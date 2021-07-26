@@ -961,16 +961,18 @@ void RunExclusiveTop(TString filename,
 
 			wgt *= outVars["L1Prefire_wgt"];
             
-            //top pt weighting
+            //top pt weighting (using version 3.1)
+			// https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
             outVars["toppt_wgt"] = 1.0;
             if(isTTbar) {
                 for (int igen=0; igen<ev.ngtop; igen++) {
                     if(abs(ev.gtop_id[igen])!=6) continue;
-                    outVars["toppt_wgt"] *= TMath::Exp(0.0615-0.0005*ev.gtop_pt[igen]);
+					//double topsf=TMath::Exp(0.0615-0.0005*ev.gtop_pt[igen]);
+					double topsf=0.103*TMath::Exp(-0.0118*ev.gtop_pt[igen])-0.000134*ev.gtop_pt[igen]+0.973;
+                    outVars["toppt_wgt"] *= topsf;
                 }
             }
-			// The recommendation is not to apply this weight but use it as a systematic uncertainty.
-			//wgt *= outVars["toppt_wgt"]; 
+			wgt *= outVars["toppt_wgt"]; 
 			
 			// generator weights
 			outVars["gen_wgt"] = (ev.g_nw>0 ? ev.g_w[0] : 1.0);
