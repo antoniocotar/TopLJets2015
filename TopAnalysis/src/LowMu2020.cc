@@ -126,6 +126,8 @@ void RunLowMu2020(const TString in_fname,
   ADDVAR(&ev.met_pt,"met_pt","/F",outT);
   ADDVAR(&ev.met_phi,"met_phi","/F",outT);
   ADDVAR(&ev.met_sig,"met_sig","/F",outT);
+  ADDVAR(&ev.zPV,"zPV","/F",outT);
+  ADDVAR(&ev.zPV2,"zPV2","/F",outT);
 	
   //Variables (bools, ints, floats):
   TString bvars[]={
@@ -146,7 +148,7 @@ void RunLowMu2020(const TString in_fname,
 					"ttm","ttdphi","ttpt","ttY",
 					"j2m","j2dphi","j2pt","j2Y",
 					"j3m","j3thrust","j3pt","j3Y",
-					"mpp","Ypp","xip","xin",
+					"mpp","Ypp","xip","xin","tp","tn","timep","timen",
 					"xip_truth","xin_truth",
 					"deta_gap_p","deta_gap_n",
 					"nTracksGap",
@@ -355,7 +357,11 @@ void RunLowMu2020(const TString in_fname,
       }
 	  	  
       // selection of protons
+      double p1_t =0.; // proton in positive pot
+      double p1_time =0.; // proton in positive pot
       double p1_xi =0.; // proton in positive pot
+      double p2_t =0.; // proton in negative pot
+      double p2_time =0.; // proton in negative pot
       double p2_xi =0.; // proton in negative pot
 	  pixel_pos_n = pixel_neg_n = 0;
 	  strip_pos_xi = strip_neg_xi = 0.;
@@ -363,9 +369,13 @@ void RunLowMu2020(const TString in_fname,
         const unsigned short pot_raw_id = ev.fwdtrk_pot[ift];
         if(ev.fwdtrk_method[ift]==1){  // selecting only MultiRP protons
           if (pot_raw_id<100){ // positive z  (pot_raw_id=3)
+            p1_t = ev.fwdtrk_t[ift];
+            p1_time = ev.fwdtrk_time[ift];
             p1_xi = ev.fwdtrk_xi[ift];
           }
           else {   // negative z   (pot_raw_id=103)
+            p2_t = ev.fwdtrk_t[ift];
+            p2_time = ev.fwdtrk_time[ift];
             p2_xi = ev.fwdtrk_xi[ift];
           }
         }
@@ -554,7 +564,11 @@ void RunLowMu2020(const TString in_fname,
 	  ioutVars["nlj"] = lightJets.size();
 	  ioutVars["np"] = (p1_xi>0) + (p2_xi>0);
 	  
+	  foutVars["tp"] = p1_t;
+	  foutVars["timep"] = p1_time;
 	  foutVars["xip"] = p1_xi;
+	  foutVars["tn"] = p2_t;
+	  foutVars["timen"] = p2_time;
 	  foutVars["xin"] = p2_xi;
 	  if( (p1_xi>0) && (p2_xi>0)){
 		foutVars["mpp"] = sqrt_s*sqrt(p1_xi*p2_xi);
