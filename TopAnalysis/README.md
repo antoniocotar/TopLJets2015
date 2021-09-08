@@ -40,7 +40,7 @@ scramv1 b
 
 #This package
 cd $CMSSW_BASE/src
-git clone https://github.com/michael-pitt/TopLJets2015.git -b 106_protonreco
+git clone git@github.com:michael-pitt/TopLJets2015.git -b 106_protonreco
 cd TopLJets2015
 
 scram b -j 8

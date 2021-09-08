@@ -133,7 +133,7 @@ int main(int argc, char* argv[]){
   tree_out.Branch("p2_xi",&entry49,"p2_xi/D");
   
   //MC weights variaitons to pass to a new output:
-  unsigned int run; float beamXangle, pu_wgt, toppt_wgt, ptag_wgt_err;
+  unsigned int run, lumi; ULong64_t event; float beamXangle, pu_wgt, toppt_wgt, ptag_wgt_err;
   float L1Prefire_wgt_err, ppsSF_wgt_err;
   float MU_trigSF_wgt_err, MU_SF_wgt_err, EL_trigSF_wgt_err, EL_SF_wgt_err; 
 
@@ -145,6 +145,8 @@ int main(int argc, char* argv[]){
   
   int signal_protons =0, cat=0;
   tree_out.Branch("run",&run,"run/i");
+  tree_out.Branch("lumi",&lumi,"lumi/i");
+  tree_out.Branch("event",&event,"event/l");
   tree_out.Branch("beamXangle",&beamXangle);
   tree_out.Branch("pu_wgt",&pu_wgt);
   tree_out.Branch("toppt_wgt",&toppt_wgt);
@@ -330,6 +332,8 @@ int main(int argc, char* argv[]){
 	//Read weights and variables to pass to the new output:
 	cat = int(tree->GetLeaf("cat")->GetValue(0));
 	run = tree->GetLeaf("run")->GetValue(0);
+	lumi = tree->GetLeaf("lumi")->GetValue(0);
+	event = tree->GetLeaf("event")->GetValue(0);
 	beamXangle = tree->GetLeaf("beamXangle")->GetValue(0);
 	pu_wgt = tree->GetLeaf("pu_wgt")->GetValue(0);
 	toppt_wgt = tree->GetLeaf("toppt_wgt")->GetValue(0);

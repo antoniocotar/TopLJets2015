@@ -1663,7 +1663,8 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	if(ev_.isData) histContainer_["RPcount"]->Fill(nmultiprotons_[0],nmultiprotons_[1]);
 	if(nrecbjets_!=0) histContainer_["counter"]->Fill(3);
 	
-    if (ev_.isData){ 
+//    if (ev_.isData){ 
+    if (false){ 
 		if (FilterType_.find("ttbar")!=std::string::npos)
 			if( nmultiprotons_[0]!=1 ||  nmultiprotons_[1]!=1 ) return;
 		//if (FilterType_.find("dilep")!=std::string::npos)
