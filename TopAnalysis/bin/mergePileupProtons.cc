@@ -24,6 +24,7 @@ NOTE: for the events in /eos/cms/store/group/phys_top/TTbarCentralExclProd/ntupl
 
 #include "TopLJets2015/TopAnalysis/interface/protonTrackRatios.h"
 #include "TopLJets2015/TopAnalysis/interface/PPSEff.h"
+#include "TopLJets2015/TopAnalysis/interface/EfficiencyScaleFactorsWrapper.h"
 
 #include <time.h>
 using namespace std;
@@ -89,6 +90,13 @@ kipped." << endl;
    //PPSEff *Strip_eff = new PPSEff(Form("%s/Alt2017ERestrictedRuns_PreliminaryEfficiencies_March122021_1D2DMultiTrack.root",data_path.Data()));
    PPSEff *Strip_eff = new PPSEff(Form("%s/PreliminaryEfficiencies_March302021_1D2DMultiTrack.root",data_path.Data()));
    
+   // Electron trigger eff (calculated per era)
+   EfficiencyScaleFactorsWrapper lepEffH_eraB(0,data_path,"B");
+   EfficiencyScaleFactorsWrapper lepEffH_eraC(0,data_path,"C");
+   EfficiencyScaleFactorsWrapper lepEffH_eraD(0,data_path,"D");
+   EfficiencyScaleFactorsWrapper lepEffH_eraE(0,data_path,"E");
+   EfficiencyScaleFactorsWrapper lepEffH_eraF(0,data_path,"F");
+      
    // ---------------------------------------------------------------------------------------------------------------------------------- //
    // ---------------------------------------------------------------------------------------------------------------------------------- //
    // ---------------------------------------------------------------------------------------------------------------------------------- //
@@ -269,6 +277,7 @@ kipped." << endl;
   //list of branches to update:
   unsigned int run; int nvtx;
   float beamXangle, p1_xi, p2_xi, weight, ppsSF_wgt, ppsSF_wgt_err, pu_wgt, ptag_wgt, ptag_wgt_err; 
+  float lep_pt, lep_eta, lep_phi, lep_m, cat, triggerSF, triggerSF_err;
   float p1_x = 0, p1_y = 0, p2_x = 0, p2_y = 0;  
   //float p1_220_x = 0, p1_220_y = 0, p2_220_x = 0, p2_220_y = 0;  
   chMCEvents->SetBranchAddress("run",&run);
@@ -287,11 +296,18 @@ kipped." << endl;
   }
   chMCEvents->SetBranchAddress("weight",&weight);
   chMCEvents->SetBranchAddress("pu_wgt",&pu_wgt);
+  chMCEvents->SetBranchAddress("EL_trigSF_wgt",&triggerSF);
+  chMCEvents->SetBranchAddress("EL_trigSF_wgt_err",&triggerSF_err);
   chMCEvents->SetBranchAddress("ppsSF_wgt",&ppsSF_wgt);
   chMCEvents->SetBranchAddress("ppsSF_wgt_err",&ppsSF_wgt_err);
   chMCEvents->SetBranchAddress("ptag_wgt",&ptag_wgt);
   chMCEvents->SetBranchAddress("ptag_wgt_err",&ptag_wgt_err);
   chMCEvents->SetBranchAddress("nvtx",&nvtx);
+  chMCEvents->SetBranchAddress("l_pt",&lep_pt);
+  chMCEvents->SetBranchAddress("l_eta",&lep_eta);
+  chMCEvents->SetBranchAddress("l_phi",&lep_phi);
+  chMCEvents->SetBranchAddress("l_m",&lep_m);
+  chMCEvents->SetBranchAddress("cat",&cat); // 4-el, 5-mu
   chMCEvents->SetBranchStatus("*",1); // activate all branches to copy
   
   int nMCEntries = chMCEvents->GetEntries();
@@ -430,6 +446,26 @@ kipped." << endl;
 	float w_mc = mc_pu->GetBinContent(nvtx+1);
 	pu_wgt = (w_mc) ? pu_weights[i_reg]->GetBinContent(nvtx+1)/w_mc : 0;
 	weight *= pu_wgt;
+	
+	// Electron trigger SF (Run dependent)
+	if(cat==4){
+		
+		// set electron kinematics
+		std::vector<Particle> leptons={};
+		TLorentzVector lp4;
+		lp4.SetPtEtaPhiM(lep_pt,lep_eta,lep_phi,lep_m);
+        leptons.push_back(Particle(lp4, 1, 11, 1, 0, 1.0, 0));
+		
+        EffCorrection_t trigSF;
+		int era_i = i_reg/4;
+		if (0==era_i) trigSF = lepEffH_eraB.getTriggerCorrection(leptons,{},{},"");
+		if (1==era_i) trigSF = lepEffH_eraC.getTriggerCorrection(leptons,{},{},"");
+		if (2==era_i) trigSF = lepEffH_eraD.getTriggerCorrection(leptons,{},{},"");
+		if (3==era_i) trigSF = lepEffH_eraE.getTriggerCorrection(leptons,{},{},"");
+		if (4==era_i) trigSF = lepEffH_eraF.getTriggerCorrection(leptons,{},{},"");
+		triggerSF = trigSF.first;
+		triggerSF_err = trigSF.second;
+	}
 	
 	// Add extra weight to signal since we have simulation for each era/xangle
 	if(isSignal) {

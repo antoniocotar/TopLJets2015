@@ -16,6 +16,12 @@ EfficiencyScaleFactorsWrapper::EfficiencyScaleFactorsWrapper(bool isData,TString
   init(era);
 }
 
+EfficiencyScaleFactorsWrapper::EfficiencyScaleFactorsWrapper(bool isData,TString era, TString period)
+{
+  if(isData) return;
+  init(era,period);
+}
+
 EfficiencyScaleFactorsWrapper::EfficiencyScaleFactorsWrapper(bool isData,TString era,std::map<TString,TString> cfgMap):
   cfgMap_(cfgMap)
 {
@@ -24,25 +30,23 @@ EfficiencyScaleFactorsWrapper::EfficiencyScaleFactorsWrapper(bool isData,TString
 }
 
 //
-void EfficiencyScaleFactorsWrapper::init(TString era)
+void EfficiencyScaleFactorsWrapper::init(TString era, TString period)
 {
   if(era.Contains("era2017")) era_=2017;
   if(era.Contains("era2016")) era_=2016;
 
   cout << "[EfficiencyScaleFactorsWrapper]" << endl
-       << "\tStarting efficiency scale factors for " << era << endl
-       << "\tWarnings: no trigger SFs for any object" << endl
-       << "\t          uncertainties returned are of statistical nature only" << endl
-       << "\tDon't forget to fix these and update these items!" << endl;
+       << "\tStarting efficiency scale factors for " << era << endl;
 
   //ELECTRONS
-  TString e_recoSF,e_idSF;
+  TString e_recoSF,e_idSF, e_trigSF;
   if(era_==2016){
     e_recoSF=era+"/EGM2D_BtoH_GT20GeV_RecoSF_Legacy2016.root";
     e_idSF=era+"/2016LegacyReReco_ElectronTight_Fall17V2.root";
   }else if(era_==2017){
     e_recoSF=era+"/egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root";
     e_idSF=era+"/2017_ElectronTight.root";
+	e_trigSF=era+"/Efficiencies_electron_DL_Run2017"+period+"_UL_SingleElectronCrossTriggers.root";
   }
 
   gSystem->ExpandPathName(e_recoSF);
@@ -60,6 +64,18 @@ void EfficiencyScaleFactorsWrapper::init(TString era)
     cout << "electrons: id SF from " << e_idSF << endl;
     scaleFactorsH_["e_id"]=(TH2 *)fIn->Get("EGamma_SF2D")->Clone();
     scaleFactorsH_["e_id"]->SetDirectory(0);     
+    fIn->Close();
+  }
+  
+  gSystem->ExpandPathName(e_trigSF);
+  fIn=TFile::Open(e_trigSF);
+  if(fIn && !fIn->IsZombie()) {
+    cout << "electrons: Trigger SF from " << e_trigSF <<  endl;
+	if(era_==2017){
+	  scaleFactorsH_["e_trig"]=(TH2F *)fIn->Get("NUM_Ele35_or_Ele28HT150_or_Ele30CentralPFJet35_DEN_CutBasedId_eta_pt")->Clone();
+	  scaleFactorsH_["e_trig"]->SetDirectory(0);
+	}
+	else{ cout << "ERROR: no SF awailable for 2016 or 2018!"<<endl;}
     fIn->Close();
   }
 

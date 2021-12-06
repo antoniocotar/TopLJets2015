@@ -346,7 +346,7 @@ void RunExclusiveTop(TString filename,
     //lhc_conds.feedConditions(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/xangle_tillTS2.csv", CMSSW_BASE));
     //lhc_conds.feedConditions(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/xangle_afterTS2.csv", CMSSW_BASE));
     
-    bool isTTbar = filename.Contains("_TTJets");
+    bool isTTbar = (filename.Contains("TTJets") || filename.Contains("TTTo2L2Nu") || filename.Contains("TTToSemiLeptonic"));
 	bool isData = filename.Contains("Data13TeV") || filename.Contains("SingleMuon") || filename.Contains("SingleElectron");
 	//bool isPythia8 = filename.Contains("pythia8");
     

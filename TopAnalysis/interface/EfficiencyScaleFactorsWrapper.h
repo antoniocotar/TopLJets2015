@@ -17,6 +17,7 @@ class EfficiencyScaleFactorsWrapper
 {
  public:
   EfficiencyScaleFactorsWrapper(bool isData,TString era);
+  EfficiencyScaleFactorsWrapper(bool isData,TString era,TString period);
   EfficiencyScaleFactorsWrapper(bool isData,TString era,std::map<TString,TString> cfgMap);
   EffCorrection_t getDileptonTriggerCorrection(std::vector<Particle> &leptons);
   EffCorrection_t getPhotonTrigCorrection(float apt,float mjj);
@@ -28,8 +29,8 @@ class EfficiencyScaleFactorsWrapper
   EffCorrection_t getOfflineCorrection(int pdgId,float pt, float eta,TString period = "");
   ~EfficiencyScaleFactorsWrapper();  
  private:
-  void init(TString era);
-  int era_;
+  void init(TString era, TString period="");
+  int era_, period_;
   std::map<TString,TH2 *> scaleFactorsH_;
   std::map<TString,TGraphAsymmErrors *> scaleFactorsGr_;
   std::map<TString,TString> cfgMap_;
