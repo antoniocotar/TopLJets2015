@@ -465,6 +465,9 @@ kipped." << endl;
 		if (4==era_i) trigSF = lepEffH_eraF.getTriggerCorrection(leptons,{},{},"");
 		triggerSF = trigSF.first;
 		triggerSF_err = trigSF.second;
+		
+		// update event weight
+		weight *= triggerSF;
 	}
 	
 	// Add extra weight to signal since we have simulation for each era/xangle
