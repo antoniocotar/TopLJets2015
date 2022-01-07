@@ -292,7 +292,7 @@ std::vector<Particle> SelectionTool::flaggedLeptons(MiniEvent_t &ev, float minPt
     Float_t unc(0.);
     if(abs(ev.l_id[il])==11)
       {
-	if( pt>minPt && eta<maxEta ) {
+	if( pt>minPt && eta<maxEta && (eta<1.4442 || eta>1.566) ) {
           if((pid>>1)&0x1)  qualityFlagsWord |= (0x1 << VETO);
           if((pid>>2)&0x1)  qualityFlagsWord |= (0x1 << LOOSEIDONLY);
           if((pid>>3)&0x1)  qualityFlagsWord |= (0x1 << LOOSE);
