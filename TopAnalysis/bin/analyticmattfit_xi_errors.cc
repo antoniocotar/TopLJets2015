@@ -171,7 +171,13 @@ int main(int argc, char* argv[]){
   tree_out.Branch("fac_err",&fac_err);
   tree_out.Branch("signal_protons",&signal_protons);
   tree_out.Branch("cat",&cat);
-
+  
+  // Additional variables:
+  float lightJet1_pt, bJet1_pt, lightJet0_pt, bJet0_pt;
+  tree_out.Branch("lightJet0_pt",&lightJet0_pt);
+  tree_out.Branch("bJet0_pt",&bJet0_pt);  
+  tree_out.Branch("lightJet1_pt",&lightJet1_pt);
+  tree_out.Branch("bJet1_pt",&bJet1_pt);  
   
   //Input files  
   //TFile file("../NewExcTopOUTPUT/bass.root");  
@@ -362,6 +368,11 @@ int main(int argc, char* argv[]){
 	ren_err =tree->GetLeaf("ren_err")->GetValue(0); 
 	fac_err =tree->GetLeaf("fac_err")->GetValue(0); 
 	signal_protons = (!isData) ? tree->GetLeaf("signal_protons")->GetValue(0) : 0; 
+
+	lightJet0_pt =tree->GetLeaf("lightJet0_pt")->GetValue(0); 
+	lightJet1_pt =tree->GetLeaf("lightJet1_pt")->GetValue(0); 
+	bJet0_pt =tree->GetLeaf("bJet0_pt")->GetValue(0); 
+	bJet1_pt =tree->GetLeaf("bJet1_pt")->GetValue(0); 
   
     ////Definisco il vettore di traslazione
     
