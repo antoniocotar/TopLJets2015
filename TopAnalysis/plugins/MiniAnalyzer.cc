@@ -137,7 +137,6 @@ private:
 
   // member data
   edm::EDGetTokenT<GenEventInfoProduct> generatorToken_;
-  edm::EDGetTokenT<GenEventInfoProduct> generatorevtToken_;
   edm::EDGetTokenT<LHEEventProduct> generatorlheToken_;
   edm::EDGetTokenT<LHERunInfoProduct> generatorRunInfoToken_;
   edm::EDGetTokenT<std::vector<PileupSummaryInfo> > puToken_;
@@ -204,7 +203,6 @@ private:
 //
 MiniAnalyzer::MiniAnalyzer(const edm::ParameterSet& iConfig) :
   generatorToken_(consumes<GenEventInfoProduct>(edm::InputTag("generator"))),
-  generatorevtToken_(consumes<GenEventInfoProduct>(edm::InputTag("generator",""))),
   generatorlheToken_(consumes<LHEEventProduct>(edm::InputTag("externalLHEProducer",""))),
   generatorRunInfoToken_(consumes<LHERunInfoProduct,edm::InRun>({"externalLHEProducer"})),
   puToken_(consumes<std::vector<PileupSummaryInfo>>(edm::InputTag("slimmedAddPileupInfo"))),
@@ -616,6 +614,7 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 //
 void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+
   //VERTICES
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(vtxToken_, vertices);
@@ -804,7 +803,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   
   edm::Handle<edm::DetSetVector<TotemRPUVPattern>> hStripPatterns;  
   iEvent.getByToken(tokenStripPatterns_, hStripPatterns);
-  
+
   if ( hStripHits.isValid() && hStripPatterns.isValid() ) { // true only for AOD
       	  
 	  // Count number of planes with nHits>5:
@@ -1653,6 +1652,12 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 		  if(!ev_.isData && nrecbjets_<1) return;
 		  if(!ev_.isData && nrecjets_>=4 && nrecbjets_<2) return;
 	  }
+      if (FilterType_.find("QCD4Fake")!=std::string::npos) {
+		  // skim (nJ>=4 and nL>0 and MET<20 and nBJ=0)
+		  if(nrecjets_<4 || nrecleptons_==0) return;
+		  if(nrecbjets_>0) return;
+		  if(ev_.met_pt>20) return;
+	  }	  
 	  if (FilterType_.find("dilep")!=std::string::npos) if(nrecleptons_<2) return;
 	  if (FilterType_.find("lowmu")!=std::string::npos) {
 		  if(ev_.nl==0 && ev_.nj==0 && nrecphotons_==0) return;

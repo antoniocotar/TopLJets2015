@@ -516,7 +516,7 @@ void RunExclusiveTop(TString filename,
         // quantities for all objects in event
         "nBjets", "nLightJets", "nJets", "ht", "cat",
 
-        "l_pt", "l_eta", "l_phi", "l_m", "l_E", "lepton_isolation",
+        "l_pt", "l_eta", "l_phi", "l_m", "l_E", "lepton_isolation", "l_tight", 
         "nu_pt", "nu_eta", "nu_phi",
         "p1_xi", "p2_xi", "ppsSF_wgt", "ppsSF_wgt_err",
 		"p1_x","p2_x","p1_y","p2_y",
@@ -619,7 +619,7 @@ void RunExclusiveTop(TString filename,
 	ht.getPlots()["pn_count"]->SetBinContent(5,counter->GetBinContent(4));
 #endif
     
-    std::cout << "--- init done" << std::endl;
+    std::cout << "--- init done" << std::endl;  
     
     //EVENT SELECTION WRAPPER
     SelectionTool selector(filename, false, triggerList, SelectionTool::AnalysisType::TOP);
@@ -887,7 +887,8 @@ void RunExclusiveTop(TString filename,
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 7, plotwgts); // count events after selection on number of jets
 #endif
-        if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
+        // Comment this line when running over QCD Control retion
+		//if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 8, plotwgts); // count events after selection on number of Bjets
 #endif
@@ -1488,7 +1489,8 @@ void RunExclusiveTop(TString filename,
             outVars["l_phi"]=leptons[0].Phi();
             outVars["l_m"]=leptons[0].M();
             outVars["l_E"]=leptons[0].E();
-            outVars["lepton_isolation"]=ev.l_relIso[0];
+            outVars["lepton_isolation"]=ev.l_relIso[leptons[0].originalReference()];
+            outVars["l_tight"]=leptons[0].hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
 
             outVars["nu_pt"]=neutrino.Pt();
             outVars["nu_eta"]=neutrino.Rapidity();
@@ -1625,6 +1627,21 @@ void RunExclusiveTop(TString filename,
             outT->Fill();
 
         } // end of if(bJets.size()>=2 && lightJets.size()>=2)
+		else{  // still fill the tree with leptons only (for QCD FF estimate)
+            outVars["l_px"]=leptons[0].p4().Px();
+            outVars["l_py"]=leptons[0].p4().Py();
+            outVars["l_pz"]=leptons[0].p4().Pz();			
+            outVars["l_pt"]=leptons[0].Pt();
+            outVars["l_eta"]=leptons[0].Rapidity();
+            outVars["l_phi"]=leptons[0].Phi();
+            outVars["l_m"]=leptons[0].M();
+            outVars["l_E"]=leptons[0].E();
+            outVars["lepton_isolation"]=ev.l_relIso[leptons[0].originalReference()];
+            outVars["l_tight"]=leptons[0].hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
+			
+			// FILL TREE
+			outT->Fill();
+		}
     } // end of loop over events
         std::cout << std::endl;
 		std::cout << "saved " << outT->GetEntries() << " events " << std::endl;

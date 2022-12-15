@@ -106,24 +106,25 @@ TString SelectionTool::flagFinalState(MiniEvent_t &ev, std::vector<Particle> pre
   if(preselPhotons.size()==0) preselPhotons=flaggedPhotons(ev);
 
   //decide the channel based on the lepton multiplicity and set lepton collections
+  std::vector<Particle> looseLeptons( selLeptons(preselLeptons,LOOSEIDONLY, 0.) );
   std::vector<Particle> tightLeptons( selLeptons(preselLeptons,TIGHT, 0.) );
   std::vector<Particle> tightPhotons( selPhotons(preselPhotons,TIGHT, tightLeptons) );
 
   TString chTag("");
   if(anType_==TOP)
     {
-      if(tightLeptons.size()>=2){
-        int ch( abs(tightLeptons[0].id()*tightLeptons[1].id()) );
+      if(looseLeptons.size()>=2){
+        int ch( abs(looseLeptons[0].id()*looseLeptons[1].id()) );
         if      (ch==11*13) chTag = "EM";
         else if (ch==13*13) chTag = "MM";
         else if (ch==11*11) chTag = "EE";
-        leptons_=tightLeptons;
+        leptons_=looseLeptons;
       }
-      else if(tightLeptons.size()==1){
-        int ch(abs(tightLeptons[0].id()) );
+      else if(looseLeptons.size()==1){
+        int ch(abs(looseLeptons[0].id()) );
         if      (ch==13) chTag = "M";
         else if (ch==11) chTag = "E";
-        leptons_=tightLeptons;
+        leptons_=looseLeptons;
         vetoLeptons_=selLeptons(preselLeptons,VETO, 0., 99., leptons_);
       }
     }

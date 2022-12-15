@@ -9,14 +9,15 @@ ANALYSISVARS={
    'pps_yx':['photons','pps','generator'],
    'pps':   ['pps'],
    'ttbar': ['leptons','jets','met','pps','generator','pflow'],
+   'ttbar_sys': ['leptons','jets','met','pps','generator','systematics','pflow'],
+   'ttbar_data': ['leptons','jets','met','pps','pflow'],
+   'QCD4Fake': ['leptons','jets','met','pps','pflow'],
    'dilep': ['leptons','pps','generator','pflow'],
    'dilep_sys': ['leptons','pps','generator','pflow','systematics'],
    'dilep_data': ['leptons','pps','pflow'],
-   'ttbar_data': ['leptons','jets','met','pps','pflow'],
-   'ttbar_sys': ['leptons','jets','met','pps','generator','systematics','pflow'],
    'lowmu': ['leptons','photons','jets','met','pps','generator','pflow'],
-   'lowmu_data': ['leptons','photons','jets','met','pps','pflow'],
    'lowmu_sys': ['leptons','photons','jets','met','pps','generator','systematics','pflow'],
+   'lowmu_data': ['leptons','photons','jets','met','pps','pflow'],
    'test':  ['generator','pps']
 }
 ANALYSISTRIGGERLISTS={

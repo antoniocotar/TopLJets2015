@@ -259,6 +259,9 @@ if 'era2017' in options.era:
       if 'ttbar' in options.ListVars:
         process.analysis.triggersToUse=ANALYSISTRIGGERLISTS['ttbar2017']
         print '\t Using 2017 ttbar triggers/jet ids'
+      elif 'QCD4Fake' in options.ListVars:
+        process.analysis.triggersToUse=ANALYSISTRIGGERLISTS['ttbar2017']
+        print '\t Using 2017 ttbar triggers/jet ids'
       elif 'dilep' in options.ListVars:
         process.analysis.triggersToUse=ANALYSISTRIGGERLISTS['dilep2017']
         print '\t Using 2017 single lepton and dilepton triggers/jet ids' 
@@ -287,6 +290,9 @@ if options.noSyst:
 if 'ttbar' in options.ListVars:
       print 'INFO\t setting up special settings for exclusive ttbar analysis, jetIdToUse = looseID'
       process.analysis.jetIdToUse='looseID'
+
+#skip version check
+process.source.bypassVersionCheck = cms.untracked.bool(True)
 
 #schedule execution
 toSchedule=[]

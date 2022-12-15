@@ -143,7 +143,7 @@ int main(int argc, char* argv[]){
   float isr_Up[NPSRad_weights], fsr_Up[NPSRad_weights], isr_Down[NPSRad_weights], fsr_Down[NPSRad_weights];
 
   
-  int signal_protons =0, cat=0;
+  int signal_protons =0, cat=0, l_tight=0;
   tree_out.Branch("run",&run,"run/i");
   tree_out.Branch("lumi",&lumi,"lumi/i");
   tree_out.Branch("event",&event,"event/l");
@@ -171,6 +171,7 @@ int main(int argc, char* argv[]){
   tree_out.Branch("fac_err",&fac_err);
   tree_out.Branch("signal_protons",&signal_protons);
   tree_out.Branch("cat",&cat);
+  tree_out.Branch("l_tight",&l_tight);
   
   // Additional variables:
   float lightJet1_pt, bJet1_pt, lightJet0_pt, bJet0_pt;
@@ -337,6 +338,7 @@ int main(int argc, char* argv[]){
 	
 	//Read weights and variables to pass to the new output:
 	cat = int(tree->GetLeaf("cat")->GetValue(0));
+	l_tight = int(tree->GetLeaf("l_tight")->GetValue(0));
 	run = tree->GetLeaf("run")->GetValue(0);
 	lumi = tree->GetLeaf("lumi")->GetValue(0);
 	event = tree->GetLeaf("event")->GetValue(0);
