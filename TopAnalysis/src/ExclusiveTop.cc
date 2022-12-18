@@ -834,6 +834,7 @@ void RunExclusiveTop(TString filename,
             //        if (leptons[i_lept].reliso()>0.10) continue;   //usually tighter
             selectedLeptons.push_back(leptons[i_lept]);
         }
+
 		
         // selection of protons and reco unc.
 		// Note fwdtrk_xiError is deprecated, using reco from 
@@ -880,6 +881,9 @@ void RunExclusiveTop(TString filename,
         ht.fill("evt_count", 5, plotwgts); // count events after channel selection
 #endif
 	if (selectedLeptons.size()!=1) continue; // ONLY events with 1 selected lepton
+	Particle lepton = selectedLeptons[0];
+	bool is_systVar = (systVar.empty() || (systVar.find("nominal")!=string::npos))  ? false : true;
+	if(is_systVar && !lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // remove non-tight leptons from systematics
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 6, plotwgts); // count events after selection on number of leptons (SHOULD BE SAME)
 #endif
@@ -888,7 +892,7 @@ void RunExclusiveTop(TString filename,
         ht.fill("evt_count", 7, plotwgts); // count events after selection on number of jets
 #endif
         // Comment this line when running over QCD Control retion
-		//if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
+		if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 8, plotwgts); // count events after selection on number of Bjets
 #endif
@@ -933,23 +937,23 @@ void RunExclusiveTop(TString filename,
             
 
             // lepton trigger*selection weights (update the code later)
-            EffCorrection_t trigSF = lepEffH.getTriggerCorrection(leptons,{},{},"");
-            EffCorrection_t  selSF = lepEffH.getOfflineCorrection(leptons[0], period);
-			if(leptons[0].id()==11){
+            EffCorrection_t trigSF = lepEffH.getTriggerCorrection(selectedLeptons,{},{},"");
+            EffCorrection_t  selSF = lepEffH.getOfflineCorrection(lepton, period);
+			if(lepton.id()==11){
 				outVars["EL_trigSF_wgt"] = trigSF.first;
 				outVars["EL_trigSF_wgt_err"] = trigSF.second;
 				if(!outVars["EL_trigSF_wgt"]) cout << "WARNING: EL_trigSF_wgt = 0, check your selection! " << endl;
 				outVars["EL_SF_wgt"] = selSF.first;
 				outVars["EL_SF_wgt_err"] = selSF.second;
 			}
-			else if(leptons[0].id()==13){
+			else if(lepton.id()==13){
 				outVars["MU_trigSF_wgt"] = trigSF.first;
 				outVars["MU_trigSF_wgt_err"] = trigSF.second;
 				if(!outVars["MU_trigSF_wgt"]) cout << "WARNING: MU_trigSF_wgt = 0, check your selection! " << endl;
 				outVars["MU_SF_wgt"] = selSF.first;
 				outVars["MU_SF_wgt_err"] = selSF.second;
 			}
-			else cout << "ERROR: leptons[0].id()="<<leptons[0].id()<<" cannot set triggerSF"<<endl;
+			else cout << "ERROR: lepton.id()="<<lepton.id()<<" cannot set triggerSF"<<endl;
 
 
             wgt *= outVars["EL_SF_wgt"]*outVars["MU_SF_wgt"];
@@ -1133,7 +1137,7 @@ void RunExclusiveTop(TString filename,
             TLorentzVector met(0,0,0,0);
             met.SetPtEtaPhiM(met_pt,0.,met_phi,0.);
             neutrinoPzComputer.SetMET(met);
-            neutrinoPzComputer.SetLepton(leptons[0].p4());
+            neutrinoPzComputer.SetLepton(lepton.p4());
             float nupz=neutrinoPzComputer.Calculate();
             TLorentzVector neutrino(met.Px(),met.Py(),nupz ,TMath::Sqrt(TMath::Power(met.Pt(),2)+TMath::Power(nupz,2)));
             
@@ -1142,7 +1146,7 @@ void RunExclusiveTop(TString filename,
             for(size_t ij=0; ij<jets.size(); ij++) {
                 scalarht += jets[ij].pt();
             }
-            scalarht += leptons[0].pt();
+            scalarht += lepton.pt();
             scalarht += neutrino.Pt();
 
             TLorentzVector t_rec_had(0,0,0,0);
@@ -1186,7 +1190,7 @@ void RunExclusiveTop(TString filename,
             // and store it in the mistake vector
             for (size_t i_comb=0; i_comb<marker.size(); i_comb++) {
                 t_rec_had = bJets[ marker[i_comb][0] ].p4() +lightJets[ marker[i_comb][1] ].p4()+ lightJets[  marker[i_comb][2] ].p4();   // b+q+q
-                t_rec_lep = bJets[ marker[i_comb][3] ].p4() +leptons[0].p4() +neutrino;            // b+l+nu
+                t_rec_lep = bJets[ marker[i_comb][3] ].p4() +lepton.p4() +neutrino;            // b+l+nu
                 mistake.push_back( abs(t_rec_had.M()-m_TOP)+abs(t_rec_lep.M()-m_TOP) );
             }
 
@@ -1200,10 +1204,10 @@ void RunExclusiveTop(TString filename,
             lightJet1 = lightJets[  combination[2] ].p4();
 			
             t_rec_had = bJet_had + lightJet0 + lightJet1;   // b+q+q
-            t_rec_lep = bJet_lep + leptons[0].p4() + neutrino;            // b+l+nu
+            t_rec_lep = bJet_lep + lepton.p4() + neutrino;            // b+l+nu
 
             bool isThadronic = 0;
-            if (leptons[0].charge()>0.) {
+            if (lepton.charge()>0.) {
                 isThadronic = 0; // the top quark decayed in leptons, the tbar decayed in jets
                 t_rec    = t_rec_lep;
                 tbar_rec = t_rec_had;
@@ -1262,10 +1266,10 @@ void RunExclusiveTop(TString filename,
             double eta_q2    =   lightJet1.Eta();    // .Rapidity();
             double phi_q2    =   lightJet1.Phi();
 
-            double pt_l     =   leptons[0].p4().Pt();
-            double eta_l    =   leptons[0].p4().Eta();    // .Rapidity();
-            double phi_l    =   leptons[0].p4().Phi();
-            double m_l      =   leptons[0].p4().M();
+            double pt_l     =   lepton.p4().Pt();
+            double eta_l    =   lepton.p4().Eta();    // .Rapidity();
+            double phi_l    =   lepton.p4().Phi();
+            double m_l      =   lepton.p4().M();
 
 //            double pt_nu     =   neutrino.Pt();
 //            double eta_nu    =   neutrino.Eta();    // .Rapidity();
@@ -1322,11 +1326,11 @@ void RunExclusiveTop(TString filename,
 //             if ( e_b2_z>4.*bJet_Leptonic.Pz()) e_b2_z=4.*bJet_Leptonic.Pz(); // if the error diverges set it to a maximum
 
              double e_l_x=sqrt(pow(e_l_p*sin(theta.Eval(eta_l))*cos(phi_l),2)+pow(pt_l/sin(theta.Eval(eta_l))*cos(theta.Eval(eta_l))*cos(phi_l)*e_l_theta,2)+pow(pt_l/sin(theta.Eval(eta_l))*sin(theta.Eval(eta_l))*sin(phi_l)*e_l_phi,2));
-//             if ( e_l_x>4.*leptons[0].p4().Px() ) e_l_x=4.*leptons[0].p4().Px(); // if the error diverges set it to a maximum
+//             if ( e_l_x>4.*lepton.p4().Px() ) e_l_x=4.*lepton.p4().Px(); // if the error diverges set it to a maximum
              double e_l_y= sqrt(pow(e_l_p*sin(theta.Eval(eta_l))*sin(phi_l),2)+pow(pt_b1/sin(theta.Eval(eta_l))*cos(theta.Eval(eta_l))*sin(phi_l)*e_l_theta,2)+pow(pt_l/sin(theta.Eval(eta_l))*sin(theta.Eval(eta_l))*cos(phi_l)*e_l_phi,2));
-//             if ( e_l_y>4.*leptons[0].p4().Py() ) e_l_y=4.*leptons[0].p4().Py(); // if the error diverges set it to a maximum
+//             if ( e_l_y>4.*lepton.p4().Py() ) e_l_y=4.*lepton.p4().Py(); // if the error diverges set it to a maximum
              double e_l_z=sqrt(pow(e_l_p*cos(theta.Eval(eta_l)),2)+pow(pt_l/sin(theta.Eval(eta_l))*sin(theta.Eval(eta_l))*e_l_theta,2));
-//             if ( e_l_z>4.*leptons[0].p4().Pz() ) e_l_z=4.*leptons[0].p4().Pz(); // if the error diverges set it to a maximum
+//             if ( e_l_z>4.*lepton.p4().Pz() ) e_l_z=4.*lepton.p4().Pz(); // if the error diverges set it to a maximum
 
              double e_nu_x=6.*neutrino.Pt(); // 6 times because six is big enough. We set a very big error on neutrino
              double e_nu_y=6.*neutrino.Pt();
@@ -1428,9 +1432,9 @@ void RunExclusiveTop(TString filename,
             outVars["ttbar_E"]=ttbarSystem_rec.E();
 
             /* quantities of objects used to build the ttbar */
-            outVars["l_px"]=leptons[0].p4().Px();
-            outVars["l_py"]=leptons[0].p4().Py();
-            outVars["l_pz"]=leptons[0].p4().Pz();
+            outVars["l_px"]=lepton.p4().Px();
+            outVars["l_py"]=lepton.p4().Py();
+            outVars["l_pz"]=lepton.p4().Pz();
             outVars["nu_px"]=neutrino.Px();
             outVars["nu_py"]=neutrino.Py();
             outVars["nu_pz"]=neutrino.Pz();
@@ -1484,13 +1488,13 @@ void RunExclusiveTop(TString filename,
             outVars["ht"]=scalarht;
             outVars["cat"]=float(ch_tag);
 
-            outVars["l_pt"]=leptons[0].Pt();
-            outVars["l_eta"]=leptons[0].Rapidity();
-            outVars["l_phi"]=leptons[0].Phi();
-            outVars["l_m"]=leptons[0].M();
-            outVars["l_E"]=leptons[0].E();
-            outVars["lepton_isolation"]=ev.l_relIso[leptons[0].originalReference()];
-            outVars["l_tight"]=leptons[0].hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
+            outVars["l_pt"]=lepton.Pt();
+            outVars["l_eta"]=lepton.Rapidity();
+            outVars["l_phi"]=lepton.Phi();
+            outVars["l_m"]=lepton.M();
+            outVars["l_E"]=lepton.E();
+            outVars["lepton_isolation"]=ev.l_relIso[lepton.originalReference()];
+            outVars["l_tight"]=lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
 
             outVars["nu_pt"]=neutrino.Pt();
             outVars["nu_eta"]=neutrino.Rapidity();
@@ -1627,17 +1631,20 @@ void RunExclusiveTop(TString filename,
             outT->Fill();
 
         } // end of if(bJets.size()>=2 && lightJets.size()>=2)
-		else{  // still fill the tree with leptons only (for QCD FF estimate)
-            outVars["l_px"]=leptons[0].p4().Px();
-            outVars["l_py"]=leptons[0].p4().Py();
-            outVars["l_pz"]=leptons[0].p4().Pz();			
-            outVars["l_pt"]=leptons[0].Pt();
-            outVars["l_eta"]=leptons[0].Rapidity();
-            outVars["l_phi"]=leptons[0].Phi();
-            outVars["l_m"]=leptons[0].M();
-            outVars["l_E"]=leptons[0].E();
-            outVars["lepton_isolation"]=ev.l_relIso[leptons[0].originalReference()];
-            outVars["l_tight"]=leptons[0].hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
+		else{  
+	        //continue;
+			// still fill the tree with leptons only (for QCD FF estimate)
+            outVars["cat"]=float(ch_tag);
+            outVars["l_px"]=lepton.p4().Px();
+            outVars["l_py"]=lepton.p4().Py();
+            outVars["l_pz"]=lepton.p4().Pz();			
+            outVars["l_pt"]=lepton.Pt();
+            outVars["l_eta"]=lepton.Rapidity();
+            outVars["l_phi"]=lepton.Phi();
+            outVars["l_m"]=lepton.M();
+            outVars["l_E"]=lepton.E();
+            outVars["lepton_isolation"]=ev.l_relIso[lepton.originalReference()];
+            outVars["l_tight"]=lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
 			
 			// FILL TREE
 			outT->Fill();
