@@ -125,11 +125,12 @@ int main(int argc, char* argv[])
 	weight *= GetFF_QCD(l_pt,cat);
 	qcd_Up = GetFF_QCD_up(l_pt,cat)/GetFF_QCD(l_pt,cat) - 1;
 	qcd_Down = 1 - GetFF_QCD_dn(l_pt,cat)/GetFF_QCD(l_pt,cat);
+	l_tight = 1;
 
     tDataQCD->Fill();
   }
 
-  cout << "\nDone. " << iDataEntry << " events processed." << endl;
+  cout << "\nDone. " << iDataEntry << " events processed, stored = " << tDataQCD->GetEntries()<< endl;
       timed=time(NULL);
     times=timed-times;
     cout << "time from start to end = " << times << endl;
@@ -184,23 +185,24 @@ for(unsigned int k2=0;k2<mc.size();k2++){
   times=time(NULL);  
   cout << "Loop over MC and apply QCD weights" << endl;
   // Loop over MC entries and mix pileup protons
-  int iDataEntry;
-  for (iDataEntry = 0; iDataEntry < nDataEntries; iDataEntry++) {
-    if(iDataEntry%1000==0) printf ("\r [%3.0f%%] done", 100.*(float)iDataEntry/(float)nDataEntries);
+  int iMCEntry;
+  for (iMCEntry = 0; iMCEntry < nMCEntries; iMCEntry++) {
+    if(iMCEntry%1000==0) printf ("\r [%3.0f%%] done", 100.*(float)iMCEntry/(float)nMCEntries);
     
 	// asign the protons to the MC event
-    chMCEvents->GetEntry(iDataEntry);
+    chMCEvents->GetEntry(iMCEntry);
 	if (nBjets<2) continue;
 	if (l_tight) continue;
 	
 	weight *= GetFF_QCD(l_pt,cat)*_xsec*(total_lumi/norm);
 	qcd_Up = GetFF_QCD_up(l_pt,cat)/GetFF_QCD(l_pt,cat) - 1;
 	qcd_Down = 1 - GetFF_QCD_dn(l_pt,cat)/GetFF_QCD(l_pt,cat);
+	l_tight = 1;
 
     tMCQCD->Fill();
   }
 
-  cout << "\nDone. " << iDataEntry << " events processed." << endl;
+  cout << "\nDone. " << iMCEntry << " events processed, and stored = " << tMCQCD->GetEntries() <<endl;
       timed=time(NULL);
     times=timed-times;
     cout << "time from start to end = " << times << endl;
