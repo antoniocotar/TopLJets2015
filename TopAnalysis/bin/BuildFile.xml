@@ -5,6 +5,7 @@
   <bin name="runFRcalculation"      file="runFRcalculation.cc"></bin>
   <bin name="mergePileupProtons"            file="mergePileupProtons.cc"></bin>
   <bin name="createQCDSample"               file="createQCDSample.cc"></bin>
+  <bin name="createQCDSampleMVA"            file="createQCDSampleMVA.cc"></bin>
   <bin name="analyticmattfit_xi_errors"     file="analyticmattfit_xi_errors.cc"></bin>
   <bin name="TMVAClassificationApplication" file="TMVAClassificationApplication.cc"></bin>
   <bin name="getShapes" file="getShapes.cc"></bin>

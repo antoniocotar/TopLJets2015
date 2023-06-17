@@ -21,6 +21,7 @@ createQCDSample /eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/mc/ex
 
 #include "TopLJets2015/TopAnalysis/data/era2017/GetFF_QCD.C"
 
+#define QCD_SYS_UNC 0.5
 
 #include <time.h>
 using namespace std;
@@ -55,6 +56,10 @@ int main(int argc, char* argv[])
   string MCPath = argv[2];
   string outFileName = "QCD.root";
   
+  // create normalization histogram with 1 in all bins (QCD is treated as a MC sample)
+  TH1F * evt_count = new TH1F("evt_count","",10,0,10);
+  for (int i=0;i<10;i++) evt_count->SetBinContent(i+1,1);
+    
   // List of data files:
   float total_lumi = 29380.666084; // in ipb
   TString eras_str[5]={"2017B","2017C","2017D","2017E","2017F"};
@@ -85,11 +90,11 @@ int main(int argc, char* argv[])
   for(unsigned int k2=0;k2<data.size();k2++){
 	  chDataEvents->Add(DataPath+"/"+data.at(k2));
   }
-  float weight, l_pt, cat, nBjets, l_tight; 
+  double weight, l_pt; 
+  int cat, l_tight;
   chDataEvents->SetBranchAddress("weight",&weight);
   chDataEvents->SetBranchAddress("l_pt",&l_pt);
   chDataEvents->SetBranchAddress("cat",&cat);
-  //chDataEvents->SetBranchAddress("nBjets",&nBjets);
   chDataEvents->SetBranchAddress("l_tight",&l_tight);
  
   int nDataEntries = chDataEvents->GetEntries();
@@ -105,9 +110,8 @@ int main(int argc, char* argv[])
   // Create new output with updated QCD weights:
   TTree* tDataQCD = chDataEvents->CloneTree(0);
   
-  float qcd_Up=1, qcd_Down=1; 
-  tDataQCD->Branch("qcd_Up",&qcd_Up);
-  tDataQCD->Branch("qcd_Down",&qcd_Down);
+  float qcd_wgt_err=0.0; 
+  tDataQCD->Branch("qcd_wgt_err",&qcd_wgt_err);
    
   int times,timed;
   times=time(NULL);  
@@ -119,12 +123,10 @@ int main(int argc, char* argv[])
     
 	// asign the protons to the MC event
     chDataEvents->GetEntry(iDataEntry);
-	//if (nBjets<2) continue;
 	if (l_tight) continue;
 	
 	weight *= GetFF_QCD(l_pt,cat);
-	qcd_Up = GetFF_QCD_up(l_pt,cat)/GetFF_QCD(l_pt,cat) - 1;
-	qcd_Down = 1 - GetFF_QCD_dn(l_pt,cat)/GetFF_QCD(l_pt,cat);
+	qcd_wgt_err = 0.0; // GetFF_QCD_up(float(l_pt),float(cat))/GetFF_QCD(float(l_pt),float(cat));
 	l_tight = 1;
 
     tDataQCD->Fill();
@@ -138,6 +140,7 @@ int main(int argc, char* argv[])
   // Write mixed tree to file and close everything
   fOutQCD->cd();
   cout << "Writes " << fOutQCD->GetName() << endl;
+  evt_count->Write();
   tDataQCD->Write();
   fOutQCD->Close();
   
@@ -156,11 +159,11 @@ for(unsigned int k2=0;k2<mc.size();k2++){
 
   TTree * chMCEvents = (TTree *)oldfile->Get("tree");
   
-  float weight, l_pt, cat, nBjets, l_tight; 
+  double weight, l_pt; 
+  int cat, l_tight;
   chMCEvents->SetBranchAddress("weight",&weight);
   chMCEvents->SetBranchAddress("l_pt",&l_pt);
   chMCEvents->SetBranchAddress("cat",&cat);
-  //chMCEvents->SetBranchAddress("nBjets",&nBjets);
   chMCEvents->SetBranchAddress("l_tight",&l_tight);
  
   int nMCEntries = chMCEvents->GetEntries();
@@ -177,9 +180,8 @@ for(unsigned int k2=0;k2<mc.size();k2++){
   // Create new output with updated QCD weights:
   TTree* tMCQCD = chMCEvents->CloneTree(0);
   
-  float qcd_Up=1, qcd_Down=1; 
-  tMCQCD->Branch("qcd_Up",&qcd_Up);
-  tMCQCD->Branch("qcd_Down",&qcd_Down);
+  float qcd_wgt_err=0.0; 
+  tMCQCD->Branch("qcd_wgt_err",&qcd_wgt_err);
    
   int times,timed;
   times=time(NULL);  
@@ -191,12 +193,10 @@ for(unsigned int k2=0;k2<mc.size();k2++){
     
 	// asign the protons to the MC event
     chMCEvents->GetEntry(iMCEntry);
-	//if (nBjets<2) continue;
 	if (l_tight) continue;
 	
-	weight *= GetFF_QCD(l_pt,cat)*_xsec*(total_lumi/norm);
-	qcd_Up = GetFF_QCD_up(l_pt,cat)/GetFF_QCD(l_pt,cat) - 1;
-	qcd_Down = 1 - GetFF_QCD_dn(l_pt,cat)/GetFF_QCD(l_pt,cat);
+	weight *= GetFF_QCD(float(l_pt),float(cat))*_xsec*(total_lumi/norm);
+	qcd_wgt_err = QCD_SYS_UNC; //GetFF_QCD_up(float(l_pt),float(cat))/GetFF_QCD(float(l_pt),float(cat));
 	l_tight = 1;
 
     tMCQCD->Fill();
@@ -207,9 +207,13 @@ for(unsigned int k2=0;k2<mc.size();k2++){
     times=timed-times;
     cout << "time from start to end = " << times << endl;
 	
-  // Write mixed tree to file and close everything
+  // Write new tree to file, and create normalization histogram
+  TH1F * evt_count = new TH1F("evt_count","",10,0,10);
+  for (int i=0;i<10;i++) evt_count->SetBinContent(i+1,1);
+  
   fOutMC->cd();
   cout << "Writes " << fOutMC->GetName() << endl;
+  evt_count->Write();
   tMCQCD->Write();
   fOutMC->Close();  
 

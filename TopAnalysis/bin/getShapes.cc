@@ -42,7 +42,9 @@ class Selection{
 	void SetMCSystPath(TString path){_mcsyst_path = path;}
 	void SetDataPath(TString path){_data_path = path;}
 	void SaveAs(TString,int);
+	float GetLumi(){return user_lumi;}
 	vector<TString> eras_str;
+
 	
 	private:
 	int _nregions = 4; // 4 crossing-angles  = minimal number of regions
@@ -91,18 +93,18 @@ int main(int argc, char* argv[])
   sel.SetMCSystPath(PWD);
   }
   else{
-  sel.SetMCPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/mc/MVA");
-  sel.SetMCSystPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/mc/MVA/syst");
-  //sel.SetMCPath("/eos/user/m/mpitt/PPS_ttbar/MC/ntuples_forMatteo/MVA");
-  //sel.SetMCSystPath("/eos/user/m/mpitt/PPS_ttbar/MC/ntuples_forMatteo/MVA");
+  //sel.SetMCPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/mc/MVA");
+  //sel.SetMCSystPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/mc/MVA/syst");
+  sel.SetMCPath("/eos/user/m/mpitt/PPS_ttbar/MC/ntuples_forMatteo/MVA");
+  sel.SetMCSystPath("/eos/user/m/mpitt/PPS_ttbar/MC/ntuples_forMatteo/MVA/sys");
   } 
 
-  //sel.SetDataPath("/eos/user/m/mpitt/PPS_ttbar/Data/ntuples_forMatteo/MVA");
-  sel.SetDataPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/data/MVA");
+  //sel.SetDataPath("/eos/cms/store/group/phys_top/TTbarCentralExclProd/ntuples/data/MVA");
+  sel.SetDataPath("/eos/user/m/mpitt/PPS_ttbar/Data/ntuples_forMatteo/MVA");
   
   // List of samples
-  std::vector<float> ttbar_xsec, wjets_xsec, zjets_xsec, stop_xsec, diboson_xsec;
-  std::vector<TString> ttbar, wjets, zjets, stop, diboson; 
+  std::vector<float> ttbar_xsec, wjets_xsec, zjets_xsec, stop_xsec, diboson_xsec, qcd_xsec;
+  std::vector<TString> ttbar, wjets, zjets, stop, diboson, qcd; 
   std::vector<TString> exclusive_ttbar;
   std::vector<TString> data;  
 
@@ -129,6 +131,20 @@ int main(int argc, char* argv[])
   //diboson
   diboson.push_back("WW_TuneCP5_13TeV-pythia8.root"); diboson_xsec.push_back(111.5);
   diboson.push_back("WZ_TuneCP5_13TeV-pythia8.root"); diboson_xsec.push_back(27.57);
+
+  // QCD (estimated using the FR method with createQCDSampleMVA)
+  // normalization is already included, check the code for consistency
+  qcd.push_back("QCD.root"); qcd_xsec.push_back(1.0/sel.GetLumi());
+  //qcd.push_back("DY2JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("DY3JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("DY4JetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  qcd.push_back("TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_QCD.root"); qcd_xsec.push_back(-1.0/sel.GetLumi());
+  qcd.push_back("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_QCD.root"); qcd_xsec.push_back(-1.0/sel.GetLumi());
+  //qcd.push_back("W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
+  //qcd.push_back("W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8_QCD.root"); qcd_xsec.push_back(1/plotlumi);
   
   // set weights (histname, branch name)
   
@@ -145,6 +161,9 @@ int main(int argc, char* argv[])
   sel.setSysWeight("scale_FAC","fac_err"); // factorization scale variation
   //sel.setSysWeight("toppt","toppt_wgt"); // top pT reweighting [SPECIAL TREATMENT]
   //sel.setSysWeight("PU_unc","pu_wgt"); // top pT reweighting [SPECIAL TREATMENT]
+  
+  // QCD uncertanty
+  sel.setSysWeight("QCD_FF","qcd_wgt_err"); // FakeFactor uncertanty (from MC subtraction)
   
   // ISR FSR
   sel.setSysWeight("ISR_G2GG_muR","isr1_"); // ISR variation - asymmetric
@@ -184,6 +203,7 @@ int main(int argc, char* argv[])
   sel.AddBkg("Wt",stop,stop_xsec);
   sel.AddBkg("Wjets",wjets,wjets_xsec);
   sel.AddBkg("Zjets",zjets,zjets_xsec);
+  sel.AddBkg("Multijets",qcd,qcd_xsec);
   //sel.AddBkg("VV",diboson,diboson_xsec);
     
   // Add data
@@ -415,7 +435,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 	int n = _tree->GetEntries(); // number of events
 
 	// analysis variables:
-	unsigned int run; Float_t beamXangle, BDT; Double_t weight;
+	unsigned int run; Float_t beamXangle, BDT; Double_t weight; Int_t l_tight;
 	float weight_sys_Up[weight_syst_names.size()];
 	float weight_sys_Dn[weight_syst_names.size()];
 	float wnorm=1; int printProgress;
@@ -426,10 +446,17 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 	_tree->SetBranchStatus("run",1); _tree->SetBranchAddress("run",&run); 
 	_tree->SetBranchStatus("beamXangle",1); _tree->SetBranchAddress("beamXangle",&beamXangle); 
 	_tree->SetBranchStatus("wBDT",1); _tree->SetBranchAddress("wBDT",&BDT); 
+	_tree->SetBranchStatus("l_tight",1); _tree->SetBranchAddress("l_tight",&l_tight); 
 	_tree->SetBranchStatus("EL_trigSF_wgt_err",1); _tree->SetBranchAddress("EL_trigSF_wgt_err",&bugfix_var); 
 	_tree->SetBranchStatus(_weight,1); _tree->SetBranchAddress(_weight,&weight); 
 	for(int is=0;is<nsys_weights;is++) {
 	  TString sys_name_(syst_weights.at(is));
+	  if((sys_name_.Contains("qcd") && !ds.Contains("QCD")) || (!sys_name_.Contains("qcd") && ds.Contains("QCD"))) {
+		  weight_sys_Up[is] = 0;
+		  weight_sys_Dn[is] = 0;
+		  continue;
+	  }
+	  
 	  int sys_len = sys_name_.Length();
 	  if((sys_len-1)==sys_name_.Last('_')){
 		_tree->SetBranchStatus(sys_name_+"Up",1); 
@@ -457,6 +484,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 	for(int i_ev=0;i_ev<n;i_ev++){
 	if(i_ev%printProgress==0) printf ("\rprocessing %d events from %s [%3.0f%%] done",n,ds.Data(), 100.*i_ev/(float)n);
 	  _tree->GetEntry(i_ev);
+	  if(!l_tight) continue;
 	  int ireg = regionIdx(run,beamXangle);
 	  if(ireg<0 || ireg>_nregions) {cout << "ERROR: ireg = " << ireg << " = regionIdx("<<run<<","<<beamXangle<<")"<< endl; continue;}
 	  //if(component_idx==0 && signal_protons!=11) continue;
@@ -499,7 +527,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 	_file->Close();
 	
 	// processing alternative samples (if defined by Selection::setSysSample)
-	for(int i_sys=0;i_sys<nsys_samples;i_sys++){
+	for(int i_sys=0;i_sys<nsys_samples && !ds.Contains("QCD");i_sys++){
 		TString ds_sys(ds);
 		ds_sys=ds_sys.ReplaceAll(".root","_"+syst_samples.at(i_sys)+"up.root");
 		cout << "Read " << _mcsyst_path+"/"+ds_sys << endl;
@@ -514,6 +542,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 		_tree->SetBranchStatus("run",1); _tree->SetBranchAddress("run",&run); 
 		_tree->SetBranchStatus("beamXangle",1); _tree->SetBranchAddress("beamXangle",&beamXangle); 
 		_tree->SetBranchStatus("wBDT",1); _tree->SetBranchAddress("wBDT",&BDT); 
+		_tree->SetBranchStatus("l_tight",1); _tree->SetBranchAddress("l_tight",&l_tight); 
 		_tree->SetBranchStatus(_weight,1); _tree->SetBranchAddress(_weight,&weight); 		
 
 	    _tree->SetBranchStatus("EL_trigSF_wgt_err",1); _tree->SetBranchAddress("EL_trigSF_wgt_err",&bugfix_var); 
@@ -531,6 +560,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
         for(int i_ev=0;i_ev<n;i_ev++){
 	        //if(i_ev%printProgress==0) printf ("\rprocessing %d events from %s [%3.0f%%] done",n,ds_sys.Data(), 100.*i_ev/(float)n);
 			_tree->GetEntry(i_ev);
+			if(!l_tight) continue;
 			int ireg = regionIdx(run,beamXangle);
 			if(ireg<0 || ireg>_nregions) {cout << "ERROR: ireg = " << ireg << " = regionIdx("<<run<<","<<beamXangle<<")"<< endl; continue;}
             //if(component_idx==0 && signal_protons!=11) continue;
@@ -560,6 +590,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
 		_tree->SetBranchStatus("run",1); _tree->SetBranchAddress("run",&run); 
 		_tree->SetBranchStatus("beamXangle",1); _tree->SetBranchAddress("beamXangle",&beamXangle); 
 		_tree->SetBranchStatus("wBDT",1); _tree->SetBranchAddress("wBDT",&BDT); 
+		_tree->SetBranchStatus("l_tight",1); _tree->SetBranchAddress("l_tight",&l_tight); 
 		_tree->SetBranchStatus(_weight,1); _tree->SetBranchAddress(_weight,&weight); 		
 
 	    _tree->SetBranchStatus("EL_trigSF_wgt_err",1); _tree->SetBranchAddress("EL_trigSF_wgt_err",&bugfix_var); 
@@ -571,6 +602,7 @@ void Selection::processSample(TString ds, float xsec, int component_idx, int Sum
         for(int i_ev=0;i_ev<n;i_ev++){
 	    //if(i_ev%printProgress==0) printf ("\rprocessing %d events from %s [%3.0f%%] done",n,ds_sys.Data(), 100.*i_ev/(float)n);
 			_tree->GetEntry(i_ev);
+			if(!l_tight) continue;
 
 			int ireg = regionIdx(run,beamXangle);
 			if(ireg<0 || ireg>_nregions) {cout << "ERROR: ireg = " << ireg << " = regionIdx("<<run<<","<<beamXangle<<")"<< endl; continue;}
@@ -599,17 +631,19 @@ void Selection::processData(TString ds){
 	TTree * _tree = (TTree *) _file->Get("tree");
 	int n = _tree->GetEntries(); // number of events
 	// analysis variables:
-	unsigned int run; Float_t beamXangle, BDT;
+	unsigned int run; Float_t beamXangle, BDT; Int_t l_tight;
 
 	_tree->SetBranchStatus("*",0); //disable all branches and enable only the relevant
 	_tree->SetBranchStatus("run",1); _tree->SetBranchAddress("run",&run); 
 	_tree->SetBranchStatus("beamXangle",1); _tree->SetBranchAddress("beamXangle",&beamXangle); 
 	_tree->SetBranchStatus("wBDT",1); _tree->SetBranchAddress("wBDT",&BDT); 
+	_tree->SetBranchStatus("l_tight",1); _tree->SetBranchAddress("l_tight",&l_tight); 
 
 	// loop over all events in the tree
 	for(int i_ev=0;i_ev<n;i_ev++){
 	if((n<1000) || (i_ev%(n/1000)==0)) printf ("\rprocessing %d events from %s [%3.0f%%] done",n,ds.Data(), 100.*i_ev/(float)n);
 	  _tree->GetEntry(i_ev);
+	  if(!l_tight) continue;
 	  int ireg = regionIdx(run,beamXangle);
 	  if(ireg<0 || ireg>_nregions) {cout << "ERROR: ireg = " << ireg << " = regionIdx("<<run<<","<<beamXangle<<")"<< endl; continue;}
 	  float var = BDT;
