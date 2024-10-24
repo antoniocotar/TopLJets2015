@@ -1,0 +1,82 @@
+# Voms proxy
+
+# Establish arquitecture
+cmssw-el7
+
+# Go to CMSSW_10_6_X
+cd CMSSW_10_6_X
+
+# Establish CMSSW env
+cmsrel CMSSW_10_6_20
+cd CMSSW_10_6_20/src
+cmsenv
+
+# Git initialization
+git cms-init
+git cms-addpkg DataFormats/CaloTowers
+
+# TopLJets code ------------------------------------------------------------------------
+
+git cms-addpkg RecoEgamma/EgammaTools
+git clone https://github.com/cms-egamma/EgammaPostRecoTools.git
+mv EgammaPostRecoTools/python/EgammaPostRecoTools.py RecoEgamma/EgammaTools/python/.
+git clone -b ULSSfiles_correctScaleSysMC https://github.com/jainshilpi/EgammaAnalysis-ElectronTools.git EgammaAnalysis/ElectronTools/data/
+git cms-addpkg EgammaAnalysis/ElectronTools
+scram b -j 8
+
+#TopTools and B-fragmentation analyzer
+git cms-addpkg TopQuarkAnalysis/TopTools
+cd TopQuarkAnalysis
+git clone -b 94x https://gitlab.cern.ch/psilva/BFragmentationAnalyzer.git
+scram b -j 8
+cd -
+
+#Statistical analysis http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit
+git clone https://github.com/cms-analysis/CombineHarvester.git CombineHarvester
+git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+cd HiggsAnalysis/CombinedLimit
+git fetch origin
+git checkout v8.2.0
+scramv1 b clean # always make a clean build
+scramv1 b 
+
+#This package
+cd $CMSSW_BASE/src
+git clone git@github.com:michael-pitt/TopLJets2015.git -b 106_protonreco
+cd TopLJets2015
+
+scram b -j 8 
+
+# ----------------------------------------------------------------------------------------------
+
+# Copy from local 4 files needed in respective directories 
+# /plugins/MiniAnalyzer.cc, /src/MiniEvent.cc /interface/MiniEvent.h /test/runMiniAnalyzer_cfg.py
+
+cp /eos/user/a/acotarod/Thesis/local_code_backup/v1_jan_2024/code_for_hf/
+
+# add necesary packages
+
+git cms-addpkg Geometry/CaloEventSetup
+git cms-addpkg Geometry/Records
+git cms-addpkg DataFormats/HcalRecHit
+
+# Modify datacard ----------------------------------------------
+
+cd /eos/user/a/acotarod/Thesis/CMSSW_MP_PROTON/CMSSW_10_6_X/CMSSW_10_6_20/src/CombineHarvester/CombineTools/src/CombineHarvester_Datacards.cc
+# Change this line boost::split(tokens, y->getStringAttribute("wspSource"), boost::is_any_of(":"));
+# to 
+# std::string wspSource = y->getStringAttribute("wspSource");
+# boost::split(tokens, wspSource, boost::is_any_of(":"));
+
+# -------------------------------------------------------------
+
+# Scram b
+cmsenv
+scram b -j 8
+
+# run cmsRun command in test/ for mc background
+cmsRun runMiniAnalyzer_cfg.py runOnData=False era=era2017_B inputFile=/store/mc/RunIISummer20UL17MiniAODv2/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v1/00000/098E1E26-6108-654E-B170-3C183CE1CCD0.root outFilename=test_hf.root doPUProtons=False ListVars=ttbar
+
+
+
+

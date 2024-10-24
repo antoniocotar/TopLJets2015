@@ -12,7 +12,7 @@ options.register('runProtonFastSim', None,
                  VarParsing.varType.int,
                  "Run proton fastsim for this angle"
                  )
-options.register('doPUProtons', True,
+options.register('doPUProtons', False,
                  VarParsing.multiplicity.singleton,
                  VarParsing.varType.bool,
                  "Include PU protons"
@@ -175,8 +175,10 @@ if options.RedoProtons and (not options.redoProtonRecoFromRAW or not options.run
 #message logger
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = ''
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+
+#options.maxEvents
 
 # set input to process
 process.source = cms.Source("PoolSource",
@@ -236,6 +238,7 @@ process.TFileService = cms.Service("TFileService",
 from TopLJets2015.TopAnalysis.miniAnalyzer_cfi import  ANALYSISJETIDS,ANALYSISTRIGGERLISTS,ANALYSISVARS,ANALYSISRUNS
 process.load('TopLJets2015.TopAnalysis.miniAnalyzer_cfi')
 print 'MiniAnalyzer configuration is as follows:'
+process.analysis.hfRecHits = cms.InputTag("slimmedHcalRecHits", "reducedHcalRecHits")
 process.analysis.saveTree  = cms.bool(options.saveTree)
 process.analysis.applyFilt = cms.bool(options.applyFilt)
 print '\t save tree=',options.saveTree,

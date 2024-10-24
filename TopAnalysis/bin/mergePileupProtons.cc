@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
   string inMCFileName = argv[1];
   string inPUFileName = argv[2];
   string outFileName = inMCFileName.substr(inMCFileName.find_last_of('/') + 1, inMCFileName.find_last_of('.') - inMCFileName.find_last_of('/') - 1) + "_enriched.root";
-  bool isSignal = TString(inMCFileName.c_str()).Contains("excl_ttbar") || TString(inMCFileName.c_str()).Contains("ExclusiveTTbar");
+  bool isSignal = TString(inMCFileName.c_str()).Contains("ntuple") || TString(inMCFileName.c_str()).Contains("ExclusiveTTbar");
   
   if (argc >= 4) {
     TString arg3 = TString(argv[3]);

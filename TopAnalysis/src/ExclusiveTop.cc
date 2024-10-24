@@ -32,7 +32,7 @@
 using namespace std;
 #define ADDVAR(x,name,t,tree) tree->Branch(name,x,TString(name)+TString(t))
 
-double m_TOP = 173.1;
+double m_TOP = 172.5;
 double m_W   =  80.379;
 double m_NU  =  0.;
 
@@ -63,7 +63,7 @@ int dump_index(vector<double> sum_squared){
 double bjet_err(double p,double eta,double phi, int err_type){
     eta=abs(eta);
     double c_p,r_p,n_p,c_e,r_e,n_e,c_ph,r_ph,n_ph;
-    
+
     if(eta>=0 && eta<0.0870)
     {c_p=0.08790000;r_p=0.90500000; n_p=2.93000000;c_e=1.60700000;r_e=0.00000000; n_e=0.00611000;c_ph=1.67550000;r_ph=0.00000000; n_ph=0.00849000;}
     if(eta>=0.0870 && eta<0.1740)
@@ -116,9 +116,9 @@ double bjet_err(double p,double eta,double phi, int err_type){
     {c_p=0.06530000;r_p=1.12400000; n_p=0.00000000;c_e=1.91100000;r_e=0.00000000; n_e=0.01127;c_ph=1.87300000;r_ph=0.00000000; n_ph=0.00540;}
     if(eta>=2.3220)
     {c_p=0.05040000;r_p=1.20200000; n_p=0.50000000;c_e=2.28000000;r_e=0.00000000; n_e=0.01053;c_ph=1.98800000;r_ph=0.00000000; n_ph=0.00887;}
-    
+
     double theta=2*atan(exp(-eta));
-    
+
     if(err_type==0){return sqrt(c_p*c_p*p*p*sin(theta)*sin(theta)+r_p*r_p*p*sin(theta)+n_p*n_p);}
     else if (err_type==1){return sqrt(c_e*c_e/(p*p)+r_e*r_e/p+n_e*n_e);}
     else if (err_type==2){return sqrt(c_ph*c_ph/(p*p)+r_ph*r_ph/p+n_ph*n_ph);}
@@ -127,9 +127,9 @@ double bjet_err(double p,double eta,double phi, int err_type){
 
 double ljet_err(double p,double eta,double phi, int err_type){
     eta=abs(eta);
-    
+
     double c_p,r_p,n_p,c_e,r_e,n_e,c_ph,r_ph,n_ph;
-    
+
     if(eta>=0 && eta<0.0870)
     {c_p=0.07390000;r_p=0.90400000; n_p=2.39000000;c_e=1.48700000;r_e=0.00000000; n_e=0.00986000;c_ph=1.54610000;r_ph=0.00000000; n_ph=0.01155000;}
     if(eta>=0.0870 && eta<0.1740)
@@ -182,9 +182,9 @@ double ljet_err(double p,double eta,double phi, int err_type){
     {c_p=0.00000000;r_p=1.08890000; n_p=1.51040000;c_e=1.63500000;r_e=0.00000000; n_e=0.01430;c_ph=1.66830000;r_ph=0.00000000; n_ph=0.01113;}
     if(eta>=2.3220)
     {c_p=0.00000000;r_p=1.06820000; n_p=2.65000000;c_e=2.04200000;r_e=0.00000000; n_e=0.01414;c_ph=1.75290000;r_ph=0.00000000; n_ph=0.01311;}
-    
+
     double theta=2*atan(exp(-eta));
-    
+
     if(err_type==0){return sqrt(c_p*c_p*p*p*sin(theta)*sin(theta)+r_p*r_p*p*sin(theta)+n_p*n_p);}
     else if(err_type==1){return sqrt(c_e*c_e/(p*p)+r_e*r_e/p+n_e*n_e);}
     else if(err_type==2){return sqrt(c_ph*c_ph/(p*p)+r_ph*r_ph/p+n_ph*n_ph);}
@@ -193,9 +193,9 @@ double ljet_err(double p,double eta,double phi, int err_type){
 
 double mu_err(double p,double eta,double phi, int err_type){
     eta=abs(eta);
-    
+
     double c_p,r_p,n_p,c_e,r_e,n_e,c_ph,r_ph,n_ph;
-    
+
     if(eta>=0 && eta<0.10)
     {c_p=0.00530000;r_p=0.0012329; n_p=2.0001434;c_e=0.00305000;r_e=0.00000000; n_e=0.00043240;c_ph=0.00304000;r_ph=0.00018100; n_ph=0.0000719;}
     if(eta>=0.10 && eta<0.20)
@@ -244,9 +244,9 @@ double mu_err(double p,double eta,double phi, int err_type){
     {c_p=0.01710000;r_p=0.00568498; n_p=0.00094500;c_e=0.00526000;r_e=0.00000000; n_e=0.00042750;c_ph=0.00470000;r_ph=0.00129000; n_ph=0.00018900;}
     if(eta>=2.30)
     {c_p=0.01590000;r_p=0.00643950; n_p=0.00130400;c_e=0.00449000;r_e=0.00000000; n_e=0.00052200;c_ph=0.00370000;r_ph=0.00176000; n_ph=0.00019800;}
-    
+
     double theta=2*atan(exp(-eta));
-    
+
     if(err_type==0){return p*p*sin(theta)*sin(theta)*sqrt(c_p*c_p/(p*p*sin(theta)*sin(theta))+r_p*r_p/(p*sin(theta))+n_p*n_p);}
     else if(err_type==1){return sqrt(c_e*c_e/(p*p)+r_e*r_e/p+n_e*n_e);}
     else if(err_type==2){return sqrt(c_ph*c_ph/(p*p)+r_ph*r_ph/p+n_ph*n_ph);}
@@ -255,9 +255,9 @@ double mu_err(double p,double eta,double phi, int err_type){
 
 double e_err(double p,double eta,double phi, int err_type){
     eta=abs(eta);
-    
+
     double c_p,r_p,n_p,c_e,r_e,n_e,c_ph,r_ph,n_ph;
-    
+
     if(eta>=0 && eta<0.1740)
     {c_p=0.00635000;r_p=0.07110000; n_p=0.26800000;c_e=0.00460000;r_e=0.00000000; n_e=0.00045350;c_ph=0.00311000;r_ph=0.00120600; n_ph=0.00009290;}
     if(eta>=0.1740 && eta<0.2610)
@@ -306,14 +306,28 @@ double e_err(double p,double eta,double phi, int err_type){
     {c_p=0.01130000;r_p=0.14700000; n_p=0.00000000;c_e=0.00472000;r_e=0.00000000; n_e=0.00045540;c_ph=0.00400000;r_ph=0.00446000; n_ph=0.00000000;}
     if(eta>=2.3220)
     {c_p=0.01460000;r_p=0.12350000; n_p=0.00000000;c_e=0.00360000;r_e=0.00000000; n_e=0.00059400;c_ph=0.01550000;r_ph=0.00370000; n_ph=0.00035000;}
-    
+
     double theta=2*atan(exp(-eta));
-    
+
     if(err_type==0){return sqrt(c_p*c_p*(p*p*sin(theta)*sin(theta))+r_p*r_p*(p*sin(theta))+n_p*n_p);}
     else if(err_type==1){return sqrt(c_e*c_e/(p*p)+r_e*r_e/p+n_e*n_e);}
     else if(err_type==2){return sqrt(c_ph*c_ph/(p*p)+r_ph*r_ph/p+n_ph*n_ph);}
     else { return 0; } // THIS WILL CAUSE THE FIT TO CRASH --> err_type must be 0,1,2
-    
+
+}
+
+
+double dR_calc(double eta1, double phi1, double eta2, double phi2) {
+    double delta_eta = eta1 - eta2;
+    double delta_phi = -10000.0;
+
+    if (abs(phi1 - phi2) < abs(phi2 - phi1)) {
+        delta_phi = phi1 - phi2;
+    } else {
+        delta_phi = phi2 - phi1;
+    }
+
+    return sqrt(pow(delta_eta, 2) + pow(delta_phi, 2));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -338,24 +352,24 @@ void RunExclusiveTop(TString filename,
     // CTPPS reconstruction part
     //ctpps::XiReconstructor proton_reco;
     //proton_reco.feedDispersions(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/dispersions.txt", CMSSW_BASE));
-    
+
     //ctpps::AlignmentsFactory ctpps_aligns;
     //ctpps_aligns.feedAlignments(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/alignments_30jan2017.txt", CMSSW_BASE));
-    
+
     //ctpps::LHCConditionsFactory lhc_conds;
     //lhc_conds.feedConditions(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/xangle_tillTS2.csv", CMSSW_BASE));
     //lhc_conds.feedConditions(Form("%s/src/TopLJets2015/CTPPSAnalysisTools/data/2017/xangle_afterTS2.csv", CMSSW_BASE));
-    
+
     bool isTTbar = (filename.Contains("TTJets") || filename.Contains("TTTo2L2Nu") || filename.Contains("TTToSemiLeptonic"));
 	bool isData = filename.Contains("Data13TeV") || filename.Contains("SingleMuon") || filename.Contains("SingleElectron");
 	//bool isPythia8 = filename.Contains("pythia8");
-    
+
     //PREPARE OUTPUT
     TString baseName=gSystem->BaseName(outname);
     TString dirName=gSystem->DirName(outname);
     TFile *fOut=TFile::Open(dirName+"/"+baseName,"RECREATE");
     fOut->cd();
-    
+
     //READ TREE FROM FILE
     MiniEvent_t ev;
     TFile *f = TFile::Open(filename);
@@ -367,7 +381,7 @@ void RunExclusiveTop(TString filename,
     TTree *t = (TTree*)f->Get("analysis/tree");
     attachToMiniEventTree(t,ev);
     Int_t nentries(t->GetEntriesFast());
-    
+
     //debug = 1; // manual turn on DEBUG mode
 #ifdef DEBUG_ON
 //    if (debug) {
@@ -376,27 +390,27 @@ void RunExclusiveTop(TString filename,
         std::cout << "--- debug mode activated" << std::endl;
 //    }
 #endif
-    
+
     t->GetEntry(0);
-    
+
     std::cout << "--- producing " << outname << " from " << nentries << " events" << std::endl;
-    
+
     //auxiliary to solve neutrino pZ using MET
     MEzCalculator neutrinoPzComputer;
-    
+
     //LUMINOSITY+PILEUP
     LumiTools lumi(era,genPU);
-    
-    //L1-prefire 
+
+    //L1-prefire
     L1PrefireEfficiencyWrapper l1PrefireWR(isData,era);
 
     //LEPTON EFFICIENCIES
     EfficiencyScaleFactorsWrapper lepEffH(isData,era);
-    
+
     //B-TAG CALIBRATION
     //BTagSFUtil btvSF(era,"DeepCSV",BTagEntry::OperatingPoint::OP_MEDIUM,"",0);
     BTagSFUtil btvSF(era,BTagEntry::OperatingPoint::OP_MEDIUM,"",seed);
-	
+
     // Proton correction class
     PPSEff *PPS_reco = new PPSEff(Form("%s/src/TopLJets2015/TopAnalysis/data/era2017/reco_charactersitics_version1.root", CMSSW_BASE));
 
@@ -413,8 +427,8 @@ void RunExclusiveTop(TString filename,
     float m_protonVars_p1_xi=0, m_protonVars_p2_xi=0;
 	outPT->Branch("p1_xi",&m_protonVars_p1_xi);
 	outPT->Branch("p2_xi",&m_protonVars_p2_xi);
-	
-		
+
+
     // BOOK OUTPUT TREE
     TTree *outT=new TTree("tree","tree");
     outT->Branch("run",&ev.run,"run/i");
@@ -424,13 +438,62 @@ void RunExclusiveTop(TString filename,
     outT->Branch("rho",&ev.rho,"rho/F");
     outT->Branch("nchPV",&ev.nchPV,"nchPV/I");
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
-	
+
+    //HF variables
+    outT->Branch("nHFRecHits", &ev.nHFRecHits, "nHFRecHits/I"); // Add this line
+    
+    // Branch for the sum of energy for hits with eta > 0
+    outT->Branch("HFpSumEnergy", &ev.HFpSumEnergy, "HFpSumEnergy/F");
+
+    // Branch for the sum of energy for hits with eta < 0
+    outT->Branch("HFnSumEnergy", &ev.HFnSumEnergy, "HFnSumEnergy/F");
+
+    // Branch for the maximum energy of hits with eta > 0
+    outT->Branch("HFpMaxEnergy", &ev.HFpMaxEnergy, "HFpMaxEnergy/F");
+
+    // Branch for the maximum energy of hits with eta < 0
+    outT->Branch("HFnMaxEnergy", &ev.HFnMaxEnergy, "HFnMaxEnergy/F");
+
+    // Branch for the eta value for the hit with max energy among hits with eta > 0
+    outT->Branch("HFpEtaMaxEnergy", &ev.HFpEtaMaxEnergy, "HFpEtaMaxEnergy/F");
+
+    // Branch for the eta value for the hit with max energy among hits with eta < 0
+    outT->Branch("HFnEtaMaxEnergy", &ev.HFnEtaMaxEnergy, "HFnEtaMaxEnergy/F");
+    
+    outT->Branch("HFtotalSumEnergy", &ev.HFtotalSumEnergy, "HFtotalSumEnergy/F");
+    outT->Branch("HFabsDiffEnergy", &ev.HFabsDiffEnergy, "HFabsDiffEnergy/F");
+
+    outT->Branch("ntrk_ch_all_eta", &ev.ntrk_ch_all_eta, "ntrk_ch_all_eta/I");
+    outT->Branch("ntrk_ch_eta_3_to_5", &ev.ntrk_ch_eta_3_to_5, "ntrntrk_ch_eta_3_to_5k_eta_3_to_5/I");
+    outT->Branch("ntrk_ch_eta_minus5_to_minus3", &ev.ntrk_ch_eta_minus5_to_minus3, "ntrk_ch_eta_minus5_to_minus3/I");
+
+    outT->Branch("HFtotalSumEnergy_eta_4_5", &ev.HFtotalSumEnergy_eta_4_5, "HFtotalSumEnergy_eta_4_5/F");
+    outT->Branch("HFtotalSumEnergy_eta_3_5_5", &ev.HFtotalSumEnergy_eta_3_5_5, "HFtotalSumEnergy_eta_3_5_5/F");
+    outT->Branch("HFtotalSumEnergy_eta_4_5_5", &ev.HFtotalSumEnergy_eta_4_5_5, "HFtotalSumEnergy_eta_4_5_5/F");
+
+    outT->Branch("HFabsDiffEnergy_eta_4_5", &ev.HFabsDiffEnergy_eta_4_5, "HFabsDiffEnergy_eta_4_5/F");
+    outT->Branch("HFabsDiffEnergy_eta_3_5_5", &ev.HFabsDiffEnergy_eta_3_5_5, "HFabsDiffEnergy_eta_3_5_5/F");
+    outT->Branch("HFabsDiffEnergy_eta_4_5_5", &ev.HFabsDiffEnergy_eta_4_5_5, "HFabsDiffEnergy_eta_4_5_5/F");
+
+    outT->Branch("HFpSumEnergy_eta_4_5", &ev.HFpSumEnergy_eta_4_5, "HFpSumEnergy_eta_4_5/F");
+    outT->Branch("HFpSumEnergy_eta_3_5_5", &ev.HFpSumEnergy_eta_3_5_5, "HFpSumEnergy_eta_3_5_5/F");
+    outT->Branch("HFpSumEnergy_eta_4_5_5", &ev.HFpSumEnergy_eta_4_5_5, "HFpSumEnergy_eta_4_5_5/F");
+
+    outT->Branch("HFnSumEnergy_eta_4_5", &ev.HFnSumEnergy_eta_4_5, "HFnSumEnergy_eta_4_5/F");
+    outT->Branch("HFnSumEnergy_eta_3_5_5", &ev.HFnSumEnergy_eta_3_5_5, "HFnSumEnergy_eta_3_5_5/F");
+    outT->Branch("HFnSumEnergy_eta_4_5_5", &ev.HFnSumEnergy_eta_4_5_5, "HFnSumEnergy_eta_4_5_5/F");
+
+
+
+
+
+
 	// Parton shower weights
 	//if(!isData){
 	//  outT->Branch("g_npsw",    &ev.g_npsw,   "g_npsw/I");
 	//  outT->Branch("g_psw",      ev.g_psw,    "g_psw[g_npsw]/F");
 	//}
-	
+
 	/// ISR/FSR Systematic variations, store as a vectors to account comp. split
 	// total, [g2gg, g2qq, q2ga, x2xg] X [muR, cNS]. Q=uds, X=cb, NS=non-singular
 	// see more info here: https://indico.cern.ch/event/746817/contributions/3101385/attachments/1702410/2742087/psweights_mseidel.pdf
@@ -479,18 +542,18 @@ void RunExclusiveTop(TString filename,
 	PSmap["isr_Q2QG_cNS_up"] = 43;
 	PSmap["isr_X2XG_cNS_dn"] = 44;
 	PSmap["isr_X2XG_cNS_up"] = 45;
-	
+
 	float met_pt, met_phi;
 	ADDVAR(&met_pt,"met_pt","/F",outT);
     ADDVAR(&met_phi,"met_phi","/F",outT);
     ADDVAR(&ev.met_sig,"met_sig","/F",outT);
-	
-	
+
+
     TString fvars[]={
         "t_pt","t_eta", "t_phi", "t_m", "t_charge", "t_isHadronic",
         "tbar_pt","tbar_eta", "tbar_phi", "tbar_m",
         "ttbar_pt","ttbar_eta", "ttbar_phi", "ttbar_m", "ttbar_E",
-        
+
         // quantities of objects used to build the ttbar
         "l_px", "l_py", "l_pz",
         "nu_px", "nu_py", "nu_pz", "nu_complex",
@@ -498,7 +561,7 @@ void RunExclusiveTop(TString filename,
         "bJet_lep_px","bJet_lep_py", "bJet_lep_pz",
         "lightJet0_px", "lightJet0_py", "lightJet0_pz",
         "lightJet1_px", "lightJet1_py", "lightJet1_pz",
-        
+
 #ifdef SAVEERRORS_ON
         "e_l_px", "e_l_py", "e_l_pz",
         "e_nu_px", "e_nu_py", "e_nu_pz", "e_nu_pxpy",
@@ -507,16 +570,16 @@ void RunExclusiveTop(TString filename,
         "e_lightJet0_px", "e_lightJet0_py", "e_lightJet0_pz",
         "e_lightJet1_px", "e_lightJet1_py", "e_lightJet1_pz",
 #endif
-        
+
 #ifdef DEBUG_ON
         // test variables
         "test1", "test2", "test3", "test4", "test5",
 #endif
-        
+
         // quantities for all objects in event
         "nBjets", "nLightJets", "nJets", "ht", "cat",
 
-        "l_pt", "l_eta", "l_phi", "l_m", "l_E", "lepton_isolation", "l_tight", 
+        "l_pt", "l_eta", "l_phi", "l_m", "l_E", "lepton_isolation", "l_tight",
         "nu_pt", "nu_eta", "nu_phi",
         "p1_xi", "p2_xi", "ppsSF_wgt", "ppsSF_wgt_err",
 		"p1_x","p2_x","p1_y","p2_y",
@@ -530,12 +593,40 @@ void RunExclusiveTop(TString filename,
         "bJet1_pt","bJet1_eta", "bJet1_phi", "bJet1_m", "bJet1_E",
         "bJet2_pt","bJet2_eta", "bJet2_phi", "bJet2_m", "bJet2_E",
         "bJet3_pt","bJet3_eta", "bJet3_phi", "bJet3_m", "bJet3_E",
-        
+
         "lightJet0_pt", "lightJet0_eta", "lightJet0_phi", "lightJet0_m", "lightJet0_E",
         "lightJet1_pt", "lightJet1_eta", "lightJet1_phi", "lightJet1_m", "lightJet1_E",
         "lightJet2_pt", "lightJet2_eta", "lightJet2_phi", "lightJet2_m", "lightJet2_E",
         "lightJet3_pt", "lightJet3_eta", "lightJet3_phi", "lightJet3_m", "lightJet3_E",
+
+        // New quantities for BDT (Semi exclusive)
+        "most_forward_jet_0", "most_forward_jet_1", "most_forward_jet_2", "most_forward_jet_3", 
+        "most_forward_jet_0_pt", "most_forward_jet_1_pt", "most_forward_jet_2_pt", "most_forward_jet_3_pt",
+        "most_forward_jet_0_phi", "most_forward_jet_1_phi", "most_forward_jet_2_phi", "most_forward_jet_3_phi",
+        "most_forward_bjet_0", "most_forward_bjet_1", "most_forward_bjet_2", "most_forward_bjet_3", 
+        "most_forward_bjet_0_pt", "most_forward_bjet_1_pt", "most_forward_bjet_2_pt", "most_forward_bjet_3_pt",
+        "most_forward_bjet_0_phi", "most_forward_bjet_1_phi", "most_forward_bjet_2_phi", "most_forward_bjet_3_phi",
+
+
+        "dR_most_forward_bjet_0_lepton", "dR_most_forward_jet_0_lepton",
+        "dR_most_forward_bjet_0_1", 
+
+        "dR_most_forward_bjet_0_top", "dR_most_forward_bjet_0_anti_top",
         
+
+        "njets_central", "njets_forward",
+        "bjet_max_eta", "lepton_diquark_deltaR",
+
+        "dR_bjet_leptonic", "dR_bjet_hadronic", 
+
+        "t_reco_hadronic_mass",
+
+        "dR_bjet_0_1", "dR_most_forward_jet_bjet_0",
+
+        "delta_pt_tops", "delta_eta_tops", "delta_phi_tops", "bJetsToLightJetsRatio", "ht_bjet", "total_pt",
+
+        "dR_mean_light_jets", "total_light_jet_energy", "total_jet_mass",
+
         // quantities of generated objects (MC truth)
         "gen_ttbar_pt","gen_ttbar_eta", "gen_ttbar_phi", "gen_ttbar_m", "gen_ttbar_E",
         "gen_t_pt","gen_t_eta", "gen_t_phi", "gen_t_m",
@@ -561,39 +652,39 @@ void RunExclusiveTop(TString filename,
     ht.addHist("njets",        new TH1F("njets",       ";Jet multiplicity;Events",15,-0.5,14.5));
     ht.addHist("nbjets",       new TH1F("nbjets",      ";b jet multiplicity;Events",10,-0.5,9.5));
     ht.addHist("ht",           new TH1F("ht",          ";H_{T} [GeV];Events",500,0,2500));
-    
+
     ht.addHist("mttbar_rec",   new TH1F("mttbar_rec",  ";M_{ttbar,rec} [GeV];Events",50,300,1200));
     ht.addHist("mttbar_gen",   new TH1F("mttbar_gen",  ";M_{ttbar,gen} [GeV];Events",50,300,1200));
     ht.addHist("mttbar_res",   new TH1F("mttbar_res",  ";M_{ttbar,rec}-M_{ttbar,gen} [GeV];Events",100,-500,500));
-    
+
     ht.addHist("ptttbar_rec", new TH1F("ptttbar_rec",";Pt_{ttbar,rec} [GeV];Events",50,0,100));
     ht.addHist("ptttbar_gen", new TH1F("ptttbar_gen",";Pt_{ttbar,gen} [GeV];Events",50,0,100));
     ht.addHist("ptttbar_res", new TH1F("ptttbar_res",";Pt_{ttbar,rec}-Pt_{ttbar,gen} [GeV];Events",50,-150,150));
-    
+
     ht.addHist("yttbar_rec", new TH1F("yttbar_rec",";Y_{ttbar,rec} ;Events",75,-2.5,2.5));
     ht.addHist("yttbar_gen", new TH1F("yttbar_gen",";Y_{ttbar,gen} ;Events",75,-2.5,2.5));
     ht.addHist("yttbar_res", new TH1F("yttbar_res",";Y_{ttbar,rec}-Y_{ttbar,gen} ;Events",75,-1.5,1.5));
-    
+
     ht.addHist("mt_res"   ,   new TH1F("mt_res",  ";M_{t,rec}-M_{t,gen} [GeV];Events",50,-700,700));
     ht.addHist("mtbar_res",   new TH1F("mtbar_res",  ";M_{tbar,rec}-M_{tbar,gen} [GeV];Events",50,-700,700));
     ht.addHist("ptt_res",     new TH1F("ptt_res",";Pt_{t,rec}-Pt_{t,gen} [GeV];Events",50,-150,150));
     ht.addHist("pttbar_res",  new TH1F("pttbar_res",";Pt_{tbar,rec}-Pt_{ttbar,gen} [GeV];Events",50,-150,150));
     ht.addHist("yt_res",    new TH1F("yt_res",";Y_{t,rec}-Y_{t,gen} ;Events",75,-2.5,2.5));
     ht.addHist("ytbar_res", new TH1F("ytbar_res",";Y_{tbar,rec}-Y_{tbar,gen} ;Events",75,-2.5,2.5));
-    
+
     ht.addHist("mtop_res_hadronic",   new TH1F("mtop_res_hadronic",  ";M_{top,rec}-M_{top,gen} [GeV];Events",100,-500,500));
     ht.addHist("pttop_res_hadronic",  new TH1F("pttop_res_hadronic",";Pt_{top,rec}-Pt_{top,gen} [GeV];Events",50,-150,150));
     ht.addHist("ytop_res_hadronic",   new TH1F("ytop_res_hadronic",";Y_{top,rec}-Y_{top,gen} ;Events",75,-2.5,2.5));
     ht.addHist("mtop_res_leptonic",   new TH1F("mtop_res_leptonic",  ";M_{top,rec}-M_{top,gen} [GeV];Events",100,-500,500));
     ht.addHist("pttop_res_leptonic",  new TH1F("pttop_res_leptonic",";Pt_{top,rec}-Pt_{top,gen} [GeV];Events",50,-150,150));
     ht.addHist("ytop_res_leptonic",   new TH1F("ytop_res_leptonic",";Y_{top,rec}-Y_{top,gen} ;Events",75,-2.5,2.5));
-	
+
     // normalization and event count
     ht.addHist("evt_count",    new TH1F("evt_count",   ";Selection Stage;Events",11,0,11));
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(1,"Total");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(2,"Sumweighted");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(3,"preselection");
-    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(4,"=2 p (data)");
+    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(4,"#geq1 p (data)");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(5,"trigger");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(6,"event cleaning");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(7,"=1 lep");
@@ -602,7 +693,7 @@ void RunExclusiveTop(TString filename,
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(10,"#geq2 ljets");
     ht.getPlots()["evt_count"]->SetBinContent(1,counter->GetBinContent(1));
     ht.getPlots()["evt_count"]->SetBinContent(2,counter->GetBinContent(2));
-    ht.getPlots()["evt_count"]->SetBinContent(3,counter->GetBinContent(3));	
+    ht.getPlots()["evt_count"]->SetBinContent(3,counter->GetBinContent(3));
 
     // proton count
     ht.addHist("pn_count",    new TH1F("pn_count",   ";;Events",5,0,5));
@@ -618,14 +709,14 @@ void RunExclusiveTop(TString filename,
 	nbin=RPcount->FindBin(1.5,1.5); ht.getPlots()["pn_count"]->SetBinContent(4,RPcount->GetBinContent(nbin));
 	ht.getPlots()["pn_count"]->SetBinContent(5,counter->GetBinContent(4));
 #endif
-    
-    std::cout << "--- init done" << std::endl;  
-    
+
+    std::cout << "--- init done" << std::endl;
+
     //EVENT SELECTION WRAPPER
     SelectionTool selector(filename, false, triggerList, SelectionTool::AnalysisType::TOP);
     SelectionTool selector_nominal(filename, false, triggerList, SelectionTool::AnalysisType::TOP);
 	// selector.minJetPt = 25;
-    
+
 	// JEC/JER settings
 	int sys = 0;
 	if(systVar.find("jerUp")!=string::npos) sys = 1;
@@ -633,15 +724,15 @@ void RunExclusiveTop(TString filename,
 	if(systVar.find("jecUp")!=string::npos) sys = 2;
 	if(systVar.find("jecDn")!=string::npos) sys = -2;
     if(systVar.find("jecAbsUp")!=string::npos) sys = 3;
-	if(systVar.find("jecAbsDn")!=string::npos) sys = -3;	
+	if(systVar.find("jecAbsDn")!=string::npos) sys = -3;
     if(systVar.find("jecRelUp")!=string::npos) sys = 4;
-	if(systVar.find("jecRelDn")!=string::npos) sys = -4;	
+	if(systVar.find("jecRelDn")!=string::npos) sys = -4;
     if(systVar.find("jecPileupUp")!=string::npos) sys = 5;
-	if(systVar.find("jecPileupDn")!=string::npos) sys = -5;	
+	if(systVar.find("jecPileupDn")!=string::npos) sys = -5;
     if(systVar.find("jecFlavUp")!=string::npos) sys = 6;
-	if(systVar.find("jecFlavDn")!=string::npos) sys = -6;	
+	if(systVar.find("jecFlavDn")!=string::npos) sys = -6;
     if(systVar.find("jecHighPtUp")!=string::npos) sys = 7;
-	if(systVar.find("jecHighPtDn")!=string::npos) sys = -7;	
+	if(systVar.find("jecHighPtDn")!=string::npos) sys = -7;
     if(systVar.find("jecTimeUp")!=string::npos) sys = 8;
 	if(systVar.find("jecTimeDn")!=string::npos) sys = -8;
 	if(sys>0){cout << "INFO: Running JEC/JER up variation"<<endl;}
@@ -663,7 +754,7 @@ void RunExclusiveTop(TString filename,
                 cout << "INFO: Running btaglf down variation, seed = "<< seed << endl;
                 optionlf = "down";}
 	else{cout << "INFO: Running nominal btag SF, seed = "<< seed << endl;}
-    
+
 	// Proton reconstuction systematics
 	float pps45_err = 0, pps56_err = 0;
 	if(systVar.find("pps45Up")!=string::npos) {
@@ -679,7 +770,7 @@ void RunExclusiveTop(TString filename,
 		cout << "INFO: Running PPS xi reco. down variation"<<endl;
 		pps56_err = -1;}
 	else{cout << "INFO: Running nominal PPS reco"<<endl;}
-	
+
 	// MET uncertanty https://github.com/cms-sw/cmssw/blob/master/DataFormats/PatCandidates/interface/MET.h#L152-L167
 	int met_err = 0;
 	if(systVar.find("UnclusteredEnUp")!=string::npos) {
@@ -689,27 +780,27 @@ void RunExclusiveTop(TString filename,
 		cout << "INFO: Running MET UnclusteredEn down variation"<<endl;
 		met_err = 11;}
 	else{cout << "INFO: Running nominal MET "<<endl;}
-	
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////  LOOP OVER EVENTS  /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     for (Int_t iev=0;iev<nentries;iev++) {
         t->GetEntry(iev);
         if(iev%10==0) printf ("\r [%3.0f%%] done", 100.*(float)iev/(float)nentries);
-        
+
         //      int fill_number = run_to_fill.getFillNumber(ev.run);
         //      proton_reco.setAlignmentConstants(pots_align.getAlignmentConstants(fill_number));
-        
+
         //assign randomly a run period
         TString period = lumi.assignRunPeriod();
-        
+
         ////////////////////
         // EVENT WEIGHTS //
         ///////////////////
         float wgt(1.0);
         std::vector<double>plotwgts(1,wgt);
-        
+
 		////////////////////
 		// EVENT cleaning //
 		// https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#2018_2017_data_and_MC_UL
@@ -723,17 +814,17 @@ void RunExclusiveTop(TString filename,
                         ((ev.met_filterBits >> 3) & 0x1) && //Flag_HBHENoiseIsoFilter
                         ((ev.met_filterBits >> 4) & 0x1) && //Flag_EcalDeadCellTriggerPrimitiveFilter
                         ((ev.met_filterBits >> 5) & 0x1) && //Flag_eeBadScFilter
-                        ((ev.met_filterBits >> 6) & 0x1) && //Flag_ecalBadCalibFilter          
-                        ((ev.met_filterBits >> 7) & 0x1) && //Flag_BadPFMuonFilter          
-                        ((ev.met_filterBits >> 8) & 0x1) ); //Flag_BadPFMuonDzFilter          
-												
+                        ((ev.met_filterBits >> 6) & 0x1) && //Flag_ecalBadCalibFilter
+                        ((ev.met_filterBits >> 7) & 0x1) && //Flag_BadPFMuonFilter
+                        ((ev.met_filterBits >> 8) & 0x1) ); //Flag_BadPFMuonDzFilter
+
         //////////////////
         // CORRECTIONS //
         /////////////////
         btvSF.addBTagDecisions(ev);
-        if(!isData) btvSF.updateBTagDecisions(ev, optionhf, optionlf); 
+        if(!isData) btvSF.updateBTagDecisions(ev, optionhf, optionlf);
         //btvSF.updateBTagDecisions(ev); // check it !!!
-        
+
         //////////////////////////
         // RECO LEVEL SELECTION //
         //////////////////////////
@@ -757,30 +848,186 @@ void RunExclusiveTop(TString filename,
         std::vector<Jet>      &nominalJets        = selector_nominal.getJets();
         std::vector<Jet>      jets,bJets,lightJets;
         std::vector<Particle> selectedLeptons;
+
+
+        // Initialized new quantities for semi exclusive MVA
+        Jet* most_forward_jets[4] = {nullptr, nullptr, nullptr, nullptr};
+        double most_forward_jet_eta[4] = {0, 0, 0, 0};
+        
+        Jet* most_forward_bjets[4] = {nullptr, nullptr, nullptr, nullptr};
+        double most_forward_bjet_eta[4] = {0, 0, 0, 0};
+
+        // Initializing counters for central and forward jets
+        int njets_central = 0;
+        int njets_forward = 0;
+        double bjet_max_eta = 0;
+        double dR_bjet_0_1 = -99;
+        double dR_most_forward_jet_bjet_0 = -99;
+        double bJetsToLightJetsRatio = 0.0; 
+        double ht_bjet = 0;
+        double total_pt = 0;  
+        double dR_mean_light_jets = 0;
+        double total_light_jet_energy = 0;
+        double total_jet_mass = 0;
+
+
+
         double p1_xi =0.; // proton in positive pot
         double p2_xi =0.; // proton in negative pot
         double p1_x = 0, p1_y =0.; // proton near track position in positive pot
 	    double p2_x = 0, p2_y =0.; // proton near track position in positive pot
         double p1_220_x = 0, p1_220_y =0.; // proton near track position in positive pot
 	    double p2_220_x = 0, p2_220_y =0.; // proton near track position in positive pot
-        
+
         //  selection of lightJets and bJets
         for(size_t ij=0; ij<allJets.size(); ij++) {
-			
-			int idx=allJets[ij].getJetIndex();		
+			int idx=allJets[ij].getJetIndex();
 			int jid=ev.j_id[idx];
-			bool passLoosePu((jid>>2)&0x1);    
-			if(!passLoosePu) {continue;}
-			
+			bool passLoosePu((jid>>2)&0x1);
+			double current_eta = fabs(allJets[ij].eta());
+
+
+            // Increment njets_central or njets_forward based on jet eta value
+            if(current_eta < 1) njets_central++;
+            else if(current_eta > 1) njets_forward++;
+
+            // Loop for all forward jets
+            for (int i = 0; i < 4; i++) {
+                if (current_eta > fabs(most_forward_jet_eta[i])) {
+                    // Shift the values down
+                    for (int j = 3; j > i; j--) {
+                        most_forward_jet_eta[j] = most_forward_jet_eta[j-1];
+                        most_forward_jets[j] = most_forward_jets[j-1];
+                    }
+                    most_forward_jet_eta[i] = allJets[ij].eta();
+                    most_forward_jets[i] = &allJets[ij];
+                    break;
+                    }
+                }
+
+
+            if(!passLoosePu) {continue;}
+
 			jets.push_back(allJets[ij]);
             if(allJets[ij].flavor()==5) bJets.push_back(allJets[ij]);
             else                     lightJets.push_back(allJets[ij]);
+
+
         }
-		
+
+
+        // Loop to calculate ht_bjet
+        for(const auto& bjet : bJets) {
+            ht_bjet += bjet.Pt();
+        }
+
+        // Calculate the ratio nBjets/nLightJets
+        if (lightJets.size() > 0) {  // Avoid division by zero
+            bJetsToLightJetsRatio = static_cast<double>(bJets.size()) / lightJets.size();
+        }
+        
+
+        // Print sizes of the vectors
+        //std::cout << "Size of allJets: " << allJets.size() << std::endl;
+        //std::cout << "Size of bJets: " << bJets.size() << std::endl;
+
+
+        // New loop for forward b-jets
+        for(size_t i=0; i<bJets.size(); i++) {
+            double current_eta = fabs(bJets[i].eta());
+            for (int j = 0; j < 4; j++) {
+                if (current_eta > fabs(most_forward_bjet_eta[j])) {
+                    // Shift the values down
+                    for (int k = 3; k > j; k--) {
+                        most_forward_bjet_eta[k] = most_forward_bjet_eta[k-1];
+                        most_forward_bjets[k] = most_forward_bjets[k-1];
+                    }
+                    most_forward_bjet_eta[j] = bJets[i].eta();
+                    most_forward_bjets[j] = &bJets[i];
+                    break;
+                }
+            }
+        }      
+
+
+        double most_forward_jet_0 = most_forward_jet_eta[0];
+        double most_forward_jet_1 = most_forward_jet_eta[1];
+        double most_forward_jet_2 = most_forward_jet_eta[2];
+        double most_forward_jet_3 = most_forward_jet_eta[3];
+
+        double most_forward_jet_0_pt = most_forward_jets[0] ? most_forward_jets[0]->Pt() : 0;
+        double most_forward_jet_1_pt = most_forward_jets[1] ? most_forward_jets[1]->Pt() : 0;
+        double most_forward_jet_2_pt = most_forward_jets[2] ? most_forward_jets[2]->Pt() : 0;
+        double most_forward_jet_3_pt = most_forward_jets[3] ? most_forward_jets[3]->Pt() : 0;
+
+        double most_forward_jet_0_phi = most_forward_jets[0] ? most_forward_jets[0]->Phi() : 0;
+        double most_forward_jet_1_phi = most_forward_jets[1] ? most_forward_jets[1]->Phi() : 0;
+        double most_forward_jet_2_phi = most_forward_jets[2] ? most_forward_jets[2]->Phi() : 0;
+        double most_forward_jet_3_phi = most_forward_jets[3] ? most_forward_jets[3]->Phi() : 0;
+
+
+        double most_forward_bjet_0 = most_forward_bjet_eta[0];
+        double most_forward_bjet_1 = most_forward_bjet_eta[1];
+        double most_forward_bjet_2 = most_forward_bjet_eta[2];
+        double most_forward_bjet_3 = most_forward_bjet_eta[3];
+
+        double most_forward_bjet_0_pt = most_forward_bjets[0] ? most_forward_bjets[0]->Pt() : 0;
+        double most_forward_bjet_1_pt = most_forward_bjets[1] ? most_forward_bjets[1]->Pt() : 0;
+        double most_forward_bjet_2_pt = most_forward_bjets[2] ? most_forward_bjets[2]->Pt() : 0;
+        double most_forward_bjet_3_pt = most_forward_bjets[3] ? most_forward_bjets[3]->Pt() : 0;
+
+        double most_forward_bjet_0_phi = most_forward_bjets[0] ? most_forward_bjets[0]->Phi() : 0;
+        double most_forward_bjet_1_phi = most_forward_bjets[1] ? most_forward_bjets[1]->Phi() : 0;
+        double most_forward_bjet_2_phi = most_forward_bjets[2] ? most_forward_bjets[2]->Phi() : 0;
+        double most_forward_bjet_3_phi = most_forward_bjets[3] ? most_forward_bjets[3]->Phi() : 0;
+
+        double dR_forward_jet_0_1 = dR_calc(most_forward_jet_0, most_forward_jet_0_phi, most_forward_jet_1, most_forward_jet_1_phi);
+
+        double dR_most_forward_bjet_0_1 = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, 
+                                          most_forward_bjet_1, most_forward_bjet_1_phi);
+
+
+
+        if(bJets.size() > 0) {
+            dR_most_forward_jet_bjet_0 = dR_calc(most_forward_jet_0, most_forward_jet_0_phi, bJets[0].eta(), bJets[0].Phi());
+            } 
+
+        if(bJets.size() >= 2) {
+            dR_bjet_0_1 = dR_calc(bJets[0].eta(), bJets[0].Phi(), bJets[1].eta(), bJets[1].Phi());
+            } 
+        
+
+        // Initialize dR_mean_light_jets to 0
+        // If there are light jets, calculate the mean ΔR
+        if (lightJets.size() > 1) {
+            for(size_t i = 0; i < lightJets.size(); i++) {
+                for(size_t j = i+1; j < lightJets.size(); j++) {
+                    double dR = dR_calc(lightJets[i].eta(), lightJets[i].Phi(), lightJets[j].eta(), lightJets[j].Phi());
+                    dR_mean_light_jets += dR / ((lightJets.size() * (lightJets.size() - 1)) / 2);
+                }
+            }
+        }
+
+        // Loop over the light jets to calculate their total energy
+        for(const Jet& lightJet : lightJets) {
+            total_light_jet_energy += lightJet.E();  
+        }
+
+        // Loop over all the jets to calculate their total mass
+        for(const Jet& jet : jets) {
+            total_jet_mass += jet.M();  // Assuming Mass() returns the mass of the jet
+        }
+
+
+
+
+
+
+
 		// met selection:
 		met_pt=ev.met_pt;
 		met_phi=ev.met_phi;
-		
+
 		// propogate JER to MET:
 		TLorentzVector tmp_met(0,0,0,0);
 		tmp_met.SetPtEtaPhiM(met_pt,0.,met_phi,0.);
@@ -788,7 +1035,7 @@ void RunExclusiveTop(TString filename,
 		for(size_t ij=0; ij<allJets.size(); ij++) {
 			int idx=allJets[ij].getJetIndex();
 			int jid=ev.j_id[idx];
-			bool passLoosePu((jid>>2)&0x1);    
+			bool passLoosePu((jid>>2)&0x1);
 			if(!passLoosePu) {continue;}
 			newx+=allJets[ij].Px()*(1-ev.j_rawsf[idx]);
 			newy+=allJets[ij].Py()*(1-ev.j_rawsf[idx]);
@@ -796,22 +1043,22 @@ void RunExclusiveTop(TString filename,
 		tmp_met.SetPxPyPzE(newx,newy,0,sqrt(newx*newx+newy*newy));
 		met_pt=tmp_met.Pt();
 		met_phi=tmp_met.Phi();
-			
+
 		if(sys){ // if apply JEC/JER variation, propogate the difference to MET
             tmp_met.SetPtEtaPhiM(met_pt,0.,met_phi,0.);
 			float dx = 0, dy =0;
 			for(size_t ij=0; ij<nominalJets.size(); ij++) {
-				int idx=nominalJets[ij].getJetIndex();		
+				int idx=nominalJets[ij].getJetIndex();
 				int jid=ev.j_id[idx];
-				bool passLoosePu((jid>>2)&0x1);    
+				bool passLoosePu((jid>>2)&0x1);
 				if(!passLoosePu) {continue;}
 				dx+=nominalJets[ij].Px();
 				dy+=nominalJets[ij].Py();
 			}
 			for(size_t ij=0; ij<allJets.size(); ij++) {
-				int idx=allJets[ij].getJetIndex();		
+				int idx=allJets[ij].getJetIndex();
 				int jid=ev.j_id[idx];
-				bool passLoosePu((jid>>2)&0x1);    
+				bool passLoosePu((jid>>2)&0x1);
 				if(!passLoosePu) {continue;}
 				dx-=allJets[ij].Px();
 				dy-=allJets[ij].Py();
@@ -825,8 +1072,8 @@ void RunExclusiveTop(TString filename,
 			met_pt=ev.met_ptShifted[met_err];
 			met_phi=ev.met_phiShifted[met_err];
 		}
-			
-        
+
+
         // selection of leptons
         for( size_t i_lept=0;i_lept<leptons.size();i_lept++) {
             if (leptons[i_lept].pt()<30.) continue;
@@ -835,9 +1082,58 @@ void RunExclusiveTop(TString filename,
             selectedLeptons.push_back(leptons[i_lept]);
         }
 
-		
+        // Add transverse momentum for all jets
+        for(const auto& jet : allJets) {
+            total_pt += jet.Pt();
+        }
+
+        // Add transverse momentum for selected leptons
+        for(const auto& lepton : selectedLeptons) {
+            total_pt += lepton.Pt();
+        }
+
+
+
+        // DeltaR calculation
+        
+        double dR_bjet_lepton = -99.0;  // Default value
+        double dR_jet_lepton = -99.0;  // Default value
+        double dR_bjet_leptonic = -99.0;  // Default value
+        double dR_bjet_hadronic = -99.0;  // Default value
+        
+        if(selectedLeptons.size() > 0) {
+            Particle leadingLepton = selectedLeptons[0];
+
+            // Calculate ΔR for the most forward b-jet
+            if (most_forward_bjets[0] != nullptr) {
+                dR_bjet_lepton = dR_calc(most_forward_bjet_eta[0], most_forward_bjets[0]->Phi(), leadingLepton.eta(), leadingLepton.Phi());
+            }
+
+            // Calculate ΔR for the most forward jet
+            if (most_forward_jets[0] != nullptr) {
+                dR_jet_lepton = dR_calc(most_forward_jet_eta[0], most_forward_jets[0]->Phi(), leadingLepton.eta(), leadingLepton.Phi());
+                }
+            }
+
+        if(selectedLeptons.size() > 0 && bJets.size() >= 2) {
+            Particle leadingLepton = selectedLeptons[0];
+            
+            // dR calculation between first b-jet and lepton
+            dR_bjet_leptonic = dR_calc(bJets[0].eta(), bJets[0].Phi(), leadingLepton.eta(), leadingLepton.Phi());
+
+            // dR calculation between second b-jet and lepton
+            dR_bjet_hadronic = dR_calc(bJets[1].eta(), bJets[1].Phi(), leadingLepton.eta(), leadingLepton.Phi());
+        }
+
+
+
+        
+
+
+
+
         // selection of protons and reco unc.
-		// Note fwdtrk_xiError is deprecated, using reco from 
+		// Note fwdtrk_xiError is deprecated, using reco from
 		// https://twiki.cern.ch/twiki/bin/view/CMS/TaggedProtonsRecoCharacteristics
         for (int ift=0; ift<ev.nfwdtrk; ift++) {
             const unsigned short pot_raw_id = ev.fwdtrk_pot[ift];
@@ -859,10 +1155,10 @@ void RunExclusiveTop(TString filename,
               }
             }
         }
-	
+
         outVars["nJets"]=jets.size();
         outVars["nBjets"]=bJets.size();
- 
+
 		// Store proton pool at preselection
 		if(ev.isData){
 			m_protonVars_p1_xi = p1_xi;
@@ -875,7 +1171,7 @@ void RunExclusiveTop(TString filename,
 	if(chTag!="E" && chTag!="M" )   continue; // events with electrons (id=11) or muons (id=13)
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 4, plotwgts); // count events after channel selection
-#endif	
+#endif
 	if(ev.isData && !passMETfilters)   continue; // event cleaning
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 5, plotwgts); // count events after channel selection
@@ -883,7 +1179,8 @@ void RunExclusiveTop(TString filename,
 	if (selectedLeptons.size()!=1) continue; // ONLY events with 1 selected lepton
 	Particle lepton = selectedLeptons[0];
 	bool is_systVar = (systVar.empty() || (systVar.find("nominal")!=string::npos))  ? false : true;
-	if(is_systVar && !lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // remove non-tight leptons from systematics
+	//if(is_systVar && !lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // remove non-tight leptons from systematics
+        if(!lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // Apply tight selection to all events
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 6, plotwgts); // count events after selection on number of leptons (SHOULD BE SAME)
 #endif
@@ -899,42 +1196,42 @@ void RunExclusiveTop(TString filename,
         if(lightJets.size()<2)       continue; // ONLY events with at least 2 light Jets
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 9, plotwgts); // count events after selection on number of light jets
-#endif  
+#endif
 
 #ifdef HISTOGRAMS_ON
         ht.fill("puwgtctr",0,plotwgts);
-#endif  
+#endif
         outVars["weight"] = outVars["gen_wgt"] = outVars["toppt_wgt"] = 1;
 		outVars["EL_SF_wgt"] = outVars["MU_SF_wgt"] = 1;
 		outVars["EL_trigSF_wgt"] = outVars["MU_trigSF_wgt"] = 1;
 
         outVars["pu_wgt"] = outVars["ptag_wgt"] =  outVars["L1Prefire_wgt"] = outVars["ppsSF_wgt"] = 1;
-        
+
 		outVars["EL_SF_wgt_err"] = outVars["MU_SF_wgt_err"] = 0;
 		outVars["EL_trigSF_wgt_err"] = outVars["MU_trigSF_wgt_err"] = 0;
 
 		outVars["L1Prefire_wgt_err"] =  0;
 		outVars["ppsSF_wgt_err"] = outVars["ptag_wgt_err"] = 0;
-		
+
         outVars["ren_err"] = outVars["fac_err"] = 0;
-	    
+
 		outVars["pdf_as"] = 0;
 		outVars["pdf_hs"] = 0;
 
 		for(int ips=0;ips<NPSRad_weights;ips++){
 			isr_Up[ips] = 0; fsr_Up[ips] = 0;
 			isr_Down[ips] = 0; fsr_Down[ips] = 0;
-		}		
-		
+		}
+
         if (!ev.isData) {
             wgt  = (normH? normH->GetBinContent(1) : 1.0);          // norm weight
             double puWgt(lumi.pileupWeight(ev.g_pu,period)[0]);     // pu weight
             std::vector<double>puPlotWgts(1,puWgt);
-            
+
 #ifdef HISTOGRAMS_ON
             ht.fill("puwgtctr",1,puPlotWgts);
 #endif
-            
+
 
             // lepton trigger*selection weights (update the code later)
             EffCorrection_t trigSF = lepEffH.getTriggerCorrection(selectedLeptons,{},{},"");
@@ -965,7 +1262,7 @@ void RunExclusiveTop(TString filename,
 			outVars["L1Prefire_wgt_err"] = l1prefireProb.second;
 
 			wgt *= outVars["L1Prefire_wgt"];
-            
+
             //top pt weighting (using version 3.1)
 			// https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
             outVars["toppt_wgt"] = 1.0;
@@ -977,16 +1274,16 @@ void RunExclusiveTop(TString filename,
                     outVars["toppt_wgt"] *= topsf;
                 }
             }
-			wgt *= outVars["toppt_wgt"]; 
-			
+			wgt *= outVars["toppt_wgt"];
+
 			// generator weights
 			outVars["gen_wgt"] = (ev.g_nw>0 ? ev.g_w[0] : 1.0);
-			
+
             wgt *= outVars["gen_wgt"];                              // generator level weights
-					
+
             plotwgts[0]=wgt;                                        //update weight for plotter
 			outVars["weight"] = wgt;
-			
+
 			// Systematic uncertainties (convert to 1 +/- form):
 			if(ev.g_nw>5 && ev.g_w[1]){ // scale variations
 				outVars["fac_err"] = (ev.g_w[2]-ev.g_w[3])/(ev.g_w[2]+ev.g_w[3]);
@@ -995,8 +1292,8 @@ void RunExclusiveTop(TString filename,
 				if(abs(outVars["fac_err"])>1) outVars["fac_err"]=0;
 				if(abs(outVars["ren_err"])>1) outVars["ren_err"]=0;
 			}
-			
-			// pdf variations 
+
+			// pdf variations
 			float sig_mean = 0; float Nmem=0;
 			for (int i=7;i<107;i++){
 				if (ev.g_w[i]==0) continue;
@@ -1005,20 +1302,20 @@ void RunExclusiveTop(TString filename,
 			}
 			if(Nmem){
 			  sig_mean /=Nmem; // eq 22 in https://arxiv.org/pdf/1510.03865.pdf
-			
+
 			  float sig_var = 0;
 			  for (int i=7;i<107;i++){
 				if (ev.g_w[i]==0) continue;
 				sig_var+=(ev.g_w[i]-sig_mean)*(ev.g_w[i]-sig_mean);
-			  }			
+			  }
 			  outVars["pdf_hs"] = sqrt(sig_var/(Nmem-1))/sig_mean; // eq 21 in https://arxiv.org/pdf/1510.03865.pdf
-			  
+
 			  // for pdf_as use eq 27 in https://arxiv.org/pdf/1510.03865.pdf
-			  // r=0.75 used to adjust to 68% for d(as)=0.002 as suggested in eq 29 
-			  outVars["pdf_as"] = 0.75*0.5*(ev.g_w[108]-ev.g_w[107])/sig_mean; 
+			  // r=0.75 used to adjust to 68% for d(as)=0.002 as suggested in eq 29
+			  outVars["pdf_as"] = 0.75*0.5*(ev.g_w[108]-ev.g_w[107])/sig_mean;
 			}
 
-			// Py8 PS variations 
+			// Py8 PS variations
 			int nW = ev.g_npsw;
 			float PSnom_weight = (nW>PSmap["nominal"]) ? ev.g_psw[PSmap["nominal"]] : 0;
 			if(nW==46 && PSnom_weight){ // 46 weights of ISR and FSR, take only the first ones
@@ -1026,7 +1323,7 @@ void RunExclusiveTop(TString filename,
 				fsr_Up[0] = (ev.g_psw[PSmap["fsrDefLo"]])/PSnom_weight-1;
 				isr_Down[0] = 1-(ev.g_psw[PSmap["isrDefHi"]])/PSnom_weight;
 				fsr_Down[0] = 1-(ev.g_psw[PSmap["fsrDefHi"]])/PSnom_weight;
-					
+
 				//G2GG muR
 				isr_Up[1] = (ev.g_psw[PSmap["isr_G2GG_muR_up"]])/PSnom_weight-1;
 				fsr_Up[1] = (ev.g_psw[PSmap["fsr_G2GG_muR_up"]])/PSnom_weight-1;
@@ -1073,7 +1370,7 @@ void RunExclusiveTop(TString filename,
 				isr_Up[8] = (ev.g_psw[PSmap["isr_X2XG_cNS_up"]])/PSnom_weight-1;
 				fsr_Up[8] = (ev.g_psw[PSmap["fsr_X2XG_cNS_up"]])/PSnom_weight-1;
 				isr_Down[8] = 1-(ev.g_psw[PSmap["isr_X2XG_cNS_dn"]])/PSnom_weight;
-				fsr_Down[8] = 1-(ev.g_psw[PSmap["fsr_X2XG_cNS_dn"]])/PSnom_weight;			
+				fsr_Down[8] = 1-(ev.g_psw[PSmap["fsr_X2XG_cNS_dn"]])/PSnom_weight;
 			}
 			if(nW==24 && PSnom_weight){ // in signal no ISR weights
 
@@ -1110,11 +1407,11 @@ void RunExclusiveTop(TString filename,
 
 				//X2XG cNS
 				fsr_Up[8] = (ev.g_psw[PSmap["fsr_X2XG_cNS_up"]-6])/PSnom_weight-1;
-				fsr_Down[8] = 1-(ev.g_psw[PSmap["fsr_X2XG_cNS_dn"]-6])/PSnom_weight;	
+				fsr_Down[8] = 1-(ev.g_psw[PSmap["fsr_X2XG_cNS_dn"]-6])/PSnom_weight;
 			}
-		
+
         } // end is MC
-        
+
         //if (ev.isData) {
         //    const edm::EventID ev_id( ev.run, ev.lumi, ev.event );
             // LHC information retrieval from LUT
@@ -1128,11 +1425,15 @@ void RunExclusiveTop(TString filename,
         //        proton_reco.reconstruct(xangle, pot_raw_id, ev.fwdtrk_x[ift]/10.+align.x_align, xi, xi_error);
         //    }
         //}
-      
+
+
+        double dR_most_forward_bjet_0_top = -99.0;
+        double dR_most_forward_bjet_0_anti_top = -99.0;
+
         // ----- START RECONSTRUCTION OF TTBAR -------------------------------------------------------
         if(bJets.size()>=2 && lightJets.size()>=2)        {    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //  in theory this selection was made already
-            
+
             //determine the neutrino kinematics
             TLorentzVector met(0,0,0,0);
             met.SetPtEtaPhiM(met_pt,0.,met_phi,0.);
@@ -1140,7 +1441,7 @@ void RunExclusiveTop(TString filename,
             neutrinoPzComputer.SetLepton(lepton.p4());
             float nupz=neutrinoPzComputer.Calculate();
             TLorentzVector neutrino(met.Px(),met.Py(),nupz ,TMath::Sqrt(TMath::Power(met.Pt(),2)+TMath::Power(nupz,2)));
-            
+
             // compute scalar ht
             float scalarht(0.);
             for(size_t ij=0; ij<jets.size(); ij++) {
@@ -1148,6 +1449,21 @@ void RunExclusiveTop(TString filename,
             }
             scalarht += lepton.pt();
             scalarht += neutrino.Pt();
+
+            double deltaR = 0.0; // Declare and initialize deltaR
+
+            // Assuming that the jets are already sorted by pt
+            if(lightJets.size() >= 2) {
+                TLorentzVector diquarkSystem = lightJets[0].p4() + lightJets[1].p4();
+
+            if(selectedLeptons.size() > 0) {
+                TLorentzVector lepton = selectedLeptons[0].p4(); // Taking the leading lepton
+
+                deltaR = diquarkSystem.DeltaR(lepton);
+
+                }
+            }
+
 
             TLorentzVector t_rec_had(0,0,0,0);
             TLorentzVector t_rec_lep(0,0,0,0);
@@ -1196,15 +1512,29 @@ void RunExclusiveTop(TString filename,
 
             int correct_index=dump_index(mistake);   // index of best candidate
             combination = marker[correct_index];     // combination of best candidate
-			
+
             // build the best top candidates
             bJet_had  = bJets[ combination[0] ].p4();
             bJet_lep  = bJets[ combination[3] ].p4();
             lightJet0 = lightJets[ combination[1] ].p4();
             lightJet1 = lightJets[  combination[2] ].p4();
-			
+
             t_rec_had = bJet_had + lightJet0 + lightJet1;   // b+q+q
             t_rec_lep = bJet_lep + lepton.p4() + neutrino;            // b+l+nu
+
+
+            TLorentzVector bJet_had_new, lightJet0_new, lightJet1_new;
+
+            // Create TLorentzVectors for the particles we want to combine
+            bJet_had_new = bJets[1].p4();
+            lightJet0_new = lightJets[0].p4();
+            lightJet1_new = lightJets[1].p4();
+
+            // Combine the TLorentzVectors to reconstruct the hadronic top
+            TLorentzVector t_reco_hadronic = bJet_had_new + lightJet0_new + lightJet1_new;
+
+            // The reconstructed hadronic top quark mass
+            double t_reco_hadronic_mass = t_reco_hadronic.M();
 
             bool isThadronic = 0;
             if (lepton.charge()>0.) {
@@ -1216,7 +1546,27 @@ void RunExclusiveTop(TString filename,
                 t_rec    = t_rec_had;
                 tbar_rec = t_rec_lep;
             }
-            
+
+            // Compute the Δpt between the top and antitop
+            float delta_pt_tops = fabs(t_rec.Pt() - tbar_rec.Pt());            
+            // Compute the Δeta between the top and antitop
+            float delta_eta_tops = fabs(t_rec.Eta() - tbar_rec.Eta());
+            // Compute the Δphi between the top and antitop
+            float delta_phi_tops = fabs(t_rec.Phi() - tbar_rec.Phi());
+
+            // Delta R of most_forward_bjet_0_top and most_forward_bjet_0_anti_top
+
+            double top_eta = t_rec.Eta();
+            double top_phi = t_rec.Phi();
+
+            double anti_top_eta = tbar_rec.Eta();
+            double anti_top_phi = tbar_rec.Phi();
+
+            dR_most_forward_bjet_0_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, top_eta, top_phi);
+            dR_most_forward_bjet_0_anti_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, anti_top_eta, anti_top_phi);
+
+
+
             //reconstructed ttbar system
             TLorentzVector ttbarSystem_rec = t_rec_had + t_rec_lep;
 
@@ -1473,7 +1823,7 @@ void RunExclusiveTop(TString filename,
             outVars["e_lightJet1_py"]=errXYZ_lightJet1.Py();
             outVars["e_lightJet1_pz"]=errXYZ_lightJet1.Pz();
 #endif
-            
+
 #ifdef DEBUG_ON
             // test variables
             outVars["test1"]       = (e_l_p-errXYZ_lepton.Mag())/e_l_p;
@@ -1482,7 +1832,7 @@ void RunExclusiveTop(TString filename,
             outVars["test4"]       = (e_l_theta-errXYZ_lepton.Theta())/e_l_theta;
             outVars["test5"]       = -1.;
 #endif
-            
+
             // quantities for all objects in event
             outVars["nLightJets"]=lightJets.size();
             outVars["ht"]=scalarht;
@@ -1511,7 +1861,8 @@ void RunExclusiveTop(TString filename,
             outVars["p2_220_x"]=p2_220_x;
             outVars["p1_220_y"]=p1_220_y;
             outVars["p2_220_y"]=p2_220_y;
-			
+
+
             outVars["lightJet0_pt"]=lightJets[0].Pt();
             outVars["lightJet0_eta"]=lightJets[0].Rapidity();
             outVars["lightJet0_phi"]=lightJets[0].Phi();
@@ -1601,6 +1952,81 @@ void RunExclusiveTop(TString filename,
                 outVars["bJet3_m"]=   0. ;
                 outVars["bJet3_E"]=   0. ;
             }
+
+
+            // New quantities for BDT
+            outVars["most_forward_jet_0"] = fabs(most_forward_jet_0);
+            outVars["most_forward_jet_1"] = fabs(most_forward_jet_1);
+            outVars["most_forward_jet_2"] = fabs(most_forward_jet_2);
+            outVars["most_forward_jet_3"] = fabs(most_forward_jet_3);
+            outVars["most_forward_jet_0_pt"] = most_forward_jet_0_pt;
+            outVars["most_forward_jet_1_pt"] = most_forward_jet_1_pt;
+            outVars["most_forward_jet_2_pt"] = most_forward_jet_2_pt;
+            outVars["most_forward_jet_3_pt"] = most_forward_jet_3_pt;
+            outVars["most_forward_jet_0_phi"] = most_forward_jet_0_phi;
+            outVars["most_forward_jet_1_phi"] = most_forward_jet_1_phi;
+            outVars["most_forward_jet_2_phi"] = most_forward_jet_2_phi;
+            outVars["most_forward_jet_3_phi"] = most_forward_jet_3_phi;
+
+            outVars["most_forward_bjet_0"] = fabs(most_forward_bjet_0);
+            outVars["most_forward_bjet_1"] = fabs(most_forward_bjet_1);
+            outVars["most_forward_bjet_2"] = fabs(most_forward_bjet_2);
+            outVars["most_forward_bjet_3"] = fabs(most_forward_bjet_3);
+            outVars["most_forward_bjet_0_pt"] = most_forward_bjet_0_pt;
+            outVars["most_forward_bjet_1_pt"] = most_forward_bjet_1_pt;
+            outVars["most_forward_bjet_2_pt"] = most_forward_bjet_2_pt;
+            outVars["most_forward_bjet_3_pt"] = most_forward_bjet_3_pt;
+            outVars["most_forward_bjet_0_phi"] = most_forward_bjet_0_phi;
+            outVars["most_forward_bjet_1_phi"] = most_forward_bjet_1_phi;
+            outVars["most_forward_bjet_2_phi"] = most_forward_bjet_2_phi;
+            outVars["most_forward_bjet_3_phi"] = most_forward_bjet_3_phi;
+
+            outVars["dR_forward_jet_0_1"] = dR_forward_jet_0_1;
+
+            outVars["dR_most_forward_bjet_0_lepton"] = dR_bjet_lepton;
+            outVars["dR_most_forward_jet_0_lepton"] = dR_jet_lepton;
+
+            outVars["dR_most_forward_bjet_0_top"] = dR_most_forward_bjet_0_top;
+            outVars["dR_most_forward_bjet_0_anti_top"] = dR_most_forward_bjet_0_anti_top;
+
+            outVars["dR_most_forward_bjet_0_1"] = dR_most_forward_bjet_0_1;
+            
+
+            outVars["njets_central"] = njets_central;
+            outVars["njets_forward"] = njets_forward;
+
+
+            outVars["bjet_max_eta"] = bjet_max_eta;
+            outVars["lepton_diquark_deltaR"] = deltaR;
+
+
+            outVars["dR_bjet_leptonic"] = dR_bjet_leptonic;
+            outVars["dR_bjet_hadronic"] = dR_bjet_hadronic;
+
+            outVars["t_reco_hadronic_mass"] = t_reco_hadronic_mass;
+
+            
+            outVars["dR_bjet_0_1"] = dR_bjet_0_1;
+            outVars["dR_most_forward_jet_bjet_0"] = dR_most_forward_jet_bjet_0;
+
+            outVars["delta_pt_tops"] = delta_pt_tops;
+            outVars["delta_eta_tops"] = delta_eta_tops;
+            outVars["delta_phi_tops"] = delta_phi_tops;
+            outVars["bJetsToLightJetsRatio"] = bJetsToLightJetsRatio;
+            outVars["ht_bjet"] = ht_bjet;
+            outVars["total_pt"] = total_pt;
+            outVars["dR_mean_light_jets"] = dR_mean_light_jets;
+            outVars["total_light_jet_energy"] = total_light_jet_energy;
+            outVars["total_jet_mass"] = total_jet_mass;
+
+
+            
+
+
+
+            
+
+
             // quantities of generated objects (MC truth)
             outVars["gen_ttbar_pt"]=ttbarSystem_gen.Pt();
             outVars["gen_ttbar_eta"]=ttbarSystem_gen.Rapidity();
@@ -1631,13 +2057,13 @@ void RunExclusiveTop(TString filename,
             outT->Fill();
 
         } // end of if(bJets.size()>=2 && lightJets.size()>=2)
-		else{  
+		else{
 	        //continue;
 			// still fill the tree with leptons only (for QCD FF estimate)
             outVars["cat"]=float(ch_tag);
             outVars["l_px"]=lepton.p4().Px();
             outVars["l_py"]=lepton.p4().Py();
-            outVars["l_pz"]=lepton.p4().Pz();			
+            outVars["l_pz"]=lepton.p4().Pz();
             outVars["l_pt"]=lepton.Pt();
             outVars["l_eta"]=lepton.Rapidity();
             outVars["l_phi"]=lepton.Phi();
@@ -1645,7 +2071,7 @@ void RunExclusiveTop(TString filename,
             outVars["l_E"]=lepton.E();
             outVars["lepton_isolation"]=ev.l_relIso[lepton.originalReference()];
             outVars["l_tight"]=lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
-			
+
 			// FILL TREE
 			outT->Fill();
 		}

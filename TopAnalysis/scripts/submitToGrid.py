@@ -82,9 +82,9 @@ def submitProduction(tag,lfnDirBase,dataset,isData,cfg,workDir,lumiMask,era='era
     config_file.write('config.Data.outLFNDirBase = \"%s\"\n' % lfnDirBase)
     config_file.write('\n')
     config_file.write('config.section_("Site")\n')
-    config_file.write('config.Site.storageSite = "T2_CH_CERN"\n')
+    config_file.write('config.Site.storageSite = "T3_US_FNALLPC"\n')
     #if addParents:
-    #    config_file.write('config.Site.whitelist = [\'T2_CH_CERN\']\n')    
+    #    config_file.write('config.Site.whitelist = [\'T3_US_FNALLPC\']\n')    
 
     config_file.close()
     

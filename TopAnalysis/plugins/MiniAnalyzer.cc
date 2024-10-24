@@ -1,4 +1,4 @@
-//
+// 
 // -*- C++ -*-
 //
 // Package:    TopLJets2015/TopAnalysis
@@ -7,7 +7,7 @@
 /**\class MiniAnalyzer MiniAnalyzer.cc Test/MiniAnalyzer/plugins/MiniAnalyzer.cc
 
    Description: [one line class summary]
-
+  
    Implementation:
    [Notes on implementation]
 */
@@ -28,7 +28,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-// TOTEM/PPS related
+// TOTEM/PPS/HF related
 #include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
@@ -37,6 +37,13 @@
 #include "DataFormats/ProtonReco/interface/ForwardProton.h"
 #include "TopLJets2015/TopAnalysis/interface/PPSEff.h"
 #include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
+#include "DataFormats/HcalRecHit/interface/HFRecHit.h"
+
+// Geometry and FWCore for HF
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+
 
 // Other tools
 #include "DataFormats/Common/interface/DetSetVector.h"
@@ -90,6 +97,9 @@
 #include "CondFormats/RunInfo/interface/LHCInfo.h"
 #include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
 
+#include <set>
+
+
 #include "TLorentzVector.h"
 #include "TH1.h"
 #include "TH1F.h"
@@ -103,6 +113,8 @@
 #include <cmath>
 #include <iostream>
 #include <string>
+#include <typeinfo>
+
 
 using namespace edm;
 using namespace std;
@@ -134,6 +146,8 @@ private:
 
   bool isSoftMuon(const reco::Muon & recoMu,const reco::Vertex &vertex);
   bool isMediumMuon2016ReReco(const reco::Muon & recoMu);
+  bool isTightMuon(const reco::Muon & recoMu, const reco::Vertex & vertex);
+
 
   // member data
   edm::EDGetTokenT<GenEventInfoProduct> generatorToken_;
@@ -160,9 +174,13 @@ private:
   edm::EDGetTokenT<pat::PackedCandidateCollection> pfToken_;
   edm::EDGetTokenT<edm::DetSetVector<TotemRPRecHit>> tokenStripHits_;
   edm::EDGetTokenT<edm::DetSetVector<TotemRPUVPattern>> tokenStripPatterns_;
+  edm::EDGetTokenT<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>> hfRecHitsToken_;
   edm::EDGetTokenT<std::vector<CTPPSLocalTrackLite> > ctppsToken_;
   std::vector< edm::EDGetTokenT<std::vector<reco::ForwardProton> > > tokenRecoProtons_;
   edm::EDGetTokenT<bool> BadChCandFilterToken_,BadPFMuonFilterToken_,BadPFMuonDzFilterToken_;
+
+  
+
 
   std::unordered_map<std::string,TH1*> histContainer_;
 
@@ -183,10 +201,16 @@ private:
 
   //counters
   int nrecleptons_, nrecphotons_, ngleptons_, ngphotons_, nmultiprotons_[2];
-  int nrecjets_, nrecbjets_;
+  int nrecjets_, nrecbjets_, nreclightjets_;
 
   //apply filter to save tree
   bool applyFilt_;
+
+  int totalEventCounter_;
+
+  // Add this new member variable
+  bool doCaloTower_;
+
 };
 
 //
@@ -226,14 +250,17 @@ MiniAnalyzer::MiniAnalyzer(const edm::ParameterSet& iConfig) :
   pfToken_(consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("pfCands"))),
   tokenStripHits_( mayConsume<edm::DetSetVector<TotemRPRecHit>>(iConfig.getParameter<edm::InputTag>("tagStripHits")) ),
   tokenStripPatterns_( consumes<edm::DetSetVector<TotemRPUVPattern>>(iConfig.getParameter<edm::InputTag>("tagStripPatterns")) ),
+  hfRecHitsToken_(consumes<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>>(iConfig.getParameter<edm::InputTag>("hfRecHits"))),
   ctppsToken_(consumes<std::vector<CTPPSLocalTrackLite> >(iConfig.getParameter<edm::InputTag>("ctppsLocalTracks"))),
   BadChCandFilterToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandFilter"))),
   BadPFMuonFilterToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"))),
   BadPFMuonDzFilterToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonDzFilter"))),
   saveTree_( iConfig.getParameter<bool>("saveTree") ),
   runNumber_( iConfig.getUntrackedParameter<int>("runNumber") ),
-  applyFilt_( iConfig.getParameter<bool>("applyFilt") )
+  applyFilt_(iConfig.getParameter<bool>("applyFilt"))
+
 {
+
 	
   tokenRecoProtons_.push_back( consumes<std::vector<reco::ForwardProton>>(iConfig.getParameter<InputTag>("tagRecoProtons")));
   tokenRecoProtons_.push_back( consumes<std::vector<reco::ForwardProton>>(iConfig.getParameter<InputTag>("tagMultiRecoProtons")));
@@ -266,6 +293,7 @@ MiniAnalyzer::MiniAnalyzer(const edm::ParameterSet& iConfig) :
   histContainer_["triggerPrescale"] = fs->make<TH1D>("triggerPrescale", ";Trigger prescale sum;",triggersToUse_.size(),0,triggersToUse_.size());
   for(size_t i=0; i<triggersToUse_.size(); i++) histContainer_["triggerList"] ->GetXaxis()->SetBinLabel(i+1,triggersToUse_[i].c_str());
   histContainer_["counter"]    = fs->make<TH1F>("counter", ";Counter;Events",4,0,4);
+  histContainer_["totalEvents"] = fs->make<TH1F>("totalEvents", ";Total Events;Events", 1, 0, 1);
   histContainer_["RPcount"]    = fs->make<TH2F>("RPcount", ";Nhits (arm=0);NHits (arm=1)",3,0,3,3,0,3);
   histContainer_["fidcounter"] = (TH1 *)fs->make<TH2F>("fidcounter",    ";Variation;Events", 1500, 0., 1500.,11,0,11);
   histContainer_["pu"]         = fs->make<TH1F>("pu",      ";Pileup observed;Events / 1",100,0,100);
@@ -439,7 +467,8 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         if(genLep->pt()>25 && fabs(genLep->eta())<2.5) ngleptons_++;
       }
   }
-    
+
+  //Photons  
   edm::Handle<std::vector<reco::GenParticle> > genPhotons;
   iEvent.getByToken(genPhotonsToken_,genPhotons);
   if(genPhotons.isValid()){
@@ -611,9 +640,14 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 }
 
 
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 //
 void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  
 
   //VERTICES
   edm::Handle<reco::VertexCollection> vertices;
@@ -674,7 +708,154 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   //if(!passTrigger) return; not obvious that triggers are simulated properly
   if(ev_.isData && !passTrigger) return;
 
-  	    
+  // Add a static event counter
+  static int eventCounter_ = 0;
+  eventCounter_++; // Increment the event counter
+
+////////////////////////////////////// HF ///////////////////////////////////////////////////////////////////
+
+
+////////////////////HF
+
+  // Get the calorimeter geometry from the EventSetup
+  edm::ESHandle<CaloGeometry> caloGeometry;
+  iSetup.get<CaloGeometryRecord>().get(caloGeometry);
+  const CaloGeometry* geo = caloGeometry.product();
+
+  edm::Handle<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>> hfRecHitsHandle;
+  iEvent.getByToken(hfRecHitsToken_, hfRecHitsHandle);
+
+  if (!hfRecHitsHandle.isValid()) {
+      edm::LogError("MiniAnalyzer") << "HFRecHit collection not found";
+      return;
+  }
+
+  // Reset the counter for the number of HFRecHits
+  ev_.nHFRecHits = 0;
+  int hitCounter = 0; // Initialize a counter for the loop iterations
+  // Initialize variables to store the computed values
+  // Initialize variables to store the computed values
+  float HFpSumEnergy = 0.0, HFnSumEnergy = 0.0;
+  float HFpMaxEnergy = 0.0, HFnMaxEnergy = 0.0;
+  float HFpEtaMaxEnergy = 0.0, HFnEtaMaxEnergy = 0.0; // Eta values for max energy hits
+  int HFpHitCount = 0, HFnHitCount = 0; // Counters for positive and negative eta hits
+
+  // Initialize variables for storing energy sums in specified eta ranges
+  ev_.HFtotalSumEnergy_eta_4_5 = 0.0;
+  ev_.HFtotalSumEnergy_eta_3_5_5 = 0.0;
+  ev_.HFtotalSumEnergy_eta_4_5_5 = 0.0;
+
+  ev_.HFabsDiffEnergy_eta_4_5 = 0.0; // For absolute difference calculations in specified eta ranges
+  ev_.HFabsDiffEnergy_eta_3_5_5 = 0.0;
+  ev_.HFabsDiffEnergy_eta_4_5_5 = 0.0;
+
+  ev_.HFpSumEnergy_eta_4_5 = 0.0; // Similar for HF+ sum energies
+  ev_.HFpSumEnergy_eta_3_5_5 = 0.0;
+  ev_.HFpSumEnergy_eta_4_5_5 = 0.0;
+
+  ev_.HFnSumEnergy_eta_4_5 = 0.0; // And for HF- sum energies
+  ev_.HFnSumEnergy_eta_3_5_5 = 0.0;
+  ev_.HFnSumEnergy_eta_4_5_5 = 0.0;
+
+
+  for (const auto& hit : *hfRecHitsHandle) {
+      float energy = hit.energy();
+      float time = hit.time();
+      uint32_t id = hit.detid().rawId();
+
+      // Get the position for this hit
+      const GlobalPoint& posHcal = geo->getPosition(hit.detid());
+      float eta = posHcal.eta();
+      float absEta = std::abs(eta); // Use absolute eta for comparisons
+
+      // Increment the hit counter and print it with the hit details
+      hitCounter++;
+      //std::cout << "Hit " << hitCounter << std::endl;
+      //std::cout << "Eta: " << eta << ", Energy: " << energy << std::endl;
+
+      // Increment the total hit counter
+      ev_.nHFRecHits++;
+
+      //std::cout << "Hit number " << hitCounter << std::endl;
+      // Log detailed information about each hit
+      //std::cout << "Hit Information: " << std::endl;
+      //std::cout << "Energy: " << energy << ", Time: " << time << ", ID: " << id << std::endl;
+      //std::cout << "Position - X: " << posHcal.x() << ", Y: " << posHcal.y() << ", Z: " << posHcal.z() << std::endl;
+      //std::cout << "Eta: " << eta << ", AbsEta: " << absEta << std::endl;
+
+      
+      
+      // Sum energies and find max energy based on Eta value, increment hit counters
+      if (eta > 0) {
+          HFpSumEnergy += energy;
+          if (energy > HFpMaxEnergy) {
+              HFpMaxEnergy = energy;
+              HFpEtaMaxEnergy = eta; // Store Eta value for max energy hit
+          }
+          HFpHitCount++;
+      } else {
+          HFnSumEnergy += energy;
+          if (energy > HFnMaxEnergy) {
+              HFnMaxEnergy = energy;
+              HFnEtaMaxEnergy = eta; // Store Eta value for max energy hit
+          }
+          HFnHitCount++;
+      }
+
+      // Increment counters and sum energies based on absEta conditions
+      if (absEta > 4 && absEta <= 5) {
+          ev_.HFtotalSumEnergy_eta_4_5 += energy; // Update this and similar variables accordingly
+          // Note: You'll need to adjust the logic for calculating HFabsDiffEnergy for specific eta ranges
+      }
+      if (absEta > 3.5 && absEta <= 5) {
+          ev_.HFtotalSumEnergy_eta_3_5_5 += energy;
+      }
+      if (absEta > 4.5 && absEta <= 5) {
+          ev_.HFtotalSumEnergy_eta_4_5_5 += energy;
+      }
+
+      // Example for HFpSumEnergy and HFnSumEnergy, adjust the logic to add to HFp/HFn variables based on eta sign
+      if (eta > 0) { // For HF+
+          if (absEta > 4 && absEta <= 5) ev_.HFpSumEnergy_eta_4_5 += energy;
+          if (absEta > 3.5 && absEta <= 5) ev_.HFpSumEnergy_eta_3_5_5 += energy;
+          if (absEta > 4.5 && absEta <= 5) ev_.HFpSumEnergy_eta_4_5_5 += energy;
+      } else { // For HF-
+          if (absEta > 4 && absEta <= 5) ev_.HFnSumEnergy_eta_4_5 += energy;
+          if (absEta > 3.5 && absEta <= 5) ev_.HFnSumEnergy_eta_3_5_5 += energy;
+          if (absEta > 4.5 && absEta <= 5) ev_.HFnSumEnergy_eta_4_5_5 += energy;
+      }
+
+
+    }
+
+    
+    // Calculate new variables abs sum and difference
+    float HFtotalSumEnergy = HFpSumEnergy + HFnSumEnergy; // Sum of HF+ and HF- energies
+    float HFabsDiffEnergy = std::abs(HFpSumEnergy - HFnSumEnergy); // Absolute difference of HF+ and HF- energies
+
+    // Update the ev_ object with the computed valuess for the new variables
+    ev_.HFtotalSumEnergy = HFtotalSumEnergy;
+    ev_.HFabsDiffEnergy = HFabsDiffEnergy;
+
+    // Update the ev_ object with the computed values
+    ev_.HFpSumEnergy = HFpSumEnergy;
+    ev_.HFnSumEnergy = HFnSumEnergy;
+    ev_.HFpMaxEnergy = HFpMaxEnergy;
+    ev_.HFnMaxEnergy = HFnMaxEnergy;
+    ev_.HFpEtaMaxEnergy = HFpEtaMaxEnergy; 
+    ev_.HFnEtaMaxEnergy = HFnEtaMaxEnergy; 
+
+    // Calculate HFabsDiffEnergy for specified eta ranges after accumulating energies
+    ev_.HFabsDiffEnergy_eta_4_5 = std::abs(ev_.HFpSumEnergy_eta_4_5 - ev_.HFnSumEnergy_eta_4_5);
+    ev_.HFabsDiffEnergy_eta_3_5_5 = std::abs(ev_.HFpSumEnergy_eta_3_5_5 - ev_.HFnSumEnergy_eta_3_5_5);
+    ev_.HFabsDiffEnergy_eta_4_5_5 = std::abs(ev_.HFpSumEnergy_eta_4_5_5 - ev_.HFnSumEnergy_eta_4_5_5);
+
+
+
+
+
+
+  
   //
   //PPS local tracks (if present)
   //
@@ -707,6 +888,30 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.nppstrk++;
       }
   }
+
+  // Print pps_0 and pps_1 values if either pps_0 is true and pps_1 is false or pps_0 is false and pps_1 is true
+  //if ((pps_0 && !pps_1) || (!pps_0 && pps_1)) {
+    //std::cout << "pps_0: " << (pps_0 ? "true" : "false") << std::endl;
+    //std::cout << "pps_1: " << (pps_1 ? "true" : "false") << std::endl;    //} else {
+    //} else {
+    //return; // Skip the rest of the function if the condition is false
+    //}
+
+  //if (ev_.nppstrk != 0) {
+    //std::cout << "  ev_.nppstrk: " << ev_.nppstrk << std::endl;
+  //}
+
+
+
+
+  //if (ev_.nppstrk != 0) {
+  //cout << "Event (final pps local tracks)" << eventCounter_ << endl; // Print the current event number
+  //cout << "ev.nppstrk = " << ev_.nppstrk << endl;
+  //}
+
+  //cout << "Event (final pps local tracks)" << eventCounter_ << endl; // Print the current event number
+  //cout << "ev.nppstrk = " << ev_.nppstrk << endl;
+
 
   //
   //PPS protons, loop over multi- and single-RP reco
@@ -793,7 +998,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       }
     }
   }// end loop over all protons (single-, multi-RP)
-  
+
     
   // For 2017 check number of strip hits to count for truth/unsuff zero hits
   // Jan's presentation: https://indico.cern.ch/event/935869/
@@ -839,12 +1044,12 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         }
       }
 	  
-	  // if nTracks>=1 and 0 multiRP assume events with nTracks>1 and increment the proton counter
-	  for(int i=0;i<2;i++) {
-		  bool is_suff = ((u_patterns[i]>= 1 || n_too_full_u[i]>=3) && (v_patterns[i]>= 1 || n_too_full_v[i]>=3));
-		  if(nmultiprotons_[i]==0 &&  is_suff) nmultiprotons_[i]=2;
-	  }
-	  
+        // if nTracks>=1 and 0 multiRP assume events with nTracks>1 and increment the proton counter
+    for(int i=0; i<2; i++) {
+      bool is_suff = ((u_patterns[i] >= 1 || n_too_full_u[i] >= 3) && (v_patterns[i] >= 1 || n_too_full_v[i] >= 3));
+      if (nmultiprotons_[i] == 0 && is_suff) nmultiprotons_[i] = 2;
+      }
+
 	  //for(int i=0;i<2;i++){
 	  //cout << "For rpId="<<i*100+3<<": n_too_full_u="<<n_too_full_u[i]<<" , u_patterns = " << u_patterns[i];
 	  //cout << " n_too_full_v="<<n_too_full_v[i]<<" , v_patterns = " << v_patterns[i]<< ", suff  = " << is_suff[i] << endl;
@@ -853,9 +1058,10 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   } // end if(hStripHits.isValid() && hStripPatterns.isValid()))  
   
   if(ev_.MAXPROTONS<ev_.nfwdtrk || ev_.MAXPROTONS<ev_.nppstrk){
-     cout << "ERROR: MAXPROTONS ("<<ev_.MAXPROTONS<<") is smaller than the N of RP hits/tracks ("<<ev_.nfwdtrk<<"/"<<ev_.nppstrk<<")."<<endl;
-	 cout <<"\t\t... can cause memory leaks!!!"<<endl;
+    cout << "ERROR: MAXPROTONS ("<<ev_.MAXPROTONS<<") is smaller than the N of RP hits/tracks ("<<ev_.nfwdtrk<<"/"<<ev_.nppstrk<<")."<<endl;
+	  cout <<"\t\t... can cause memory leaks!!!"<<endl;
   }
+
 	  
   //PF candidates (used for muon mini isolation) 
   edm::Handle<pat::PackedCandidateCollection> pfcands;
@@ -864,6 +1070,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   //
   //LEPTON SELECTION 
   ev_.nl=0; 
+
   
   //MUON SELECTION: cf. https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
   edm::Handle<pat::MuonCollection> muons;
@@ -931,22 +1138,24 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       bool passEta(fabs(p4.Eta()) < 2.5);
       if(!passPt || !passEta) continue;
 
-      //ID
-      bool isLoose(muon::isLooseMuon(mu));
-      if(!isLoose) continue;
 
+      // ID
+      bool isTight(muon::isTightMuon(mu, primVtx));
+      if (!isTight) continue;
+
+      //if (ev_.nl == 0) {
       //save info
       ev_.l_isPromptFinalState[ev_.nl] = gen ? gen->isPromptFinalState() : false;
       ev_.l_isDirectPromptTauDecayProductFinalState[ev_.nl] = gen ? gen->isDirectPromptTauDecayProductFinalState() : false;
       ev_.l_id[ev_.nl]=13;
       ev_.l_g[ev_.nl]=-1;
       for(int ig=0; ig<ev_.ng; ig++)
-	{
-	  if(abs(ev_.g_id[ig])!=ev_.l_id[ev_.nl]) continue;
-	  if(deltaR( mu.eta(),mu.phi(), ev_.g_eta[ig],ev_.g_phi[ig])>0.4) continue;
-	  ev_.l_g[ev_.nl]=ig;
-	  break;
-	}
+	      {
+	        if(abs(ev_.g_id[ig])!=ev_.l_id[ev_.nl]) continue;
+	        if(deltaR( mu.eta(),mu.phi(), ev_.g_eta[ig],ev_.g_phi[ig])>0.4) continue;
+	        ev_.l_g[ev_.nl]=ig;
+	        break;
+	      }
 
       ev_.l_charge[ev_.nl]   = q;
       ev_.l_pt[ev_.nl]       = p4.Pt();
@@ -969,34 +1178,49 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 				) / p4.Pt();
       ev_.l_ip3d[ev_.nl]    = -9999.;
       ev_.l_ip3dsig[ev_.nl] = -9999;
-	  ev_.l_dz[ev_.nl] = -1;
-	  // Trigger maching
-	  //for(size_t i=0; i<triggersToUse_.size(); i++) 
-	  //	  ev_.l_trigMatch[ev_.nl][i] = mu.triggered((triggersToUse_[i]+"*").c_str());
+	      ev_.l_dz[ev_.nl] = -1;
+	      // Trigger maching
+	      //for(size_t i=0; i<triggersToUse_.size(); i++) 
+	      //	  ev_.l_trigMatch[ev_.nl][i] = mu.triggered((triggersToUse_[i]+"*").c_str());
 	  	  
       if(mu.innerTrack().get())
-	{
-	  std::pair<bool,Measurement1D> ip3dRes = getImpactParameter<reco::TrackRef>(mu.innerTrack(), primVtxRef, iSetup, true);
-	  ev_.l_ip3d[ev_.nl]    = ip3dRes.second.value();
-	  ev_.l_ip3dsig[ev_.nl] = ip3dRes.second.significance();
+	      {
+	        std::pair<bool,Measurement1D> ip3dRes = getImpactParameter<reco::TrackRef>(mu.innerTrack(), primVtxRef, iSetup, true);
+	        ev_.l_ip3d[ev_.nl]    = ip3dRes.second.value();
+	        ev_.l_ip3dsig[ev_.nl] = ip3dRes.second.significance();
 	  
-	  ev_.l_dz[ev_.nl] = fabs(mu.innerTrack()->dz(primVtx.position()));
-	}
-      ev_.nl++;
+	        ev_.l_dz[ev_.nl] = fabs(mu.innerTrack()->dz(primVtx.position()));
+	      }
 
-      if( p4.Pt()>25 && fabs(p4.Eta())<2.5 && isLoose) nrecleptons_++;
+      //std::cout << "Event (Muon pass)" << eventCounter_ << std::endl; // Print the current event number
+      //std::cout << "Selected muon" << nSelectedMuons << std::endl; // Print the current event number 
+      
+      
+      ev_.nl++;
+    
+
+      if( p4.Pt()>25 && fabs(p4.Eta())<2.5 && isTight) nrecleptons_++;
+
+
     }
 	
   if(ev_.MAXRAWMU<ev_.nrawmu){
      cout << "ERROR: MAXRAWMU ("<<ev_.MAXRAWMU<<") is smaller than the N of raw muons ("<<ev_.nrawmu<<")."<<endl;
-	 cout <<"\t\t... can cause memory leaks!!!"<<endl;
-  }	
+	  cout <<"\t\t... can cause memory leaks!!!"<<endl;
+
+  }
+  
+
+  //std::cout << "Number of leptons (muons act.): " << ev_.nl << std::endl; // Print the number of leptons
+
 
   // ELECTRON SELECTION: cf. https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
+
   edm::Handle<edm::View<pat::Electron> > electrons;
   iEvent.getByToken(electronToken_, electrons);
   for (const pat::Electron &e : *electrons)
     {
+
 
       float enSF(1.0);
       try{
@@ -1037,22 +1261,22 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       //see details in https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2
       bool passIpCuts(true); float dz = -1;
       if(e.gsfTrack().isNonnull())
-	{
-	  float dxy(fabs(e.gsfTrack()->dxy(primVtx.position())));
-	  dz = (fabs(e.gsfTrack()->dz(primVtx.position())));
-	  if(fabs(e.superCluster()->eta()) < 1.4442)
-	    {
-	      if(dxy>0.05 || dz>0.10) passIpCuts=false;
-	    }
-	  else
-	    {
-	      if(dxy>0.10 || dz>0.20) passIpCuts=false;
-	    }
-	}
+	      {
+	        float dxy(fabs(e.gsfTrack()->dxy(primVtx.position())));
+	        dz = (fabs(e.gsfTrack()->dz(primVtx.position())));
+	        if(fabs(e.superCluster()->eta()) < 1.4442)
+	          {
+	            if(dxy>0.05 || dz>0.10) passIpCuts=false;
+	          }
+	        else
+	          {
+	            if(dxy>0.10 || dz>0.20) passIpCuts=false;
+	          }
+	      }
       else
-	{
-	  passIpCuts=false;
-	}
+	      {
+	        passIpCuts=false;
+	      }
 
       //save the electron
       const reco::GenParticle * gen=e.genLepton();
@@ -1061,25 +1285,25 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.l_id[ev_.nl]=11;
       ev_.l_g[ev_.nl]=-1;
       for(int ig=0; ig<ev_.ng; ig++)
-	{
-	  if(abs(ev_.g_id[ig])!=ev_.l_id[ev_.nl]) continue;
-	  if(deltaR( corrP4.eta(),corrP4.phi(), ev_.g_eta[ig],ev_.g_phi[ig])>0.4) continue;
-	  ev_.l_g[ev_.nl]=ig;
-	  break;
-	}
+	      {
+	        if(abs(ev_.g_id[ig])!=ev_.l_id[ev_.nl]) continue;
+	        if(deltaR( corrP4.eta(),corrP4.phi(), ev_.g_eta[ig],ev_.g_phi[ig])>0.4) continue;
+	        ev_.l_g[ev_.nl]=ig;
+	        break;
+	      }
       ev_.l_mva[ev_.nl]=e.userFloat("ElectronMVAEstimatorRun2Fall17IsoV"+EGIDVersion_+"Values");
       ev_.l_mvaCats[ev_.nl]=e.userInt("ElectronMVAEstimatorRun2Fall17IsoV"+EGIDVersion_+"Categories");
 
       ev_.l_pid[ev_.nl]=0;
       ev_.l_pid[ev_.nl]= (passVetoId | (isVeto<<1)
-			  | (passLooseId<<2) | (isLoose<<3)
-			  | (passMediumId<<4) | (isMedium<<5)
-			  | (passTightId<<6) | (isTight<<7)
-			  | (passIpCuts<<8)
+			                    | (passLooseId<<2) | (isLoose<<3)
+			                    | (passMediumId<<4) | (isMedium<<5)
+			                    | (passTightId<<6) | (isTight<<7)
+			                    | (passIpCuts<<8)
                           | (mvawp80<<9) | (mvawp90<<10) | (mvawploose<<11)
                           | (mvanonisowp80<<12) | (mvanonisowp90<<13) | (mvanonisowploose<<14)
                           | (passHEEP<<15)
-			 );
+			                  );
 
       ev_.l_charge[ev_.nl]   = e.charge();
       ev_.l_dz[ev_.nl]   = dz;
@@ -1101,20 +1325,42 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.l_ip3d[ev_.nl]     = -9999.;
       ev_.l_ip3dsig[ev_.nl]  = -9999;
       if(e.gsfTrack().get())
-	{
-	  std::pair<bool,Measurement1D> ip3dRes = getImpactParameter<reco::GsfTrackRef>(e.gsfTrack(), primVtxRef, iSetup, true);
-	  ev_.l_ip3d[ev_.nl]    = ip3dRes.second.value();
-	  ev_.l_ip3dsig[ev_.nl] = ip3dRes.second.significance();
-	}
+	      {
+	        std::pair<bool,Measurement1D> ip3dRes = getImpactParameter<reco::GsfTrackRef>(e.gsfTrack(), primVtxRef, iSetup, true);
+	        ev_.l_ip3d[ev_.nl]    = ip3dRes.second.value();
+	        ev_.l_ip3dsig[ev_.nl] = ip3dRes.second.significance();
+	      }
+      
+      //std::cout << "Event (Electron pass)" << eventCounter_ << std::endl; // Print the current event number 
+
+
+
       ev_.nl++;
 
+
       if( corrP4.pt()>25 && passEta && passLooseId ) nrecleptons_++;
+
     }
+
+
   if(ev_.MAXLEP<ev_.nl){
      cout << "ERROR: MAXLEP ("<<ev_.MAXLEP<<") is smaller than the N of leptons in the sample ("<<ev_.nl<<")."<<endl;
 	 cout <<"\t\t... can cause memory leaks!!!"<<endl;
+
+   
+
+
   }
-  
+
+  //std::cout << "Number of leptons (electron act.): " << ev_.nl << std::endl; // Print the number of leptons
+
+
+  //if (electron_id != 0) return; // Only events with electrons
+  //std::cout << "Event (Electron pass)" << eventCounter_ << std::endl; // Print the current event number
+
+  //if (muon_id != 1) return; // Only events witht muons
+  //std::cout << "Event (Muon pass)" << eventCounter_ << std::endl; // Print the current event number
+
   // PHOTON SELECTION: cf. https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonIdentificationRun2
   ev_.ngamma=0;
   edm::Handle<edm::View<pat::Photon> > photons;
@@ -1181,14 +1427,21 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	  
       if(ev_.ngamma>ev_.MAXGAMMA) break;
       if( tightBits ) nrecphotons_++;
+
+
     }
   if(ev_.MAXGAMMA==ev_.ngamma){
      cout << "WARNING: MAXGAMMA ("<<ev_.MAXGAMMA<<") equal to stored N of photons in the sample ("<<ev_.ngamma<<")."<<endl;
 	 cout <<"\t\t... check that the actuall number of photons is not larger!!!"<<endl;
   }
   
-  // JETS
+  // JETS SELECTION
   ev_.nj=0;
+  ev_.leading_j_pt = -999;
+  ev_.leading_bjet_pt = -999; 
+  ev_.leading_ljet_pt = -999;  
+
+
   edm::Handle<edm::View<pat::Jet> > jets;
   iEvent.getByToken(jetToken_,jets);
   JME::JetResolution jerResolution  = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
@@ -1247,7 +1500,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 
       auto corrP4  = j->p4() * jerSF[0]; 
 	  
-	  // Skip jets with corrected PT < 10 GeV
+	    // Skip jets with corrected PT < 25 GeV
       if(corrP4.pt()<10 ) continue;
 
       //jet id cf. for AK4CHS jets
@@ -1290,9 +1543,9 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.j_area[ev_.nj]    = j->jetArea();
       ev_.j_jerUp[ev_.nj]   = jerSF[1];
       ev_.j_jerDn[ev_.nj]   = jerSF[2];
-	  if(ev_.MAXJETSYS<jecCorrectionUncs_.size()){
-         cout << "ERROR: MAXJETSYS ("<<ev_.MAXJETSYS<<") is smaller than the N jet syst. MC ("<<jecCorrectionUncs_.size()<<")."<<endl;
-	     cout <<"\t\t... can cause memory leaks!!!"<<endl;
+	        if(ev_.MAXJETSYS<jecCorrectionUncs_.size()){
+          cout << "ERROR: MAXJETSYS ("<<ev_.MAXJETSYS<<") is smaller than the N jet syst. MC ("<<jecCorrectionUncs_.size()<<")."<<endl;
+	        cout <<"\t\t... can cause memory leaks!!!"<<endl;
       }
       for(size_t iunc=0; iunc<jecCorrectionUncs_.size(); iunc++){
         jecCorrectionUncs_[iunc]->setJetPt(j->pt());
@@ -1314,13 +1567,14 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.j_csv[ev_.nj]     = j->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
       ev_.j_deepcsv[ev_.nj] = j->bDiscriminator("pfDeepCSVJetTags:probb") + j->bDiscriminator("pfDeepCSVJetTags:probbb");
       //https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
-	  ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.4506);
+	    ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.4506);
       ev_.j_emf[ev_.nj]     = CEMF+NEMF;
+
 	  
-	  // jet momentum uncertainties (for exclusive ttbar analysis):
-	  ev_.e_j_px[ev_.nj]  =  abs(cos(corrP4.phi()))*(abs(j->correctedJet("Uncorrected").pt()-j->pt()));
-	  ev_.e_j_py[ev_.nj]  =  abs(sin(corrP4.phi()))*(abs(j->correctedJet("Uncorrected").pt()-j->pt()));
-	  ev_.e_j_pz[ev_.nj]  =  (abs(j->correctedJet("Uncorrected").pt()-j->pt()))/(tan( 2.*atan(exp(-corrP4.eta())) ));
+	    // jet momentum uncertainties (for exclusive ttbar analysis):
+	    ev_.e_j_px[ev_.nj]  =  abs(cos(corrP4.phi()))*(abs(j->correctedJet("Uncorrected").pt()-j->pt()));
+	    ev_.e_j_py[ev_.nj]  =  abs(sin(corrP4.phi()))*(abs(j->correctedJet("Uncorrected").pt()-j->pt()));
+	    ev_.e_j_pz[ev_.nj]  =  (abs(j->correctedJet("Uncorrected").pt()-j->pt()))/(tan( 2.*atan(exp(-corrP4.eta())) ));
 
       //jet shape variables
       ev_.j_c2_00[ev_.nj]    = getC(2, 0.0, &(*j), true, 0.9);
@@ -1343,42 +1597,78 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.j_tau21[ev_.nj]=-99;
       }
       if( j->hasTagInfo("pfInclusiveSecondaryVertexFinder") )
-	{
-	  const reco::CandSecondaryVertexTagInfo *candSVTagInfo = j->tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
-	  if( candSVTagInfo->nVertices() >= 1 )
-	    {
-	      math::XYZTLorentzVectorD vp4 = candSVTagInfo->secondaryVertex(0).p4();
-	      ev_.j_vtxpx[ev_.nj]          = vp4.px();
-	      ev_.j_vtxpy[ev_.nj]          = vp4.py();
-	      ev_.j_vtxpz[ev_.nj]          = vp4.pz();
-	      ev_.j_vtxmass[ev_.nj]        = vp4.mass();
-	      ev_.j_vtxNtracks[ev_.nj]     = candSVTagInfo->nVertexTracks(0);
-	      ev_.j_vtx3DVal[ev_.nj]       = candSVTagInfo->flightDistance(0).value();
-	      ev_.j_vtx3DSig[ev_.nj]       = candSVTagInfo->flightDistance(0).significance();
-	    }
-	}
+	      {
+	        const reco::CandSecondaryVertexTagInfo *candSVTagInfo = j->tagInfoCandSecondaryVertex("pfInclusiveSecondaryVertexFinder");
+	        if( candSVTagInfo->nVertices() >= 1 )
+	          {
+	            math::XYZTLorentzVectorD vp4 = candSVTagInfo->secondaryVertex(0).p4();
+	            ev_.j_vtxpx[ev_.nj]          = vp4.px();
+	            ev_.j_vtxpy[ev_.nj]          = vp4.py();
+	            ev_.j_vtxpz[ev_.nj]          = vp4.pz();
+	            ev_.j_vtxmass[ev_.nj]        = vp4.mass();
+	            ev_.j_vtxNtracks[ev_.nj]     = candSVTagInfo->nVertexTracks(0);
+	            ev_.j_vtx3DVal[ev_.nj]       = candSVTagInfo->flightDistance(0).value();
+	            ev_.j_vtx3DSig[ev_.nj]       = candSVTagInfo->flightDistance(0).significance();
+	          }
+	      }
+	        
+	        // count reconstructed objects (used in the analysis)
+	        if(ev_.j_pt[ev_.nj]>10 && abs(ev_.j_eta[ev_.nj])<4.7){
+            
+            // Update leading_j_pt if this jet has higher pt
+            if(ev_.j_pt[ev_.nj] > ev_.leading_j_pt) {
+              ev_.leading_j_pt = ev_.j_pt[ev_.nj];
+              ev_.leading_j_eta = ev_.j_eta[ev_.nj];
+              ev_.leading_j_phi = ev_.j_phi[ev_.nj];
+              }
+
+            if(ev_.j_btag[ev_.nj] && (ev_.j_pt[ev_.nj] > ev_.leading_bjet_pt) ){
+              ev_.leading_bjet_pt = ev_.j_pt[ev_.nj]; 
+              ev_.leading_bjet_eta = ev_.j_eta[ev_.nj];
+              ev_.leading_bjet_phi = ev_.j_phi[ev_.nj];
+              }
+
+            if(!ev_.j_btag[ev_.nj] && (ev_.j_pt[ev_.nj] > ev_.leading_ljet_pt) ){
+              ev_.leading_ljet_pt = ev_.j_pt[ev_.nj]; 
+              ev_.leading_ljet_eta = ev_.j_eta[ev_.nj];
+              ev_.leading_ljet_phi = ev_.j_phi[ev_.nj];
+              }        
+
+
+            //printf("ev_.j_pt[ev_.nj]: %f\n", ev_.j_pt[ev_.nj]);
+            //printf("ev_.leading_j_pt: %f\n", ev_.leading_j_pt); 
+
+		        nrecjets_++;
+		        if(ev_.j_btag[ev_.nj]){
+              nrecbjets_++;
+              ev_.nBjets = nrecbjets_;
+              } else {
+                  nreclightjets_++;
+                  // Store non-b-tagged jets in the variable nlightjets
+                  ev_.nlightjets = nreclightjets_;
+
+              }
+            
+	        }
 	  
-	  // count reconstructed objects (used in the analysis)
-	  if(ev_.j_pt[ev_.nj]>25 && abs(ev_.j_eta[ev_.nj])<2.5){
-		  nrecjets_++;
-		  if(ev_.j_btag[ev_.nj]) nrecbjets_++;
-	  }
-	  
-	  // increment jet index
+	    // increment jet index
       ev_.nj++;	  
 
       //save all PF candidates central jet
       if(fabs(j->eta())>2.5) continue;
       for(size_t ipf=0; ipf<j->numberOfDaughters(); ipf++)
-	{
-	  const reco::Candidate *pf=j->daughter(ipf);
-	  clustCands.push_back(std::pair<const reco::Candidate *,int>(pf,ev_.nj-1));
-	}
+	      {
+	        const reco::Candidate *pf=j->daughter(ipf);
+	        clustCands.push_back(std::pair<const reco::Candidate *,int>(pf,ev_.nj-1));
+	      }
     }
   if(ev_.MAXJET<ev_.nj){
      cout << "ERROR: MAXJET ("<<ev_.MAXJETSYS<<") is smaller than the N jets in the sample ("<<ev_.nj<<")."<<endl;
-	 cout <<"\t\t... expect memory leaks!!!"<<endl;
+	   cout <<"\t\t... expect memory leaks!!!"<<endl;
   }
+  
+  //std::cout << "The maximum value is: " << ev_.leading_j_pt << std::endl;
+
 	  
   // MET
   edm::Handle<pat::METCollection> mets;
@@ -1478,6 +1768,12 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
     ev_.sumPFChEn[i]=0;
     ev_.sumPFChPz[i]=0;
   }
+
+    // Initialize counters for charged tracks in the specified eta regions
+  ev_.ntrk_ch_all_eta = 0; // For counting charged tracks in all eta regions
+  ev_.ntrk_ch_eta_3_to_5 = 0; // For counting charged tracks in 3 < eta < 5
+  ev_.ntrk_ch_eta_minus5_to_minus3 = 0; // For counting charged tracks in -5 < eta < -3
+  
   for(auto pf = pfcands->begin();  pf != pfcands->end(); ++pf)
     {
       int ieta(-1);
@@ -1500,8 +1796,27 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.sumPFChHt[ieta] += pf->pt();
         ev_.sumPFChEn[ieta] += pf->energy();
         ev_.sumPFChPz[ieta] += (pf->pz());
+
+                
+        // Counting for all eta regions
+        ev_.ntrk_ch_all_eta++;
+
+        // Counting for 3 < eta < 5
+        if(pf->eta() > 3 && pf->eta() < 5) {
+            ev_.ntrk_ch_eta_3_to_5++;
+        }
+
+        // Counting for -5 < eta < -3
+        if(pf->eta() > -5 && pf->eta() < -3) {
+            ev_.ntrk_ch_eta_minus5_to_minus3++;
+        }
+
+
         bool passChargeSel(pf->pt()>0.9 && fabs(pf->eta())<2.5); // split 2.1 and 2.5
         const pat::PackedCandidate::PVAssoc pvassoc=pf->fromPV(); 
+
+
+        
 		const pat::PackedCandidate::PVAssoc pvassoc2=pf->fromPV(_second_vertex_index); 
 		int _bin;
         if(passChargeSel && pvassoc>=pat::PackedCandidate::PVTight){
@@ -1570,7 +1885,17 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   ev_.sumPVChPt=vtxPt[0].pt();
   for(int i=0; i<8; i++)
     ev_.sumPVChPt_v[i]=vtxPt[i].pt();
+
 }
+
+
+
+
+
+
+
+
+
 
 //cf. https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#Soft_Muon
 bool MiniAnalyzer::isSoftMuon(const reco::Muon & recoMu,const reco::Vertex &vertex)
@@ -1597,6 +1922,7 @@ bool MiniAnalyzer::isMediumMuon2016ReReco(const reco::Muon & recoMu)
     recoMu.innerTrack()->validFraction() > 0.8 &&
     muon::segmentCompatibility(recoMu) > (goodGlob ? 0.303 : 0.451);
   return isMedium;
+
 }
 
 
@@ -1604,6 +1930,7 @@ bool MiniAnalyzer::isMediumMuon2016ReReco(const reco::Muon & recoMu)
 // ------------ method called for each event  ------------
 void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+
   //get beam-crossing angle and LHC conditions
   try{
     edm::ESHandle<LHCInfo> hLHCInfo;
@@ -1623,12 +1950,20 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     ev_.fill=0;
   }
 
+
   histContainer_["counter"]->Fill(0);
   ngleptons_=0;   ngphotons_=0;
   nrecleptons_=0; nrecphotons_=0; nmultiprotons_[0]=nmultiprotons_[1]=0;
-  nrecjets_=0; nrecbjets_=0;
+  nrecjets_=0; nrecbjets_=0; nreclightjets_=0;
   ev_.g_nw=0; ev_.ng=0; ev_.ngtop=0;
   ev_.nl=0; ev_.ngamma=0; ev_.nj=0; ev_.nfwdtrk=0; ev_.nrawmu=0;
+  totalEventCounter_ = 0;
+  totalEventCounter_++;
+  histContainer_["totalEvents"]->Fill(static_cast<double>(0), static_cast<double>(totalEventCounter_));
+
+
+
+
 
   //analyze the event
   ev_.isData  = iEvent.isRealData();
@@ -1638,50 +1973,95 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
   if(!ev_.isData) genAnalysis(iEvent,iSetup);
   recAnalysis(iEvent,iSetup);
+
   
 
   //save event if at least one object at gen or reco level
   if(!saveTree_) return;
   // Define some filters, otherwise, you might store a lot of empty events (check returns in recAnalysis)
+
+  // True -> return -> exit code
+  // False -> continue
+
   if(applyFilt_){
 	//if (FilterType_.find("ttbar")!=std::string::npos) if(nrecbjets_<2 || nrecjets_<4 || nrecleptons_==0) return;
       if (FilterType_.find("ttbar")!=std::string::npos) {
 		  // skim (nJ>=4 and nL>0) OR (nL>1)
 		  if((nrecjets_<4 || nrecleptons_==0) && (nrecleptons_<2)) return;
-		  //if(!ev_.isData && nrecbjets_<2) return;
-		  if(!ev_.isData && nrecbjets_<1) return;
+		  if(!ev_.isData && nrecbjets_<2) return;
+		  if(!ev_.isData && nreclightjets_<2) return;
+                  //if(!ev_.isData && nrecbjets_<1) return;
 		  if(!ev_.isData && nrecjets_>=4 && nrecbjets_<2) return;
+      // apply conditional for nreclightjets_
+      //if(!ev_.isData && (nrecjets_ - nrecbjets_ < 2)) return;
 	  }
+
       if (FilterType_.find("QCD4Fake")!=std::string::npos) {
 		  // skim (nJ>=4 and nL>0 and MET<20 and nBJ=0)
 		  if(nrecjets_<4 || nrecleptons_==0) return;
 		  if(nrecbjets_>0) return;
 		  if(ev_.met_pt>20) return;
-	  }	  
-	  if (FilterType_.find("dilep")!=std::string::npos) if(nrecleptons_<2) return;
-	  if (FilterType_.find("lowmu")!=std::string::npos) {
+	  }
+
+
+	    if (FilterType_.find("dilep")!=std::string::npos) if(nrecleptons_<2) return;
+	    if (FilterType_.find("lowmu")!=std::string::npos) {
 		  if(ev_.nl==0 && ev_.nj==0 && nrecphotons_==0) return;
 		  if(ev_.nl==0 && nrecphotons_==0 && ev_.nj>0 && ev_.j_pt[0]<100) return;
 	  }
-	// data - skim on event w/o forward protons but save the event count
-	histContainer_["counter"]->Fill(2);
-	if(ev_.isData) histContainer_["RPcount"]->Fill(nmultiprotons_[0],nmultiprotons_[1]);
-	if(nrecbjets_!=0) histContainer_["counter"]->Fill(3);
-	
+      
+    
+	  // data - skim on event w/o forward protons but save the event count
+	  histContainer_["counter"]->Fill(2);
+	  if(ev_.isData) histContainer_["RPcount"]->Fill(nmultiprotons_[0],nmultiprotons_[1]);
+	  if(nrecbjets_!=0) histContainer_["counter"]->Fill(3);
+
+
     if (ev_.isData){ 
-		if (FilterType_.find("ttbar")!=std::string::npos)
-			if( nmultiprotons_[0]!=1 ||  nmultiprotons_[1]!=1 ) return;
+		  if (FilterType_.find("ttbar")!=std::string::npos)
+		  if(  ( nmultiprotons_[0]==0 &&  nmultiprotons_[1]==0) ) return;
 		//if (FilterType_.find("dilep")!=std::string::npos)
 		//	if( nmultiprotons_[0]!=1 &&  nmultiprotons_[1]!=1 ) return;
-	}
+    }
+
   }
-  tree_->Fill();
+
+  //This conditional checks if there are one track of a proton
+  //if (ev_.nfwdtrk != 1) {
+  //  return;
+  //}
+
+  //This conditional checks if only there is one lepton in the final state
+  //if (ev_.nl != 1) {
+    //return;
+  //}
+
+  
+  //This conditional checks if either pps_0 or pps_1 is true, but not both
+  //if ((pps_0 && !pps_1) || (!pps_0 && pps_1)) {
+  //  std::cout << "pps_0 : " << (pps_0 ? "true" : "false") << std::endl;
+  //  std::cout << "pps_1 : " << (pps_1 ? "true" : "false") << std::endl;
+  //  } else {
+  //  return; // Skip the rest of the function if the condition is false
+  //  
+
+    /*if (ev_.nHFRecHits > 0) {
+        // Print out the computed values for verification
+        std::cout << "HFpSumEnergy: " << HFpSumEnergy << ", HFpMaxEnergy: " << HFpMaxEnergy 
+                  << ", HFpEtaMaxEnergy: " << HFpEtaMaxEnergy << ", Hits: " << HFpHitCount << std::endl;
+        std::cout << "HFnSumEnergy: " << HFnSumEnergy << ", HFnMaxEnergy: " << HFnMaxEnergy 
+                  << ", HFnEtaMaxEnergy: " << HFnEtaMaxEnergy << ", Hits: " << HFnHitCount << std::endl;
+    }*/
+
+
+    tree_->Fill();
 }
 
 
 // ------------ method called once each job just before starting event loop  ------------
 void
 MiniAnalyzer::beginJob(){
+
 }
 
 //

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Common parameters
+runOnData="True"
+era="era2017_F"
+ListVars="ttbar_data"
+outputBasePath="/eos/home-a/acotarod/Thesis/Updates/Updates_Antonio/february_2024/minievents_v1/v1_hf_ntrk/data/third_set"
+inputBasePath="/store/data/Run2017F/SingleMuon/MINIAOD/UL2017_MiniAODv2-v1/270000"
+counter=240
+
+# Array of unique parts of input file paths
+inputFiles=(
+"03AEB1AC-A537-CA48-AF96-84C6900C8C82.root"
+"420E6641-5FCC-4E49-B772-AEB7B6845045.root"
+"973A6C30-1909-674B-B1BF-994B4AD44F76.root"
+"0A4B4AC1-3F54-8743-B549-247E0BC5E724.root"
+"6D6A0552-6095-8A41-8018-6A14992BC657.root"
+"C57D15B5-E666-E749-ADC0-F971507C0DFA.root"
+"4579422A-08E4-FB48-9302-EBB1B6A39CCF.root"
+"4713B82B-243B-BE49-815A-F9A98DC35794.root"
+"B05F08EC-96E9-4641-B288-E450549321C3.root"
+"3ED1EC41-6524-1047-B7B6-52C273B23445.root"
+"448E98AD-5FA0-874E-83B3-288977B6D4A6.root"
+"A5F1BD75-76D5-1344-BF20-05705140DF5B.root"
+"E0DAEEB7-55B7-1349-9C8B-6D9D7A27291D.root"
+"4474A2B4-A2AF-5645-8F27-2A9C52E61129.root"
+"4C87E7CF-C4AF-8B49-98D4-7C5A99F02048.root"
+"EABCA053-39C9-3E4A-8D27-D35B63E2C37E.root"
+"44A5E8C7-70C3-684A-98C8-50CD7976B24B.root"
+"ABB1EC7B-5F5B-6A4F-9F30-5317EFB41774.root"
+"883C40E8-C196-4A4B-BF02-5E8D2213BDCA.root"
+"F029DDA3-BC69-7449-AB37-232102DD3135.root"
+"FF436787-1310-504B-AE8A-4CA62F860BCB.root"
+"4E8860A6-1998-B54C-B623-004AD05AE3BF.root"
+"F55AD375-BC6F-F84A-9F8F-9D220B136A59.root"
+"76EFEB3B-CE24-9544-9815-ACFB216B1279.root"
+"8254F321-4A93-684F-BB1D-A723CDBD060C.root"
+"DCF5D9A0-68C6-7144-BC70-7CFDCF828950.root"
+"59BF4825-7D2A-804A-83B1-5223FF8B2ED5.root"
+"BE9C5F07-D34B-8E48-B7D3-190AC2169498.root"
+"69604507-DA21-FB46-8741-D5CCF4471920.root"
+"F59E6507-5CF7-0F4D-96E5-BAC9E0ACEE8B.root"
+)
+
+# Loop through the input files
+for file in "${inputFiles[@]}"; do
+    inputFile="${inputBasePath}/${file}"
+    outputFile="${outputBasePath}/test_SingleMuon_B_hf_ntrk_third-set_v${counter}.root"
+    cmsRun /eos/home-a/acotarod/Thesis/CMSSW_MP_PROTON/CMSSW_10_6_X/CMSSW_10_6_20/src/TopLJets2015/TopAnalysis/test/runMiniAnalyzer_cfg.py runOnData=$runOnData era=$era inputFile=$inputFile outFilename=$outputFile ListVars=$ListVars
+    ((counter++))
+done
