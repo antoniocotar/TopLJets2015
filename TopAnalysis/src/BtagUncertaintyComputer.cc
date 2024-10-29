@@ -18,15 +18,26 @@ BTagSFUtil::~BTagSFUtil() {
 
 }
 
-//
+// change to deep jet
+/*
 void BTagSFUtil::addBTagDecisions(MiniEvent_t &ev,float wp,float wpl) {
   for (int k = 0; k < ev.nj; k++) {
     if (ev.j_hadflav[k] >= 4) ev.j_btag[k] = (ev.j_deepcsv[k] > wp);
     else                      ev.j_btag[k] = (ev.j_deepcsv[k] > wpl);
   }
 }
+*/
 
+void BTagSFUtil::addBTagDecisions(MiniEvent_t &ev,float wp,float wpl) {
+  for (int k = 0; k < ev.nj; k++) {
+    if (ev.j_hadflav[k] >= 4) ev.j_btag[k] = (ev.j_deepjet[k] > wp);
+    else                      ev.j_btag[k] = (ev.j_deepjet[k] > wpl);
+  }
+}
+
+// change for deepjet
 // method 1a -weight ev
+/*
 double BTagSFUtil::getBtagWeightMethod1a(std::vector<Jet> &jetColl, MiniEvent_t &ev,TString sys) {
 
   double csvWgtHF = 1., csvWgtLF = 1., csvWgtC = 1.;
@@ -57,6 +68,40 @@ double BTagSFUtil::getBtagWeightMethod1a(std::vector<Jet> &jetColl, MiniEvent_t 
   
   return csvWgtTotal;
 }     
+
+*/
+
+double BTagSFUtil::getBtagWeightMethod1a(std::vector<Jet> &jetColl, MiniEvent_t &ev,TString sys) {
+
+  double deepjetWgtHF = 1., deepjetWgtLF = 1., deepjetWgtC = 1.;
+  for(auto j : jetColl) {
+
+    float jptForBtag(j.Pt()>1000. ? 999. : j.Pt()), jetaForBtag(fabs(j.Eta()));
+    int k=j.getJetIndex();
+    float deepjet=ev.j_deepjet[k];
+
+    if (abs(ev.j_hadflav[k])==5) {
+      std::string sysHF(sys.Contains("cferr") ? "central" : sys);
+      double iDeepJetWgtHF = btvCSVCalibReaders_[BTagEntry::FLAV_B]->eval_auto_bounds(sysHF,BTagEntry::FLAV_B, jetaForBtag, jptForBtag, deepjet);      
+      if( iDeepJetWgtHF!=0 ) deepjetWgtHF *= iDeepJetWgtHF;                
+    }
+    else if(abs(ev.j_hadflav[k])==4) {
+      std::string sysC(sys.Contains("cferr") ? sys : "central");
+      double iDeepJetWgtC = btvCSVCalibReaders_[BTagEntry::FLAV_C]->eval_auto_bounds(sysC, BTagEntry::FLAV_C, jetaForBtag, jptForBtag, deepjet);
+      if( iDeepJetWgtC!=0 ) deepjetWgtC *= iDeepJetWgtC;	   
+    }
+    else { //LF
+      std::string sysLF(sys.Contains("cferr") ? "central" : sys);       
+      double iDeepJetWgtLF = btvCSVCalibReaders_[BTagEntry::FLAV_UDSG]->eval_auto_bounds(sysLF,BTagEntry::FLAV_UDSG, jetaForBtag, jptForBtag, deepjet);
+      if( iDeepJetWgtLF!=0 ) deepjetWgtLF *= iDeepJetWgtLF;
+    } 
+  }
+  
+  double deepjetWgtTotal = deepjetWgtHF * deepjetWgtC * deepjetWgtLF;
+  
+  return deepjetWgtTotal;
+}     
+
 
 //
 void BTagSFUtil::updateBTagDecisions(MiniEvent_t &ev,std::string optionbc, std::string optionlight) {
@@ -126,11 +171,15 @@ bool BTagSFUtil::applySF(bool& isBTagged, float Btag_SF, float Btag_eff){
   return newBTag;
 }
 
-//
+// change for deepjet
+/*
 void BTagSFUtil::startBTVcalibrationReaders(TString era,BTagEntry::OperatingPoint btagOP)
 {
   //start the btag calibration
-  TString btagUncUrl( era+"/DeepCSV_106XUL17SF_WPonly_V2.csv"); 
+
+  //TString btagUncUrl( era+"/DeepCSV_106XUL17SF_WPonly_V2.csv"); 
+
+  TString btagUncUrl( era+"/wp_deepJet.csv");
   if(era.Contains("2016")) btagUncUrl=era+"/DeepCSV_2016LegacySF_V1.csv"; 
   gSystem->ExpandPathName(btagUncUrl);
   BTagCalibration btvcalib("DeepCSV",btagUncUrl.Data());
@@ -156,7 +205,47 @@ void BTagSFUtil::startBTVcalibrationReaders(TString era,BTagEntry::OperatingPoin
   //btvCSVCalibReaders_[BTagEntry::FLAV_C]->load(btvcalib,BTagEntry::FLAV_UDSG,"iterativefit");
 }
 
-//
+*/
+
+void BTagSFUtil::startBTVcalibrationReaders(TString era,BTagEntry::OperatingPoint btagOP)
+{
+  // Start the btag calibration
+  TString btagUncUrl(era + "/wp_deepJet.csv"); // Update with the correct file
+  if(era.Contains("2016")) btagUncUrl=era+"/DeepJet_2016LegacySF_V1p2.csv"; 
+  gSystem->ExpandPathName(btagUncUrl);
+  BTagCalibration btvcalib("DeepJet", btagUncUrl.Data()); // Use "DeepJet"
+
+  // Initialize calibration readers for b, c, and light jets
+  btvCalibReaders_[BTagEntry::FLAV_B] = new BTagCalibrationReader(btagOP, "central", {"up", "down"});
+  btvCalibReaders_[BTagEntry::FLAV_B]->load(btvcalib, BTagEntry::FLAV_B, "comb");
+  
+  btvCalibReaders_[BTagEntry::FLAV_C] = new BTagCalibrationReader(btagOP, "central", {"up", "down"});
+  btvCalibReaders_[BTagEntry::FLAV_C]->load(btvcalib, BTagEntry::FLAV_C, "comb");
+  
+  btvCalibReaders_[BTagEntry::FLAV_UDSG] = new BTagCalibrationReader(btagOP, "central", {"up", "down"});
+  btvCalibReaders_[BTagEntry::FLAV_UDSG]->load(btvcalib, BTagEntry::FLAV_UDSG, "incl");
+
+  // Initialize calibration readers for reshaping (DeepJet)
+  btvCSVCalibReaders_[BTagEntry::FLAV_B] = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central", 
+    {"up_jes", "down_jes", "up_lf", "down_lf", "up_hf", "down_hf",
+     "up_hfstats1", "down_hfstats1", "up_hfstats2", "down_hfstats2",
+     "up_lfstats1", "down_lfstats1", "up_lfstats2", "down_lfstats2"});
+  btvCSVCalibReaders_[BTagEntry::FLAV_B]->load(btvcalib, BTagEntry::FLAV_B, "iterativefit");
+
+  btvCSVCalibReaders_[BTagEntry::FLAV_C] = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central", 
+    {"up_cferr1", "down_cferr1", "up_cferr2", "down_cferr2"});
+  btvCSVCalibReaders_[BTagEntry::FLAV_C]->load(btvcalib, BTagEntry::FLAV_C, "iterativefit");
+
+  btvCSVCalibReaders_[BTagEntry::FLAV_UDSG] = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central",
+    {"up_jes", "down_jes", "up_lf", "down_lf", "up_hf", "down_hf",
+     "up_hfstats1", "down_hfstats1", "up_hfstats2", "down_hfstats2",
+     "up_lfstats1", "down_lfstats1", "up_lfstats2", "down_lfstats2"});
+  btvCSVCalibReaders_[BTagEntry::FLAV_UDSG]->load(btvcalib, BTagEntry::FLAV_UDSG, "iterativefit");
+}
+
+
+// changes for deepjet 
+/*
 void BTagSFUtil::readExpectedBtagEff(TString era,BTagEntry::OperatingPoint btagOp,TString btagExp)
 {
   //open up the ROOT file with the expected efficiencies
@@ -173,3 +262,23 @@ void BTagSFUtil::readExpectedBtagEff(TString era,BTagEntry::OperatingPoint btagO
   expBtagEff_[BTagEntry::FLAV_UDSG] = (TGraphAsymmErrors *)beffIn->Get(baseDir+"/udsg");
   beffIn->Close();
 }
+*/
+
+void BTagSFUtil::readExpectedBtagEff(TString era,BTagEntry::OperatingPoint btagOp,TString btagExp)
+{
+  // Open the ROOT file with the expected efficiencies
+  TString btagEffExpUrl(Form("%s/expectedBtagEff.root", era.Data()));
+  gSystem->ExpandPathName(btagEffExpUrl);
+
+  TFile *beffIn = TFile::Open(btagEffExpUrl);
+  TString baseDir("DeepJet_"); // Change to "DeepJet_"
+  if(btagOp==BTagEntry::OP_LOOSE) baseDir += "loose";
+  if(btagOp==BTagEntry::OP_MEDIUM) baseDir += "medium";
+  if(btagOp==BTagEntry::OP_TIGHT) baseDir += "tight";
+  expBtagEff_[BTagEntry::FLAV_B]    = (TGraphAsymmErrors *)beffIn->Get(baseDir + "/b");
+  expBtagEff_[BTagEntry::FLAV_C]    = (TGraphAsymmErrors *)beffIn->Get(baseDir + "/c");
+  expBtagEff_[BTagEntry::FLAV_UDSG] = (TGraphAsymmErrors *)beffIn->Get(baseDir + "/udsg");
+  beffIn->Close();
+}
+
+// ready

@@ -32,8 +32,11 @@ def saveExpectedBtagEff(opt):
 
         print '\t Starting',x
         tagger,op,opval=x.split(':')        
-        cut='j_%s>%s'%('deepcsv',opval)
         
+        # changes for deepjet
+        #cut='j_%s>%s'%('deepcsv',opval)
+        cut='j_%s>%s'%('deepjet',opval)
+
         #count number of tagged jets
         effgrs[(tagger,op)]={}
         for flav,cond in flavConds:

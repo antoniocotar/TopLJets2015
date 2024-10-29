@@ -121,10 +121,19 @@ def main():
     #parse list of systematic variations
     varList=[]
     if opt.systVar == 'all':
+        
+        # changes made for deepjet (uncomment for deepcsv)
+        '''
         allSystVars = ['jec_CorrelationGroupMPFInSitu', 'jec_RelativeFSR',
                        'jec_CorrelationGroupUncorrelated', 'jec_FlavorPureGluon', 'jec_FlavorPureQuark',
                        'jec_FlavorPureCharm', 'jec_FlavorPureBottom', 'jer',
                        'btag_heavy', 'btag_light', 'csv_heavy', 'csv_light', 'tracking']
+        '''
+        allSystVars = ['jec_CorrelationGroupMPFInSitu', 'jec_RelativeFSR',
+                'jec_CorrelationGroupUncorrelated', 'jec_FlavorPureGluon', 'jec_FlavorPureQuark',
+                'jec_FlavorPureCharm', 'jec_FlavorPureBottom', 'jer',
+                'btag_heavy', 'btag_light', 'tracking']
+
         for var in allSystVars:
             varList.append(var+'_up')
             varList.append(var+'_down')

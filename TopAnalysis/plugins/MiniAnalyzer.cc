@@ -1564,10 +1564,17 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.j_qg[ev_.nj]      = j->userFloat("QGTagger:qgLikelihood");
       ev_.j_pumva[ev_.nj]   = j->userFloat("pileupJetId:fullDiscriminant");
       ev_.j_id[ev_.nj]      = j->userInt("pileupJetId:fullId");
-      ev_.j_csv[ev_.nj]     = j->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
-      ev_.j_deepcsv[ev_.nj] = j->bDiscriminator("pfDeepCSVJetTags:probb") + j->bDiscriminator("pfDeepCSVJetTags:probbb");
+      
+      //ev_.j_csv[ev_.nj]     = j->bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags");
+
+      //ev_.j_deepcsv[ev_.nj] = j->bDiscriminator("pfDeepCSVJetTags:probb") + j->bDiscriminator("pfDeepCSVJetTags:probbb");
       //https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
-	    ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.4506);
+
+      ev_.j_deepjet[ev_.nj] = j->bDiscriminator("pfDeepFlavourJetTags:probb") + j->bDiscriminator("pfDeepFlavourJetTags:probbb") + j->bDiscriminator("pfDeepFlavourJetTags:problepb");
+      //  https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
+
+      //ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.4506);
+	    ev_.j_btag[ev_.nj]    = (ev_.j_deepjet[ev_.nj]>0.3040); // Medium working point
       ev_.j_emf[ev_.nj]     = CEMF+NEMF;
 
 	  
@@ -2218,3 +2225,6 @@ MiniAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(MiniAnalyzer);
+
+
+// ready

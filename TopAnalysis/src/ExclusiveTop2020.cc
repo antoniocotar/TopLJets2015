@@ -125,7 +125,10 @@ void RunExclusiveTop2020(const TString in_fname,
   
   int jet_n(0);
   float jet_pt[ev.MAXJET];
-  float jet_deepcsv[ev.MAXJET];
+  
+  // changes for deepjet (uncomment below for deepcsv)
+  //float jet_deepcsv[ev.MAXJET];
+  float jet_deepjet[ev.MAXJET];
 
   TTree *outT=new TTree("tree","tree");
   if(skimtree) {
@@ -146,8 +149,12 @@ void RunExclusiveTop2020(const TString in_fname,
 
 	outT->Branch("jet_n",&jet_n,"jet_n/I");
 	outT->Branch("jet_pt",jet_pt,"jet_pt[jet_n]/F");
-	outT->Branch("jet_deepcsv",jet_deepcsv,"jet_deepcsv[jet_n]/F");
 	
+	// changes for deepjet (uncomment below for deepcsv)
+	//outT->Branch("jet_deepcsv",jet_deepcsv,"jet_deepcsv[jet_n]/F");
+	outT->Branch("jet_deepjet",jet_deepjet,"jet_deepjet[jet_n]/F");
+
+
 	// fill custom variables
 	for(size_t i=0; i<sizeof(bvars)/sizeof(TString); i++){
 	  ADDVAR(&(boutVars[bvars[i]]),bvars[i],"/O",outT);
@@ -298,7 +305,11 @@ void RunExclusiveTop2020(const TString in_fname,
       for(size_t ij=0; ij<allJets.size(); ij++) {
 		  foutVars["HT"]+=allJets[ij].pt();
 		  jet_pt[ij] = allJets[ij].pt();
-		  jet_deepcsv[ij] = ev.j_deepcsv[allJets[ij].getJetIndex()];
+		  
+		  // changes for deepjet (uncomment below for deepcsv)
+		  //jet_deepcsv[ij] = ev.j_deepcsv[allJets[ij].getJetIndex()];
+		  jet_deepjet[ij] = ev.j_deepjet[allJets[ij].getJetIndex()];
+
 		  if(ev.j_btag[allJets[ij].getJetIndex()]) {
 			  ioutVars["nbj"]++;
 			  bJets.push_back(allJets[ij]);
@@ -513,3 +524,6 @@ void RunExclusiveTop2020(const TString in_fname,
   
   fOut->Close();
 }
+
+
+// ready

@@ -73,7 +73,12 @@ struct MiniEvent_t
   Int_t nlightjets;
   Float_t j_pt[MAXJET],j_eta[MAXJET],j_phi[MAXJET],j_mass[MAXJET],j_area[MAXJET],j_rawsf[MAXJET];
   Float_t j_jerUp[MAXJET],j_jerDn[MAXJET],j_jecUp[MAXJETSYS][MAXJET],j_jecDn[MAXJETSYS][MAXJET];
-  Float_t j_csv[MAXJET],j_deepcsv[MAXJET],j_pumva[MAXJET],j_emf[MAXJET],j_qg[MAXJET];
+  
+  // change for deepjet j_pumva, j_emf, j_qg need to be changed?
+  //Float_t j_csv[MAXJET],j_deepJet[MAXJET]
+  
+  Float_t j_deepjet[MAXJET];
+  Float_t j_pumva[MAXJET],j_emf[MAXJET],j_qg[MAXJET];
   Float_t j_c2_00[MAXJET],j_c2_02[MAXJET],j_c2_05[MAXJET],j_c2_10[MAXJET],j_c2_20[MAXJET];
   Float_t j_zg[MAXJET],j_mult[MAXJET],j_gaptd[MAXJET],j_gawidth[MAXJET],j_gathrust[MAXJET],j_tau32[MAXJET],j_tau21[MAXJET];
   Float_t j_vtxmass[MAXJET],j_vtx3DVal[MAXJET],j_vtx3DSig[MAXJET],j_vtxpx[MAXJET],j_vtxpy[MAXJET],j_vtxpz[MAXJET];
@@ -179,3 +184,5 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t, std::vector<std::string
 void attachToMiniEventTree(TTree *t, MiniEvent_t &ev);
 
 #endif
+
+//ready 2

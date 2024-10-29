@@ -172,7 +172,11 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("j_mass",     ev.j_mass,    "j_mass[nj]/F");
   t->Branch("j_pumva",    ev.j_pumva,   "j_pumva[nj]/F");
   t->Branch("j_id",       ev.j_id,      "j_id[nj]/I");
-  t->Branch("j_csv",      ev.j_csv,     "j_csv[nj]/F");
+  
+  //change for deep jet
+  //t->Branch("j_csv",      ev.j_csv,     "j_csv[nj]/F");
+  t->Branch("j_deepjet",      ev.j_deepjet,     "j_deepjet[nj]/F");
+
   t->Branch("j_btag",     ev.j_btag,    "j_btag[nj]/O");
   t->Branch("j_emf",      ev.j_emf,     "j_emf[nj]/F");
   t->Branch("j_qg",       ev.j_qg,      "j_qg[nj]/F");
@@ -188,7 +192,11 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("j_gathrust", ev.j_gathrust,"j_gathrust[nj]/F");
   t->Branch("j_tau32",    ev.j_tau32,   "j_tau32[nj]/F");
   t->Branch("j_tau21",    ev.j_tau21,   "j_tau21[nj]/F");
-  t->Branch("j_deepcsv",  ev.j_deepcsv, "j_deepcsv[nj]/F");
+  
+  
+  //change for deep jet
+  //t->Branch("j_deepcsv",  ev.j_deepcsv, "j_deepcsv[nj]/F");
+
   t->Branch("j_vtxpx",    ev.j_vtxpx,   "j_vtxpx[nj]/F");
   t->Branch("j_vtxpy",    ev.j_vtxpy,   "j_vtxpy[nj]/F");
   t->Branch("j_vtxpz",    ev.j_vtxpz,   "j_vtxpz[nj]/F");
@@ -514,7 +522,12 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("j_mass",     ev.j_mass);
   t->SetBranchAddress("j_pumva",    ev.j_pumva);
   t->SetBranchAddress("j_id",       ev.j_id);
-  t->SetBranchAddress("j_csv",      ev.j_csv);
+
+  // changes made for deepjet
+  //t->SetBranchAddress("j_csv",      ev.j_csv);
+  t->SetBranchAddress("j_deepjet",      ev.j_deepjet);
+
+  
   t->SetBranchAddress("j_btag",     ev.j_btag);
   t->SetBranchAddress("j_emf",      ev.j_emf);
   t->SetBranchAddress("j_qg",       ev.j_qg);
@@ -530,7 +543,10 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("j_gathrust", ev.j_gathrust);
   t->SetBranchAddress("j_tau32",    ev.j_tau32);
   t->SetBranchAddress("j_tau21",    ev.j_tau21);
-  t->SetBranchAddress("j_deepcsv",  ev.j_deepcsv);
+  
+  // changes made for deepjet (uncomment for deepcsv)
+  //t->SetBranchAddress("j_deepcsv",  ev.j_deepcsv);
+
   t->SetBranchAddress("j_vtxpx",    ev.j_vtxpx);
   t->SetBranchAddress("j_vtxpy",    ev.j_vtxpy);
   t->SetBranchAddress("j_vtxpz",    ev.j_vtxpz);
@@ -659,3 +675,5 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   }
   
 }
+
+//ready

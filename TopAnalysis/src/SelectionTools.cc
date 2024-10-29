@@ -568,8 +568,13 @@ std::vector<Jet> SelectionTool::getGoodJets(MiniEvent_t &ev, double minPt, doubl
     
     //jet.setScaleUnc(0.5*(jecUp+jecDn));
     Jet jet(jp4, flavor, k);
-    jet.setCSV(ev.j_csv[k]);
-    jet.setDeepCSV(ev.j_deepcsv[k]);
+    
+    // changes for deepjet (uncomment lines below for deepcsv use)
+    //jet.setCSV(ev.j_csv[k]);
+    //jet.setDeepCSV(ev.j_deepcsv[k]);
+    jet.setDeepJET(ev.j_deepjet[k]);
+
+    
     jet.setPUMVA(ev.j_pumva[k]);
 	
     //cross clean with leptons/photons
@@ -588,8 +593,10 @@ std::vector<Jet> SelectionTool::getGoodJets(MiniEvent_t &ev, double minPt, doubl
     if(debug_)
       cout << "Jet #" << jets.size() 
            << " pt=" << jp4.Pt() << "+/-" << jet.getScaleUnc()*jp4.Pt() << " (jec+jer)"
-           << " eta=" << jp4.Eta() << " deepCSV=" << ev.j_deepcsv[k] << " flav=" << jflav << endl;
-    
+           // changes made for deepjet (uncomment below to use deepcsv)
+           //<< " eta=" << jp4.Eta() << " deepCSV=" << ev.j_deepcsv[k] << " flav=" << jflav << endl;
+           << " eta=" << jp4.Eta() << " DeepJET=" << ev.j_deepjet[k] << " flav=" << jflav << endl;
+
     jets.push_back(jet);
   }
   
@@ -832,3 +839,4 @@ std::vector<Jet> SelectionTool::getGenJets(MiniEvent_t &ev, double minPt, double
 
 
 
+//ready
