@@ -91,9 +91,12 @@ def submitProduction(tag,lfnDirBase,dataset,isData,cfg,workDir,lumiMask,era='era
     if submit : os.system('alias crab=\'/cvmfs/cms.cern.ch/crab3/crab-env-bootstrap.sh\' && crab submit -c %s' % crabConfigFile )
 
 def isSignal(tag):
-  if 'DYToMuMu_pomflux' in tag: return True
-  if 'GGToEE' in tag: return True
-  if 'GGToMuMu' in tag: return True
+  #if 'DYToMuMu_pomflux' in tag: return True
+  #if 'GGToEE' in tag: return True
+  #if 'GGToMuMu' in tag: return True
+  if 'APtoTT' in tag: return True
+  if 'APtoTW' in tag: return True
+  if 'TT-pomflux' in tag: return True
   return False
 
 """
