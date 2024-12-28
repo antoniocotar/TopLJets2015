@@ -409,6 +409,7 @@ void RunExclusiveTop(TString filename,
 
     //B-TAG CALIBRATION
     //BTagSFUtil btvSF(era,"DeepCSV",BTagEntry::OperatingPoint::OP_MEDIUM,"",0);
+    // yes, related to deepjet (medium?)
     BTagSFUtil btvSF(era,BTagEntry::OperatingPoint::OP_MEDIUM,"",seed);
 
     // Proton correction class
@@ -718,39 +719,47 @@ void RunExclusiveTop(TString filename,
 	// selector.minJetPt = 25;
 
 	// JEC/JER settings
+    // This can be modified by deepjet version
 	int sys = 0;
-	if(systVar.find("jerUp")!=string::npos) sys = 1;
-	if(systVar.find("jerDn")!=string::npos) sys = -1;
-	if(systVar.find("jecUp")!=string::npos) sys = 2;
-	if(systVar.find("jecDn")!=string::npos) sys = -2;
-    if(systVar.find("jecAbsUp")!=string::npos) sys = 3;
-	if(systVar.find("jecAbsDn")!=string::npos) sys = -3;
-    if(systVar.find("jecRelUp")!=string::npos) sys = 4;
-	if(systVar.find("jecRelDn")!=string::npos) sys = -4;
-    if(systVar.find("jecPileupUp")!=string::npos) sys = 5;
-	if(systVar.find("jecPileupDn")!=string::npos) sys = -5;
-    if(systVar.find("jecFlavUp")!=string::npos) sys = 6;
-	if(systVar.find("jecFlavDn")!=string::npos) sys = -6;
-    if(systVar.find("jecHighPtUp")!=string::npos) sys = 7;
-	if(systVar.find("jecHighPtDn")!=string::npos) sys = -7;
-    if(systVar.find("jecTimeUp")!=string::npos) sys = 8;
-	if(systVar.find("jecTimeDn")!=string::npos) sys = -8;
+	if(systVar.find("jerUp")!=string::npos) sys = 1; // y 
+	if(systVar.find("jerDn")!=string::npos) sys = -1; // y
+	if(systVar.find("jecUp")!=string::npos) sys = 2; // y
+	if(systVar.find("jecDn")!=string::npos) sys = -2; // y
+    if(systVar.find("jecAbsUp")!=string::npos) sys = 3; // n
+	if(systVar.find("jecAbsDn")!=string::npos) sys = -3; // n
+    if(systVar.find("jecRelUp")!=string::npos) sys = 4; // n
+	if(systVar.find("jecRelDn")!=string::npos) sys = -4; // n
+    if(systVar.find("jecPileupUp")!=string::npos) sys = 5; // n
+	if(systVar.find("jecPileupDn")!=string::npos) sys = -5; // n
+    if(systVar.find("jecFlavUp")!=string::npos) sys = 6; // y
+	if(systVar.find("jecFlavDn")!=string::npos) sys = -6; // y
+    if(systVar.find("jecHighPtUp")!=string::npos) sys = 7; // n
+	if(systVar.find("jecHighPtDn")!=string::npos) sys = -7; // n
+    if(systVar.find("jecTimeUp")!=string::npos) sys = 8; // n
+	if(systVar.find("jecTimeDn")!=string::npos) sys = -8; // n
 	if(sys>0){cout << "INFO: Running JEC/JER up variation"<<endl;}
 	else if(sys<0){cout << "INFO: Running JEC/JER down variation"<<endl;}
 	else{cout << "INFO: Running nominal jet callibration"<<endl;}
 
 	// btagSF settings
-	string optionlf = "central", optionhf = "central";
-	if(systVar.find("btaghfUp")!=string::npos) {
+    // yes, related to deepjet ()
+	
+    // jet options
+    string optionlf = "central", optionhf = "central";
+
+    // conditions over btag heavy and light
+    // need to be modified for deep jet version? 1. no 
+
+    if(systVar.find("btaghfUp")!=string::npos) {
 		cout << "INFO: Running btaghf up variation, seed = "<< seed << endl;
-		optionhf = "up";}
+		optionhf = "up";} // yes, related to deepjet
 	else if(systVar.find("btaghfDn")!=string::npos) {
 		cout << "INFO: Running btaghf down variation, seed = "<< seed << endl;
-		optionhf = "down";}
-        else if(systVar.find("btaglfUp")!=string::npos) {
+		optionhf = "down";} // yes, related to deepjet
+        else if(systVar.find("btaglfUp")!=string::npos) { // yes, related to deepjet
                 cout << "INFO: Running btaglf up variation, seed = "<< seed << endl;
                 optionlf = "up";}
-        else if(systVar.find("btaglfDn")!=string::npos) {
+        else if(systVar.find("btaglfDn")!=string::npos) { // yes, related to deepjet
                 cout << "INFO: Running btaglf down variation, seed = "<< seed << endl;
                 optionlf = "down";}
 	else{cout << "INFO: Running nominal btag SF, seed = "<< seed << endl;}
@@ -1189,6 +1198,7 @@ void RunExclusiveTop(TString filename,
         ht.fill("evt_count", 7, plotwgts); // count events after selection on number of jets
 #endif
         // Comment this line when running over QCD Control retion
+        // yes, this is related to deepjet (uncomment to cut bjets n <= 2)
 		if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
 #ifdef HISTOGRAMS_ON
         ht.fill("evt_count", 8, plotwgts); // count events after selection on number of Bjets
