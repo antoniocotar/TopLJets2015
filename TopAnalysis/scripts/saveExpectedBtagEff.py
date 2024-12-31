@@ -8,9 +8,9 @@ def saveExpectedBtagEff(opt):
     """loops over events and computes expected tagging efficiency per flavour"""
 
     #prepare data chain
-    inputDir=opt.input
-    input_list=getEOSlslist(directory=inputDir)
-    data=ROOT.TChain('analysis/data') 
+    #inputDir=opt.input
+    input_list = [opt.input]
+    data=ROOT.TChain('analysis/tree') 
     for i in xrange(0,min(5,len(input_list))):
         data.Add(input_list[i])
     print 'Projecting tagging efficiency from ',data.GetEntries(),' events'
