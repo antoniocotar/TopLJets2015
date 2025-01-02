@@ -1,6 +1,6 @@
 # TopLJets2015
 
-## Installation instructions
+## Installation instructions (Modify this for tttbar photoproduction)
 
 These installation instructions correspond to the 2017 data/MC production.
 To install execute the following in your work area.
