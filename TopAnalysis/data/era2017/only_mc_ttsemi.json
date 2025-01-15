@@ -1,0 +1,3 @@
+{
+    "MC13TeV_2017_TTSemileptonic"                : [365.34, 0,     "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "ttbar_semi", 920, true, false, 1]
+}

@@ -1,0 +1,19 @@
+/eos/home-a/acotarod/Thesis/CMSSW_MP_PROTON/CMSSW_10_6_X/CMSSW_10_6_20/src/TopLJets2015/TopAnalysis/bin/
+├── analysisWrapper.cc
+├── analyticmattfit_xi_errors
+├── analyticmattfit_xi_errors.cc
+├── BuildFile.xml
+├── createQCDSample.cc
+├── createQCDSampleMVA.cc
+├── getShapes.cc
+├── histo_data_final.root
+├── mergePileupProtons.cc
+├── runFRcalculation.cc
+├── runTMVAClassification.cc
+├── TMVAClassificationApplication.cc
+├── TT_photo_both_dir_nominal_enriched_chi2.root
+├── ttphoto_chi2.root
+├── ttsemi_chi2.root
+└── TTToSemileptonic_ntuples_nominal_enriched_chi2.root
+
+0 directories, 16 files

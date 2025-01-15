@@ -407,8 +407,15 @@ void RunExclusiveTop(TString filename,
     //LEPTON EFFICIENCIES
     EfficiencyScaleFactorsWrapper lepEffH(isData,era);
 
+
+    // Debugging information
+    std::cout << "Debugging before initializing BTagSFUtil:" << std::endl;
+    std::cout << "  Era: " << era << std::endl;
+    std::cout << "  Operating Point: " << BTagEntry::OperatingPoint::OP_MEDIUM << std::endl;
+    std::cout << "  Seed: " << seed << std::endl;
+
     //B-TAG CALIBRATION
-    //BTagSFUtil btvSF(era,"DeepCSV",BTagEntry::OperatingPoint::OP_MEDIUM,"",0);
+    //BTagSFUtil btvSF(era,"DeepJet",BTagEntry::OperatingPoint::OP_MEDIUM,"",0);
     // yes, related to deepjet (medium?)
     BTagSFUtil btvSF(era,BTagEntry::OperatingPoint::OP_MEDIUM,"",seed);
 

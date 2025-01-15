@@ -149,7 +149,7 @@ def main():
         if '2017B_SingleElectron' in tag or '2017C_SingleElectron' in tag: opt.addParents=False # 2017B,C AOD only on TAPE 
         if isSignal(tag):
           for xangle in ['120', '130', '140', '150']:
-            for sim_era in [opt.era+'_B',opt.era+'_F']:
+            for sim_era in [opt.era+'_B', opt.era+'_C', opt.era+'_D', opt.era+'_E', opt.era+'_F']:
               newtag = tag + '_signal_xa%s_%s' % (xangle, sim_era)
               submitProduction(tag=newtag,
                          lfnDirBase=lfnDirBase,

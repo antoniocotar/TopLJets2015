@@ -1,0 +1,196 @@
+/eos/home-a/acotarod/Thesis/CMSSW_MP_PROTON/CMSSW_10_6_X/CMSSW_10_6_20/src/TopLJets2015/TopAnalysis/test/
+├── analysis
+│   ├── computeL1PrefRatio.py
+│   ├── computeTransferFactor.py
+│   ├── computeTriggerEff.py
+│   ├── computeVBFRatios.py
+│   ├── computeVBFTriggerEff.py
+│   ├── l1prefire
+│   │   ├── JetAnalysis.C
+│   │   ├── JetAnalysis.h
+│   │   ├── makeZmassPlots.py
+│   │   └── runJetAnalysis.py
+│   ├── pps
+│   │   ├── checkFinalDiscrInteg.py
+│   │   ├── checkFinalNtupleInteg.py
+│   │   ├── collectEventsForMixing.py
+│   │   ├── combined_RPIN_CMS.json
+│   │   ├── compareBackgroundEstimation.py
+│   │   ├── compareOptimResults.py
+│   │   ├── compareWithZeroBias.py
+│   │   ├── computeDileptonSelEfficiency.py
+│   │   ├── drawRPtks.py
+│   │   ├── drawSignalPeak.py
+│   │   ├── effsummary_eez_ptboson.root
+│   │   ├── effsummary_lpta_ptboson.root
+│   │   ├── effsummary_mmz_ptboson.root
+│   │   ├── estimateLocalSensitivity.py
+│   │   ├── generateBinnedWorkspace.py
+│   │   ├── generateWorkspace.py
+│   │   ├── golden_noRP.json
+│   │   ├── importanceViaColumnPermutation.py
+│   │   ├── jetht_samples.json
+│   │   ├── mixedEvent.py
+│   │   ├── optimizeSR.py
+│   │   ├── plotLimits.py
+│   │   ├── plot_signal_samples.json
+│   │   ├── prepareFinalFits.py
+│   │   ├── prepareOptimScanCards.py
+│   │   ├── runExclusiveAnalysis.py
+│   │   ├── runLimits.sh
+│   │   ├── samples.json
+│   │   ├── showPreFitDistributions.py
+│   │   ├── showPUdiscriminatorPerformance.py
+│   │   ├── signal_resol_acc.pck
+│   │   ├── signal_samples.json
+│   │   ├── steerExclusiveZX.sh
+│   │   ├── trainPUdiscriminators.py
+│   │   ├── wrapAnalysis.sh
+│   │   ├── wrapOptim.sh
+│   │   ├── wrapPUDiscrTrain.sh
+│   │   ├── zbias_samples.json
+│   │   └── zx_samples.json
+│   ├── runVBFws.sh
+│   ├── steerVBFVectorBoson.sh
+│   ├── summer2019
+│   │   ├── inspectPlotter.py
+│   │   ├── samples_2016.json
+│   │   ├── samples_2017.json
+│   │   ├── samples_2017lowpu.json
+│   │   └── steerAnalysis.sh
+│   ├── top17010
+│   │   ├── checkDataCards.py
+│   │   ├── combinePlotsForAllCategories.py
+│   │   ├── compareLineShapes.py
+│   │   ├── createFit.py
+│   │   ├── doNuisanceReport.py
+│   │   ├── estimateDY.py
+│   │   ├── estimateLocalSensitivity.py
+│   │   ├── getMlbResolution.py
+│   │   ├── jerRelativeBreakup.dat
+│   │   ├── jer_relunc.root
+│   │   ├── mc2mc_corrections.root
+│   │   ├── mlbresol.root
+│   │   ├── nuisanceScan.py
+│   │   ├── parametrizeJERRelUnc.py
+│   │   ├── plotLikelihoodScanResults.py
+│   │   ├── prepareDataCard.py
+│   │   ├── prepareMC2MCCorrections.py
+│   │   ├── prepareTemplateFiles.py
+│   │   ├── runFitWrapper.sh
+│   │   ├── samples_2016.json
+│   │   ├── samples_2017.json
+│   │   ├── steerFits.sh
+│   │   ├── steerTOP17010.sh
+│   │   ├── submitPrepareDataCard.py
+│   │   ├── syst_samples_2016.json
+│   │   ├── syst_samples_2017.json
+│   │   ├── systs_dict_incjer.json
+│   │   └── systs_dict.json
+│   ├── VBFTraining.md
+│   └── VBF_weights
+│       ├── checkJER.py
+│       ├── getInverseCDFFromPlotter.py
+│       ├── getInverseCDF.py
+│       ├── HighMJJ_BDT_VBF0HighMJJ.class.C
+│       ├── HighMJJ_BDT_VBF0HighMJJ.weights.xml
+│       ├── HighPt_BDT_VBF0HighPt.class.C
+│       ├── HighPt_BDT_VBF0HighPt.weights.xml
+│       ├── HighVPtHighMJJ_BDT_VBF0HighVPtHighMJJ.class.C
+│       ├── HighVPtHighMJJ_BDT_VBF0HighVPtHighMJJ.weights.xml
+│       ├── HighVPtLowMJJ_BDT_VBF0HighVPtLowMJJ.class.C
+│       ├── HighVPtLowMJJ_BDT_VBF0HighVPtLowMJJ.weights.xml
+│       ├── inverse_cdfs.root
+│       ├── LowMJJ_BDT_VBF0LowMJJ.class.C
+│       ├── LowMJJ_BDT_VBF0LowMJJ.weights.xml
+│       ├── LowVPtHighMJJ_BDT_VBF0LowVPtHighMJJ.class.C
+│       ├── LowVPtHighMJJ_BDT_VBF0LowVPtHighMJJ.weights.xml
+│       └── makeTableOfVars.py
+├── check_pu_protons.sh
+├── commands_CMMSS_cmsrun_hf.txt
+├── crabConfig.py
+├── crab.log
+├── index.php
+├── run_data_first_set
+│   ├── run_data_singleMuonF_multiple.sh
+│   ├── run_data_singleMuonF_multiple_v2.sh
+│   ├── run_data_singleMuonF_multiple_v3.sh
+│   ├── run_data_singleMuonF_multiple_v4.sh
+│   ├── run_data_singleMuonF_multiple_v5.sh
+│   ├── run_data_singleMuonF_multiple_v6.sh
+│   ├── run_data_singleMuonF_multiple_v7.sh
+│   ├── run_data_singleMuonF_multiple_v8.sh
+│   └── run_data_singleMuonF_multiple_v9.sh
+├── run_data_fourth_set
+│   ├── run_data_singleMuonF_multiple.sh
+│   ├── run_data_singleMuonF_multiple_v2.sh
+│   ├── run_data_singleMuonF_multiple_v3.sh
+│   ├── run_data_singleMuonF_multiple_v4.sh
+│   ├── run_data_singleMuonF_multiple_v5.sh
+│   ├── run_data_singleMuonF_multiple_v6.sh
+│   ├── run_data_singleMuonF_multiple_v7.sh
+│   ├── run_data_singleMuonF_multiple_v8.sh
+│   └── run_data_singleMuonF_multiple_v9.sh
+├── run_data_second_set
+│   ├── data_das_singleMuonF_280000.txt
+│   ├── jec_DATA.db
+│   ├── jecUncSources.txt
+│   ├── jer_DATA.db
+│   ├── muoncorr_db.txt
+│   ├── qg_db.db
+│   ├── run_data_singleMuonF_multiple.sh
+│   ├── run_data_singleMuonF_multiple_v2.sh
+│   ├── run_data_singleMuonF_multiple_v3.sh
+│   ├── run_data_singleMuonF_multiple_v4.sh
+│   ├── run_data_singleMuonF_multiple_v5.sh
+│   ├── run_data_singleMuonF_multiple_v6.sh
+│   ├── run_data_singleMuonF_multiple_v7.sh
+│   ├── run_data_singleMuonF_multiple_v8.sh
+│   └── run_data_singleMuonF_multiple_v9.sh
+├── run_data_third_set
+│   ├── run_data_singleMuonF_multiple.sh
+│   ├── run_data_singleMuonF_multiple_v2.sh
+│   ├── run_data_singleMuonF_multiple_v3.sh
+│   ├── run_data_singleMuonF_multiple_v4.sh
+│   ├── run_data_singleMuonF_multiple_v5.sh
+│   ├── run_data_singleMuonF_multiple_v6.sh
+│   ├── run_data_singleMuonF_multiple_v7.sh
+│   ├── run_data_singleMuonF_multiple_v8.sh
+│   └── run_data_singleMuonF_multiple_v9.sh
+├── runL1PrefireAna_cfg.py
+├── runMiniAnalyzer_cfg.py
+├── runMiniAnalyzer_cfg.pyc
+├── run_minianalyzer.sh
+├── run_ttphoto
+│   ├── run_ttphoto_multiple_v1.sh
+│   ├── run_ttphoto_multiple_v2.sh
+│   ├── run_ttphoto_multiple_v3.sh
+│   ├── run_ttphoto_multiple_v4.sh
+│   ├── run_ttphoto_v1.sh
+│   └── run_ttphoto_v2.sh
+├── run_ttphoto_negative_era2017B_xa120_2files.sh
+├── run_ttphoto_positive_era2017B_xa120.sh
+├── run_ttsemi
+│   ├── run_ttsemi_multiple.sh
+│   ├── run_ttsemi_multiple_v2.sh
+│   ├── run_ttsemi_multiple_v3.sh
+│   └── run_ttsemi_multiple_v4.sh
+├── script_for_tree_information
+│   ├── file_tree_obtain.sh
+│   └── test_1
+│       ├── bin_tree.txt
+│       ├── data_tree.txt
+│       ├── interface_tree.txt
+│       ├── plugins_tree.txt
+│       ├── python_tree.txt
+│       ├── scripts_tree.txt
+│       ├── src_tree.txt
+│       └── test_tree.txt
+├── set_crab.sh
+├── submitLocalNtuplizer.sh
+├── ttphoto_local
+└── xdrp_root_files
+    ├── downloand.sh
+    └── failed_files.log
+
+16 directories, 177 files

@@ -1573,8 +1573,8 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       ev_.j_deepjet[ev_.nj] = j->bDiscriminator("pfDeepFlavourJetTags:probb") + j->bDiscriminator("pfDeepFlavourJetTags:probbb") + j->bDiscriminator("pfDeepFlavourJetTags:problepb");
       //  https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
 
-      //ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.4506);
-	    ev_.j_btag[ev_.nj]    = (ev_.j_deepjet[ev_.nj]>0.3040); // Medium working point
+      //ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.2770);
+	    ev_.j_btag[ev_.nj]    = (ev_.j_deepjet[ev_.nj]>0.2770); // Medium working point
       ev_.j_emf[ev_.nj]     = CEMF+NEMF;
 
 	  

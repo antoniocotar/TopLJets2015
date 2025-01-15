@@ -26,11 +26,16 @@ NOTE: for the events in /eos/cms/store/group/phys_top/TTbarCentralExclProd/ntupl
 #include "TopLJets2015/TopAnalysis/interface/PPSEff.h"
 #include "TopLJets2015/TopAnalysis/interface/EfficiencyScaleFactorsWrapper.h"
 
+#include <cstdlib>  // For std::rand() and std::srand()
 #include <time.h>
+
 using namespace std;
 
 int main(int argc, char* argv[])
 {
+
+  // Seed the random number generator once
+  std::srand(std::time(nullptr));	
 	
   // CMSSW settings  
   const char* CMSSW_BASE = getenv("CMSSW_BASE");
@@ -66,8 +71,9 @@ int main(int argc, char* argv[])
   string inMCFileName = argv[1];
   string inPUFileName = argv[2];
   string outFileName = inMCFileName.substr(inMCFileName.find_last_of('/') + 1, inMCFileName.find_last_of('.') - inMCFileName.find_last_of('/') - 1) + "_enriched.root";
-  bool isSignal = TString(inMCFileName.c_str()).Contains("ntuple") || TString(inMCFileName.c_str()).Contains("ExclusiveTTbar");
-  
+  bool isSignal = TString(inMCFileName.c_str()).Contains("ttphoto") ||
+                  TString(inMCFileName.c_str()).Contains("twphoto") ||
+                  TString(inMCFileName.c_str()).Contains("ttpomflux");  
   if (argc >= 4) {
     TString arg3 = TString(argv[3]);
     if (arg3.IsDec())
@@ -168,10 +174,20 @@ kipped." << endl;
    for(int i_era=0;i_era<n_era;i_era++) total_lumi+=era_lumi[i_era];
    
    float total_event_per_era[n_PUregions];
-   float norm_weight[n_PUregions], norm_weight_err[n_PUregions], fraction_regions[n_PUregions]; int counter_regions[n_PUregions];
+
+   // only for exlusive case
+   //float norm_weight[n_PUregions];    
+   //float norm_weight_err[n_PUregions];
+
+   float fraction_regions[n_PUregions];
+   int counter_regions[n_PUregions]; 
+
+
    float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
    float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
    float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
+   
+   // Modification for efficiency
    for(int i_era=0;i_era<n_era;i_era++){
 	   printf ("\rProcessing %s ", era[i_era].Data());
 	   TString name_el = Form("%s/SingleElectron_%s.root",inPUFileName.c_str(),era[i_era].Data());
@@ -216,14 +232,14 @@ kipped." << endl;
 		   TChain * _ch2 = new TChain("tree"); _ch2->Add(name_el); _ch2->Add(name_mu);
 		   fraction_regions[i_era*n_xa+i_xa] = _ch2->GetEntries(Form("beamXangle==%d",xangle[i_xa]));
 		   total_event_per_era[i_era*n_xa+i_xa] = isSignal ? fraction_regions[i_era*n_xa+i_xa] : _ch2->GetEntries();
-		   norm_weight[i_era*n_xa+i_xa] = n_p2/float(n); // probability of 2 tracks
-	       norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
+		   //norm_weight[i_era*n_xa+i_xa] = n_p2/float(n); // probability of 2 tracks
+	       //norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
 		   		   
 		   // probabilities for 1 track in signal events
-	       norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0
+	       norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
 	       norm_weight_1pRP0_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
-	       norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1
+	       norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1   P(0,1)
 	       norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
 		   // probabilities for 0 track in signal events
@@ -235,6 +251,8 @@ kipped." << endl;
 	   for(int ii=0;ii<n_xa;ii++) fraction_regions[i_era*n_xa+ii] *= (era_lumi[i_era]/total_lumi)/total_event_per_era[i_era*n_xa+ii];
    }
    
+
+
    // List obtained fractions:
    cout << "\nINFO List obtained fractions for all "<<n_PUregions<<" SRs, (for 120,130,140,150), including statistics:"<<endl;
    for(int i_era=0;i_era<n_era;i_era++){
@@ -350,12 +368,18 @@ kipped." << endl;
 	//while (cdf_<rndm) {cdf_+= fraction_regions[i_reg];i_reg++;}
 	//i_reg--; // region index should start from 0
 
+    // Debugging the progress
+    std::cout << "\nProcessing event " << iMCEntry << "/" << nEventsToMix << std::endl;
+
 	// ------------- new approach --------------------- //
 	// samples region index using flat PDF, and asign extra weight to event
     int i_reg = rand_gen->Rndm() * n_PUregions;
     float _extra_weight = (fraction_regions[i_reg]*float(n_PUregions));
 	// -------------------------------------------------- //
-	
+
+    std::cout << "Selected region index: " << i_reg << ", Extra weight: " << _extra_weight << std::endl;
+
+
 	int i_event = rand_gen->Rndm()*counter_regions[i_reg];  
 	PUpr[i_reg]->GetEntry(i_event);
 	
@@ -388,56 +412,114 @@ kipped." << endl;
 		ppsSF_wgt_err += MultiRP_eff->getRelEffErrSq(p2_x,p2_y,1,run);
 	}
 	ppsSF_wgt_err = sqrt(ppsSF_wgt_err);
+
+    std::cout << "Proton efficiencies applied. ppsSF_wgt: " << ppsSF_wgt << ", ppsSF_wgt_err: " << ppsSF_wgt_err << std::endl;
+
 	
 	// mixing with the pileup protons (note the different treatment for the signal)
-	if(isSignal && p1_xi>0 && p2_xi>0){ // two accepted signal protons
+	
+	// Exclude events where both protons are reconstructed
+	if (isSignal && (p1_xi > 0 && p2_xi > 0)) {
+		// -- Case 1: Signal with 2 protons reconstructed --
+		// Apply the weight "norm_weight_0p" and multiply by trueZeroTracksRatio
 		ptag_wgt = norm_weight_0p[i_reg];
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0) * ptr.trueZeroTracksRatio(run, beamXangle, 1);
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0) 
+				* ptr.trueZeroTracksRatio(run, beamXangle, 1);
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
+
 		weight *= ptag_wgt;
-		//ppsSF_wgt = MultiRP_eff->getEff(p1_x,p1_y,0,run) *  MultiRP_eff->getEff(p2_x,p2_y,1,run);
-		//ppsSF_wgt_err = MultiRP_eff->getRelEffErrSq(p1_x,p1_y,0,run) + 
-		//                MultiRP_eff->getRelEffErrSq(p2_x,p2_y,1,run);
-		//ppsSF_wgt_err = sqrt(ppsSF_wgt_err);
-		// strip efficiency
-		//ppsSF_wgt *= Strip_eff->getEff(p1_x,p1_y,0,run) * Strip_eff->getEff(p2_x,p2_y,1,run);
+
+		// Set signal_protons variable to 11 to indicate (1,1)
 		signal_protons = 11;
-		//weight *= ppsSF_wgt;
 	}
-	else if(isSignal && p1_xi==0 && p2_xi>0){ // one signal proton in arm1
-		p1_xi = poll_p1_xi[i_reg];
-		ptag_wgt = norm_weight_1pRP0[i_reg];
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 1);
-		ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
+
+	//----------------------------------------------------------------------------------
+	// CASE 2: Signal, one proton in arm 1 => (0,1)
+	//----------------------------------------------------------------------------------
+	else if (isSignal && p1_xi == 0 && p2_xi > 0) {
+		// (Already (0,1), no injection into arm 0 is required)
+		// => Assign weights:
+		ptag_wgt = norm_weight_0p[i_reg]; // P(1,0)
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0)*ptr.trueZeroTracksRatio(run, beamXangle, 0);
+
+
+		ptag_wgt_err = norm_weight_0p_err[i_reg];
+
 		weight *= ptag_wgt;
-		//ppsSF_wgt = MultiRP_eff->getEff(p2_x,p2_y,1,run);
-		//ppsSF_wgt_err = MultiRP_eff->getRelEffErrSq(p2_x,p2_y,1,run);
-		// strip efficiency
-		//ppsSF_wgt *= Strip_eff->getEff(p2_x,p2_y,1,run);
-		signal_protons = 1;
-		//weight *= ppsSF_wgt;
+		signal_protons = 1;  
 	}
-	else if(isSignal && p1_xi>0 && p2_xi==0){ // one signal proton in arm0
-		p2_xi = poll_p2_xi[i_reg];
-		ptag_wgt = norm_weight_1pRP1[i_reg];
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
-		ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
+
+	//----------------------------------------------------------------------------------
+	// CASE 3: Signal, one proton in arm 0 => (1,0)
+	//----------------------------------------------------------------------------------
+	else if (isSignal && p1_xi > 0 && p2_xi == 0) {
+		// => Assign weights:
+		ptag_wgt = norm_weight_0p[i_reg];
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0)*ptr.trueZeroTracksRatio(run, beamXangle, 0);;
+
+		ptag_wgt_err = norm_weight_0p_err[i_reg];
+
 		weight *= ptag_wgt;
-		//ppsSF_wgt = MultiRP_eff->getEff(p1_x,p1_y,0,run);
-		//ppsSF_wgt_err = MultiRP_eff->getRelEffErrSq(p1_x,p1_y,0,run);
-		// strip efficiency
-		//ppsSF_wgt *= Strip_eff->getEff(p1_x,p1_y,0,run);
 		signal_protons = 10;
-		//weight *= ppsSF_wgt;
 	}
-	else{ // no signal protons in the acceptance region
-		p1_xi = poll_p1_xi[i_reg];
-		p2_xi = poll_p2_xi[i_reg];
-		ptag_wgt = norm_weight[i_reg];
-		ptag_wgt_err = norm_weight_err[i_reg];
+
+	//----------------------------------------------------------------------------------
+	// CASE 4: Signal with 0 protons => Inject 1 randomly
+	//----------------------------------------------------------------------------------
+	else if (isSignal) {
+		// => (0,0), need to force (1,0) or (0,1)
+		if (rand_gen->Rndm() < 0.5) {
+			p1_xi = poll_p1_xi[i_reg]; // Inject one proton into arm 0
+			p2_xi = 0;
+			// Assign weights:
+			ptag_wgt = norm_weight_1pRP0[i_reg];
+			ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
+			//ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 1);
+
+			weight *= ptag_wgt;
+			signal_protons = 2;
+		} else {
+			p1_xi = 0;
+			p2_xi = poll_p2_xi[i_reg]; // Inject one proton into arm 1
+			ptag_wgt = norm_weight_1pRP1[i_reg];
+			ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
+			//ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
+
+			weight *= ptag_wgt;
+			signal_protons = 3;
+		}
+	}
+
+	//----------------------------------------------------------------------------------
+	// CASE 5: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
+	//----------------------------------------------------------------------------------
+	else {
+		// Not a signal => Allow injecting "pileup" 
+		// or leave as (0,0). Example: inject 1 proton
+		if (std::rand() % 2 == 0) {
+			// Inject 1 proton into arm 0
+			p1_xi = poll_p1_xi[i_reg]; 
+			p2_xi = 0;
+
+			// Assign weights for arm 0
+			ptag_wgt = norm_weight_1pRP0[i_reg];
+			ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
+		} else {
+			// Inject 1 proton into arm 1
+			p1_xi = 0;
+			p2_xi = poll_p2_xi[i_reg];
+
+			// Assign weights for arm 1
+			ptag_wgt = norm_weight_1pRP1[i_reg];
+			ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
+		}
+		
 		weight *= ptag_wgt;
-		signal_protons = 0;
+
+		// Mark as 0 => not a signal
+		signal_protons = 0; 
 	}
+
 
 	// Fix ptag weight from w_sys/w_nom to 1 +/- err
 	ptag_wgt_err = TMath::Abs(1 - ptag_wgt_err);
@@ -447,6 +529,13 @@ kipped." << endl;
 	pu_wgt = (w_mc) ? pu_weights[i_reg]->GetBinContent(nvtx+1)/w_mc : 0;
 	weight *= pu_wgt;
 	
+    std::cout << "Signal protons: " << signal_protons << ", p1_xi: " << p1_xi << ", p2_xi: " << p2_xi << std::endl;
+
+    // Additional debug info for weights
+    std::cout << "Weight details - ptag_wgt: " << ptag_wgt << ", ptag_wgt_err: " << ptag_wgt_err << ", pu_wgt: " << pu_wgt << std::endl;
+
+
+
 	// Electron trigger SF (Run dependent)
 	if(cat==4){
 		
