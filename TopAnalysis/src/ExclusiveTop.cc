@@ -628,6 +628,7 @@ void RunExclusiveTop(TString filename,
         "dR_bjet_leptonic", "dR_bjet_hadronic", 
 
         "t_reco_hadronic_mass",
+        "t_reco_leptonic_mass",
 
         "dR_bjet_0_1", "dR_most_forward_jet_bjet_0",
 
@@ -1550,8 +1551,10 @@ void RunExclusiveTop(TString filename,
             // Combine the TLorentzVectors to reconstruct the hadronic top
             TLorentzVector t_reco_hadronic = bJet_had_new + lightJet0_new + lightJet1_new;
 
-            // The reconstructed hadronic top quark mass
-            double t_reco_hadronic_mass = t_reco_hadronic.M();
+            // The reconstructed hadronic and leptonic top quark mass
+            double t_reco_hadronic_mass = t_rec_had.M();
+            double t_reco_leptonic_mass = t_rec_lep.M();
+
 
             bool isThadronic = 0;
             if (lepton.charge()>0.) {
@@ -2021,6 +2024,7 @@ void RunExclusiveTop(TString filename,
             outVars["dR_bjet_hadronic"] = dR_bjet_hadronic;
 
             outVars["t_reco_hadronic_mass"] = t_reco_hadronic_mass;
+            outVars["t_reco_leptonic_mass"] = t_reco_leptonic_mass;
 
             
             outVars["dR_bjet_0_1"] = dR_bjet_0_1;
