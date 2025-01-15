@@ -1522,11 +1522,35 @@ void RunExclusiveTop(TString filename,
             // build t_rec_had and t_rec_lep for every combination,
             // compute difference between top candidate and true mass for every combination
             // and store it in the mistake vector
+            
+            // Uing delta
+            /* 
+            
             for (size_t i_comb=0; i_comb<marker.size(); i_comb++) {
                 t_rec_had = bJets[ marker[i_comb][0] ].p4() +lightJets[ marker[i_comb][1] ].p4()+ lightJets[  marker[i_comb][2] ].p4();   // b+q+q
                 t_rec_lep = bJets[ marker[i_comb][3] ].p4() +lepton.p4() +neutrino;            // b+l+nu
                 mistake.push_back( abs(t_rec_had.M()-m_TOP)+abs(t_rec_lep.M()-m_TOP) );
             }
+            */
+
+
+            // Using xi
+
+            for (size_t i_comb = 0; i_comb < marker.size(); i_comb++) {
+                // Reconstruct the hadronic and leptonic top quarks
+                t_rec_had = bJets[marker[i_comb][0]].p4() + lightJets[marker[i_comb][1]].p4() + lightJets[marker[i_comb][2]].p4(); // b+q+q
+                t_rec_lep = bJets[marker[i_comb][3]].p4() + lepton.p4() + neutrino;                                              // b+l+nu
+
+                // Weighted squared difference metric
+                double sigma_had = 162.30; // Resolution for hadronic mass
+                double sigma_lep = 103.25; // Resolution for leptonic mass
+                mistake.push_back(
+                    pow((t_rec_had.M() - m_TOP) / sigma_had, 2) + 
+                    pow((t_rec_lep.M() - m_TOP) / sigma_lep, 2)
+                );
+            }
+            
+
 
             int correct_index=dump_index(mistake);   // index of best candidate
             combination = marker[correct_index];     // combination of best candidate
@@ -1554,6 +1578,10 @@ void RunExclusiveTop(TString filename,
             // The reconstructed hadronic and leptonic top quark mass
             double t_reco_hadronic_mass = t_rec_had.M();
             double t_reco_leptonic_mass = t_rec_lep.M();
+
+            // Print debugging information
+            std::cout << "t_reco_hadronic_mass: " << t_reco_hadronic_mass << " GeV" << std::endl;
+            std::cout << "t_reco_leptonic_mass: " << t_reco_leptonic_mass << " GeV" << std::endl;
 
 
             bool isThadronic = 0;
