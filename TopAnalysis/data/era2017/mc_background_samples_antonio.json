@@ -1,0 +1,13 @@
+{
+    "MC13TeV_2017_tbarW"                : [35.85, 0,     "/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "tbarw", 920, true, false, 1],
+    "MC13TeV_2017_tW"                : [35.85, 0,     "/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "tw", 920, true, false, 1],
+    "MC13TeV_2017_W2Jets"                : [2793.0, 0,     "/W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "w2jets", 797,false,false,1],
+    "MC13TeV_2017_W3Jets"                : [992.5, 0,     "/W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "w3jets", 797,false,false,1],
+    "MC13TeV_2017_W4Jets"                : [544.3, 0,     "/W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAOD-106X_mc2017_realistic_v6-v1/MINIAODSIM", "w4jets", 797,false,false,1],
+    "MC13TeV_2017_DY2JetsToLL"                : [304.4, 0,     "/DY2JetsToLL_M-50_MatchEWPDG20_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "DY2Jets", 41, false, false, 1],
+    "MC13TeV_2017_DY3JetsToLL"                : [111.5, 0,     "/DY3JetsToLL_M-50_MatchEWPDG20_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "DY3Jets", 41, false, false, 1],
+    "MC13TeV_2017_DY4JetsToLL"                : [44.03, 0,     "/DY4JetsToLL_M-50_MatchEWPDG20_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "DY4Jets", 41, false, false, 1],
+    "MC13TeV_2017_WW"                         : [75.88, 0,     "/WW_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "WW", 797, false, false, 1],
+    "MC13TeV_2017_WZ"                         : [27.57, 0,     "/WZ_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "WZ", 797, false, false, 1]
+    "MC13TeV_2017_TTTo2L2Nu"                : [88.29, 0,     "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "ttdilep", 920, true, false, 1]
+}

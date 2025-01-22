@@ -124,7 +124,7 @@ def main():
         allSystVars = ['jec_CorrelationGroupMPFInSitu', 'jec_RelativeFSR',
                        'jec_CorrelationGroupUncorrelated', 'jec_FlavorPureGluon', 'jec_FlavorPureQuark',
                        'jec_FlavorPureCharm', 'jec_FlavorPureBottom', 'jer',
-                       'btag_heavy', 'btag_light', 'tracking']
+                       'btag_heavy', 'btag_light', 'tracking', "UnclusteredEnUp", "UnclusteredEnDn"]
         for var in allSystVars:
             varList.append(var+'_up')
             varList.append(var+'_down')

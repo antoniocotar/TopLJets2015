@@ -77,6 +77,7 @@ def submitProduction(tag,lfnDirBase,dataset,isData,cfg,workDir,lumiMask,era='era
     else : 
         config_file.write('config.Data.splitting = "FileBased"\n')
         config_file.write('config.Data.unitsPerJob = 6\n')
+        config_file.write('config.Data.totalUnits = 6\n')
      
     config_file.write('config.Data.publication = False\n')
     config_file.write('config.Data.outLFNDirBase = \"%s\"\n' % lfnDirBase)
@@ -148,8 +149,10 @@ def main():
             continue
         if '2017B_SingleElectron' in tag or '2017C_SingleElectron' in tag: opt.addParents=False # 2017B,C AOD only on TAPE 
         if isSignal(tag):
-          for xangle in ['120', '130', '140', '150']:
-            for sim_era in [opt.era+'_B', opt.era+'_C', opt.era+'_D', opt.era+'_E', opt.era+'_F']:
+          #for xangle in ['120', '130', '140', '150']:
+          for xangle in ['120']:
+            #for sim_era in [opt.era+'_B', opt.era+'_C', opt.era+'_D', opt.era+'_E', opt.era+'_F']:
+            for sim_era in [opt.era+'_B']:
               newtag = tag + '_signal_xa%s_%s' % (xangle, sim_era)
               submitProduction(tag=newtag,
                          lfnDirBase=lfnDirBase,

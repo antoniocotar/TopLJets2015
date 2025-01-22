@@ -151,8 +151,8 @@ kipped." << endl;
 		     extra_signal_normalization += signal_fraction_regions[i_era*n_xa+i_xa];
 	  }
 	  else {
-		  n_era = 3; // for preTS2 first 3 entries are the same
-		  for(int i_era=0;i_era<3;i_era++)
+		  n_era = 1; // for preTS2 first 3 entries are the same n_era =1 for only run era B
+		  for(int i_era=0;i_era<1;i_era++) // i_era<1
 		    extra_signal_normalization += signal_fraction_regions[i_era*n_xa+i_xa];
 	  }
 	  

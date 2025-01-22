@@ -627,8 +627,26 @@ void RunExclusiveTop(TString filename,
 
         "dR_bjet_leptonic", "dR_bjet_hadronic", 
 
+        // For Delta R matching
+
         "t_reco_hadronic_mass",
         "t_reco_leptonic_mass",
+        "gen_light_quark1_eta",
+        "gen_light_quark1_phi",
+        "gen_light_quark2_eta",
+        "gen_light_quark2_phi",
+        "gen_lepton_eta",
+        "gen_lepton_phi",
+        "bjet_had_eta_reco",
+        "bjet_had_phi_reco",
+        "bjet_lep_eta_reco",
+        "bjet_lep_phi_reco",
+        "light_jet_had0_eta_reco",
+        "light_jet_had0_phi_reco",
+        "light_jet_had1_eta_reco",
+        "light_jet_had1_phi_reco",
+
+
 
         "dR_bjet_0_1", "dR_most_forward_jet_bjet_0",
 
@@ -1523,19 +1541,19 @@ void RunExclusiveTop(TString filename,
             // compute difference between top candidate and true mass for every combination
             // and store it in the mistake vector
             
-            // Uing delta
-            /* 
+            // Using delta
+            
             
             for (size_t i_comb=0; i_comb<marker.size(); i_comb++) {
                 t_rec_had = bJets[ marker[i_comb][0] ].p4() +lightJets[ marker[i_comb][1] ].p4()+ lightJets[  marker[i_comb][2] ].p4();   // b+q+q
                 t_rec_lep = bJets[ marker[i_comb][3] ].p4() +lepton.p4() +neutrino;            // b+l+nu
                 mistake.push_back( abs(t_rec_had.M()-m_TOP)+abs(t_rec_lep.M()-m_TOP) );
             }
-            */
+            
 
 
             // Using xi
-
+            /*
             for (size_t i_comb = 0; i_comb < marker.size(); i_comb++) {
                 // Reconstruct the hadronic and leptonic top quarks
                 t_rec_had = bJets[marker[i_comb][0]].p4() + lightJets[marker[i_comb][1]].p4() + lightJets[marker[i_comb][2]].p4(); // b+q+q
@@ -1549,7 +1567,7 @@ void RunExclusiveTop(TString filename,
                     pow((t_rec_lep.M() - m_TOP) / sigma_lep, 2)
                 );
             }
-            
+            */
 
 
             int correct_index=dump_index(mistake);   // index of best candidate
@@ -1579,9 +1597,24 @@ void RunExclusiveTop(TString filename,
             double t_reco_hadronic_mass = t_rec_had.M();
             double t_reco_leptonic_mass = t_rec_lep.M();
 
-            // Print debugging information
-            std::cout << "t_reco_hadronic_mass: " << t_reco_hadronic_mass << " GeV" << std::endl;
-            std::cout << "t_reco_leptonic_mass: " << t_reco_leptonic_mass << " GeV" << std::endl;
+
+            // ***** START OF NEW VARIABLE DECLARATIONS for Delta R matching*****
+
+            // Reconstructed hadronic b-jet eta and phi
+            double bjet_had_eta_reco = bJet_had.Eta();
+            double bjet_had_phi_reco = bJet_had.Phi();
+
+            // Reconstructed leptonic b-jet eta and phi
+            double bjet_lep_eta_reco = bJet_lep.Eta();
+            double bjet_lep_phi_reco = bJet_lep.Phi();
+
+            // Reconstructed hadronic light-jet 0 eta and phi
+            double light_jet_had0_eta_reco = lightJet0.Eta();
+            double light_jet_had0_phi_reco = lightJet0.Phi();
+
+            // Reconstructed hadronic light-jet 1 eta and phi
+            double light_jet_had1_eta_reco = lightJet1.Eta();
+            double light_jet_had1_phi_reco = lightJet1.Phi();
 
 
             bool isThadronic = 0;
@@ -1639,7 +1672,60 @@ void RunExclusiveTop(TString filename,
                     firstBbar = 0;
                 }
             }
+
             ttbarSystem_gen = t_gen+tbar_gen;
+
+
+            // ***** START OF GEN-LEVEL LIGHT QUARK VARIABLE DECLARATIONS *****
+
+            // Initialize TLorentzVectors for generated light quarks
+            TLorentzVector lightQuark1_gen(0, 0, 0, 0);
+            TLorentzVector lightQuark2_gen(0, 0, 0, 0);
+            Bool_t firstLightQuark1 = 1;
+            Bool_t firstLightQuark2 = 1;
+
+            // Loop over generated particles to find light quarks from top decays
+            for (int igen = 0; igen < ev.ngtop; igen++) {
+                // PDG IDs for light quarks: 1 (d), 2 (u), 3 (s), 4 (c)
+                // and their antiparticles: -1, -2, -3, -4
+                int pdgId = ev.gtop_id[igen];
+                if (abs(pdgId) >= 1 && abs(pdgId) <= 4) { // Identify light quarks
+                    if (firstLightQuark1) {
+                        lightQuark1_gen.SetPtEtaPhiM(ev.gtop_pt[igen], ev.gtop_eta[igen], ev.gtop_phi[igen], ev.gtop_m[igen]);
+                        firstLightQuark1 = 0;
+                    }
+                    else if (firstLightQuark2) {
+                        lightQuark2_gen.SetPtEtaPhiM(ev.gtop_pt[igen], ev.gtop_eta[igen], ev.gtop_phi[igen], ev.gtop_m[igen]);
+                        firstLightQuark2 = 0;
+                    }
+                    // If more than two light quarks are present, you can extend this logic
+                }
+            }
+
+            // ***** START OF GEN-LEVEL LEPTON VARIABLE DECLARATIONS *****
+
+            // Initialize TLorentzVector for generated lepton
+            TLorentzVector lepton_gen(0, 0, 0, 0);
+            Bool_t firstLepton = 1;
+
+            // Loop over generated particles to find the lepton from top decays
+            for (int igen = 0; igen < ev.ngtop; igen++) {
+                int pdgId = ev.gtop_id[igen];
+                // PDG IDs for leptons: 11 (electron), -11 (positron), 13 (muon), -13 (antimuon), 15 (tau), -15 (anti-tau)
+                if (abs(pdgId) == 11 || abs(pdgId) == 13 || abs(pdgId) == 15) { // Identify leptons
+                    if (firstLepton) {
+                        lepton_gen.SetPtEtaPhiM(ev.gtop_pt[igen], ev.gtop_eta[igen], ev.gtop_phi[igen], ev.gtop_m[igen]);
+                        firstLepton = 0;
+                        // If you expect only one lepton, you can break here
+                        break;
+                    }
+                    // If multiple leptons are present, you can extend this logic
+                }
+            }
+
+            // Store the generated lepton kinematics
+            double gen_lepton_eta = lepton_gen.Eta();
+            double gen_lepton_phi = lepton_gen.Phi();
 
 
 #ifdef SAVEERRORS_ON
@@ -2054,7 +2140,17 @@ void RunExclusiveTop(TString filename,
             outVars["t_reco_hadronic_mass"] = t_reco_hadronic_mass;
             outVars["t_reco_leptonic_mass"] = t_reco_leptonic_mass;
 
-            
+            // New variables for Delta R matching
+            outVars["bjet_had_eta_reco"] = bjet_had_eta_reco;
+            outVars["bjet_had_phi_reco"] = bjet_had_phi_reco;
+            outVars["bjet_lep_eta_reco"] = bjet_lep_eta_reco;
+            outVars["bjet_lep_phi_reco"] = bjet_lep_phi_reco;
+            outVars["light_jet_had0_eta_reco"] = light_jet_had0_eta_reco;
+            outVars["light_jet_had0_phi_reco"] = light_jet_had0_phi_reco;
+            outVars["light_jet_had1_eta_reco"] = light_jet_had1_eta_reco;
+            outVars["light_jet_had1_phi_reco"] = light_jet_had1_phi_reco;
+
+
             outVars["dR_bjet_0_1"] = dR_bjet_0_1;
             outVars["dR_most_forward_jet_bjet_0"] = dR_most_forward_jet_bjet_0;
 
@@ -2100,6 +2196,15 @@ void RunExclusiveTop(TString filename,
             outVars["gen_bbar_eta"]=bbar_gen.Rapidity();
             outVars["gen_bbar_phi"]=bbar_gen.Phi();
             outVars["gen_bbar_m"]=bbar_gen.M();
+
+            // For delta R matching
+            outVars["gen_light_quark1_eta"] = lightQuark1_gen.Eta();
+            outVars["gen_light_quark1_phi"] = lightQuark1_gen.Phi();
+            outVars["gen_light_quark2_eta"] = lightQuark2_gen.Eta();
+            outVars["gen_light_quark2_phi"] = lightQuark2_gen.Phi();
+
+            outVars["gen_lepton_eta"] = gen_lepton_eta;
+            outVars["gen_lepton_phi"] = gen_lepton_phi;
 
             //---------------------------------
             // FILL TREE
