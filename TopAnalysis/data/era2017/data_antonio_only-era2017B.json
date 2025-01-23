@@ -1,0 +1,5 @@
+{
+    "Data13TeV_SingleMuon_2017B" : [1, 1, "/SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD", "Data", 1, false, false, 0],
+    "Data13TeV_SingleElectron_2017B" : [1, 1, "/SingleElectron/Run2017B-UL2017_MiniAODv2-v1/MINIAOD", "Data", 1, false, false, 0]
+}
+    

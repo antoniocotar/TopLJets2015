@@ -1541,33 +1541,32 @@ void RunExclusiveTop(TString filename,
             // compute difference between top candidate and true mass for every combination
             // and store it in the mistake vector
             
-            // Using delta
-            
-            
+            // Using delta M 
+            /*
             for (size_t i_comb=0; i_comb<marker.size(); i_comb++) {
                 t_rec_had = bJets[ marker[i_comb][0] ].p4() +lightJets[ marker[i_comb][1] ].p4()+ lightJets[  marker[i_comb][2] ].p4();   // b+q+q
                 t_rec_lep = bJets[ marker[i_comb][3] ].p4() +lepton.p4() +neutrino;            // b+l+nu
                 mistake.push_back( abs(t_rec_had.M()-m_TOP)+abs(t_rec_lep.M()-m_TOP) );
             }
-            
+            */
 
 
             // Using xi
-            /*
+
             for (size_t i_comb = 0; i_comb < marker.size(); i_comb++) {
                 // Reconstruct the hadronic and leptonic top quarks
                 t_rec_had = bJets[marker[i_comb][0]].p4() + lightJets[marker[i_comb][1]].p4() + lightJets[marker[i_comb][2]].p4(); // b+q+q
                 t_rec_lep = bJets[marker[i_comb][3]].p4() + lepton.p4() + neutrino;                                              // b+l+nu
 
                 // Weighted squared difference metric
-                double sigma_had = 162.30; // Resolution for hadronic mass
-                double sigma_lep = 103.25; // Resolution for leptonic mass
+                double sigma_had = 26.31; // Resolution for hadronic mass
+                double sigma_lep = 26.10; // Resolution for leptonic mass
                 mistake.push_back(
                     pow((t_rec_had.M() - m_TOP) / sigma_had, 2) + 
                     pow((t_rec_lep.M() - m_TOP) / sigma_lep, 2)
                 );
             }
-            */
+
 
 
             int correct_index=dump_index(mistake);   // index of best candidate

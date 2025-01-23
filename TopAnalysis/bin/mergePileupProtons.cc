@@ -71,9 +71,9 @@ int main(int argc, char* argv[])
   string inMCFileName = argv[1];
   string inPUFileName = argv[2];
   string outFileName = inMCFileName.substr(inMCFileName.find_last_of('/') + 1, inMCFileName.find_last_of('.') - inMCFileName.find_last_of('/') - 1) + "_enriched.root";
-  bool isSignal = TString(inMCFileName.c_str()).Contains("ttphoto") ||
-                  TString(inMCFileName.c_str()).Contains("twphoto") ||
-                  TString(inMCFileName.c_str()).Contains("ttpomflux");  
+  bool isSignal = TString(inMCFileName.c_str()).Contains("ntuples_ttphoto") ||
+                  TString(inMCFileName.c_str()).Contains("ntuples_twphoto") ||
+                  TString(inMCFileName.c_str()).Contains("ntuples_ttpomflux");  
   if (argc >= 4) {
     TString arg3 = TString(argv[3]);
     if (arg3.IsDec())
@@ -151,8 +151,8 @@ kipped." << endl;
 		     extra_signal_normalization += signal_fraction_regions[i_era*n_xa+i_xa];
 	  }
 	  else {
-		  n_era = 1; // for preTS2 first 3 entries are the same n_era =1 for only run era B
-		  for(int i_era=0;i_era<1;i_era++) // i_era<1
+		  n_era = 3; // for preTS2 first 3 entries are the same n_era =1 for only run era B
+		  for(int i_era=0;i_era<3;i_era++) // i_era<1
 		    extra_signal_normalization += signal_fraction_regions[i_era*n_xa+i_xa];
 	  }
 	  
