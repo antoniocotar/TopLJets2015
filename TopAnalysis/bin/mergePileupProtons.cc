@@ -397,9 +397,10 @@ kipped." << endl;
 	run = poll_run[i_reg];
 	beamXangle = xangle[i_reg % n_xa];
 	
+	// From Exclusive
 	// proton efficiency implementation (xi of protons that fail reco. will be set to zero)
 	ppsSF_wgt = 1.; ppsSF_wgt_err=0;
-	if(p1_xi>0){
+	if(p1_xi>0){ 
 		float SF = Strip_eff->getEff(p1_x,p1_y,0,run) * MultiRP_eff->getEff(p1_x,p1_y,0,run);
 		if(rand_gen->Rndm()>SF) p1_xi=0;
 		else ppsSF_wgt *= SF;
@@ -422,25 +423,26 @@ kipped." << endl;
 	if (isSignal && (p1_xi > 0 && p2_xi > 0)) {
 		// -- Case 1: Signal with 2 protons reconstructed --
 		// Apply the weight "norm_weight_0p" and multiply by trueZeroTracksRatio
-		ptag_wgt = norm_weight_0p[i_reg];
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0) 
-				* ptr.trueZeroTracksRatio(run, beamXangle, 1);
-		ptag_wgt_err = norm_weight_0p_err[i_reg];
+		//ptag_wgt = norm_weight_0p[i_reg];
+		//ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0) 
+		//		* ptr.trueZeroTracksRatio(run, beamXangle, 1);
+		//ptag_wgt_err = norm_weight_0p_err[i_reg];
 
-		weight *= ptag_wgt;
+		//weight *= ptag_wgt;
 
-		// Set signal_protons variable to 11 to indicate (1,1)
-		signal_protons = 11;
+		// Set signal_protons variable to 0 to treated as background
+		signal_protons = 0;
 	}
 
 	//----------------------------------------------------------------------------------
-	// CASE 2: Signal, one proton in arm 1 => (0,1)
+	// CASE 1: Signal, one proton in arm 1 => (0,1)
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi == 0 && p2_xi > 0) {
 		// (Already (0,1), no injection into arm 0 is required)
 		// => Assign weights:
-		ptag_wgt = norm_weight_0p[i_reg]; // P(1,0)
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0)*ptr.trueZeroTracksRatio(run, beamXangle, 0);
+		// probability of having 0 proton is the prob of not having one.
+		ptag_wgt = norm_weight_0p[i_reg]; 
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 1); // in the part that we measured proton 
 
 
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
@@ -450,12 +452,12 @@ kipped." << endl;
 	}
 
 	//----------------------------------------------------------------------------------
-	// CASE 3: Signal, one proton in arm 0 => (1,0)
+	// CASE 2: Signal, one proton in arm 0 => (1,0)
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi > 0 && p2_xi == 0) {
 		// => Assign weights:
 		ptag_wgt = norm_weight_0p[i_reg];
-		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0)*ptr.trueZeroTracksRatio(run, beamXangle, 0);;
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
 
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
 
@@ -464,7 +466,7 @@ kipped." << endl;
 	}
 
 	//----------------------------------------------------------------------------------
-	// CASE 4: Signal with 0 protons => Inject 1 randomly
+	// CASE 3: Signal with 0 protons => Inject 1 randomly
 	//----------------------------------------------------------------------------------
 	else if (isSignal) {
 		// => (0,0), need to force (1,0) or (0,1)
@@ -472,7 +474,7 @@ kipped." << endl;
 			p1_xi = poll_p1_xi[i_reg]; // Inject one proton into arm 0
 			p2_xi = 0;
 			// Assign weights:
-			ptag_wgt = norm_weight_1pRP0[i_reg];
+			ptag_wgt = norm_weight_1pRP0[i_reg];// P(1,0)
 			ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
 			//ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 1);
 
@@ -481,7 +483,7 @@ kipped." << endl;
 		} else {
 			p1_xi = 0;
 			p2_xi = poll_p2_xi[i_reg]; // Inject one proton into arm 1
-			ptag_wgt = norm_weight_1pRP1[i_reg];
+			ptag_wgt = norm_weight_1pRP1[i_reg]; // P(0,1)
 			ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
 			//ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
 
@@ -491,7 +493,7 @@ kipped." << endl;
 	}
 
 	//----------------------------------------------------------------------------------
-	// CASE 5: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
+	// CASE 4: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
 	//----------------------------------------------------------------------------------
 	else {
 		// Not a signal => Allow injecting "pileup" 
