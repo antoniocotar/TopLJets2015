@@ -152,7 +152,7 @@ kipped." << endl;
 	  }
 	  else {
 		  n_era = 3; // for preTS2 first 3 entries are the same n_era =1 for only run era B
-		  for(int i_era=0;i_era<3;i_era++) // i_era<1
+		  for(int i_era=0;i_era<3;i_era++) // i_era<1 for only 2017B
 		    extra_signal_normalization += signal_fraction_regions[i_era*n_xa+i_xa];
 	  }
 	  
@@ -176,8 +176,8 @@ kipped." << endl;
    float total_event_per_era[n_PUregions];
 
    // only for exlusive case
-   //float norm_weight[n_PUregions];    
-   //float norm_weight_err[n_PUregions];
+   float norm_weight[n_PUregions];    
+   float norm_weight_err[n_PUregions];
 
    float fraction_regions[n_PUregions];
    int counter_regions[n_PUregions]; 
@@ -232,8 +232,8 @@ kipped." << endl;
 		   TChain * _ch2 = new TChain("tree"); _ch2->Add(name_el); _ch2->Add(name_mu);
 		   fraction_regions[i_era*n_xa+i_xa] = _ch2->GetEntries(Form("beamXangle==%d",xangle[i_xa]));
 		   total_event_per_era[i_era*n_xa+i_xa] = isSignal ? fraction_regions[i_era*n_xa+i_xa] : _ch2->GetEntries();
-		   //norm_weight[i_era*n_xa+i_xa] = n_p2/float(n); // probability of 2 tracks
-	       //norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
+		   norm_weight[i_era*n_xa+i_xa] = n_p2/float(n); // probability of 2 tracks
+	       norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
 		   		   
 		   // probabilities for 1 track in signal events
 	       norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
@@ -495,31 +495,13 @@ kipped." << endl;
 	//----------------------------------------------------------------------------------
 	// CASE 4: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
 	//----------------------------------------------------------------------------------
-	else {
-		// Not a signal => Allow injecting "pileup" 
-		// or leave as (0,0). Example: inject 1 proton
-		if (std::rand() % 2 == 0) {
-			// Inject 1 proton into arm 0
-			p1_xi = poll_p1_xi[i_reg]; 
-			p2_xi = 0;
-
-			// Assign weights for arm 0
-			ptag_wgt = norm_weight_1pRP0[i_reg];
-			ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
-		} else {
-			// Inject 1 proton into arm 1
-			p1_xi = 0;
-			p2_xi = poll_p2_xi[i_reg];
-
-			// Assign weights for arm 1
-			ptag_wgt = norm_weight_1pRP1[i_reg];
-			ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
-		}
-		
+	else{ // no signal protons in the acceptance region
+		p1_xi = poll_p1_xi[i_reg];
+		p2_xi = poll_p2_xi[i_reg];
+		ptag_wgt = norm_weight[i_reg];
+		ptag_wgt_err = norm_weight_err[i_reg];
 		weight *= ptag_wgt;
-
-		// Mark as 0 => not a signal
-		signal_protons = 0; 
+		signal_protons = 0;
 	}
 
 

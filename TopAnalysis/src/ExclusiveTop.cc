@@ -445,6 +445,7 @@ void RunExclusiveTop(TString filename,
     outT->Branch("nvtx",&ev.nvtx,"nvtx/I");
     outT->Branch("rho",&ev.rho,"rho/F");
     outT->Branch("nchPV",&ev.nchPV,"nchPV/I");
+    outT->Branch("zPV2",&ev.zPV2,"zPV2/F");
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
 
     //HF variables
