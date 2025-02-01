@@ -504,7 +504,7 @@ kipped." << endl;
 	}
 
 
-	/* // Injecting one proton randomly to signal events with (0,0) protons
+	 // Injecting one proton randomly to signal events with (0,0) protons
 	//----------------------------------------------------------------------------------
 	// CASE 3: Signal with 0 protons => Inject 1 randomly
 	//----------------------------------------------------------------------------------
@@ -531,7 +531,7 @@ kipped." << endl;
 			signal_protons = 3;
 		}
 	}
-	*/
+	
 	
 
 	//----------------------------------------------------------------------------------
