@@ -108,8 +108,16 @@ kipped." << endl;
    // ---------------------------------------------------------------------------------------------------------------------------------- //
    // NEW code, create pools from the data files, calculate relative cross-sections and nvtx distributions (era,xangle)
    // Read data, prerare PU trees:
-   float era_lumi[] = {2.360910165,8.577154400,4.074834625,1.440661783,13.219864250};
-   TString era[] = {"2017B","2017C","2017D","2017E","2017F"}; int n_era = (sizeof(era)/sizeof(TString));
+
+   float lumi2017B = 2.360910165;
+   float lumi2017C = 8.577154400;
+   float lumi2017D = 4.074834625;
+   float lumi2017E = 1.440661783;
+   float lumi2017F = 13.219864250;
+   
+
+   float era_lumi[] = {lumi2017B + lumi2017C + lumi2017D + lumi2017E + lumi2017F };
+   TString era[] = {"2017B", "2017C", "2017D", "2017E", "2017F"}; int n_era = (sizeof(era)/sizeof(TString));
    int xangle[] = {120, 130, 140, 150}; int n_xa = (sizeof(xangle)/sizeof(int));
    
    const int n_PUregionsMAX = n_era * n_xa; // used in signal normalization
@@ -130,7 +138,7 @@ kipped." << endl;
 			sig_total_event_per_era[i_era*n_xa+i_xa]=_ch2->GetEntries();
 	      }
 	    // normalize properly per selected crossing-angle (sometimes data contains unselected values lke 141,142...)
-	    for(int ii=0;ii<n_xa;ii++) signal_fraction_regions[i_era*n_xa+ii] *= (era_lumi[i_era]/29.673425)/sig_total_event_per_era[i_era*n_xa+ii];
+	    for(int ii=0;ii<n_xa;ii++) signal_fraction_regions[i_era*n_xa+ii] *= (era_lumi[i_era]/(lumi2017B + lumi2017C + lumi2017D + lumi2017E + lumi2017F))/sig_total_event_per_era[i_era*n_xa+ii];
       }
 
 	  // reduce the number of regions in case if the sample is a simulated signal
@@ -183,7 +191,7 @@ kipped." << endl;
    int counter_regions[n_PUregions]; 
 
 
-   float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
+   //float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
    float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
    float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
    
@@ -232,6 +240,7 @@ kipped." << endl;
 		   TChain * _ch2 = new TChain("tree"); _ch2->Add(name_el); _ch2->Add(name_mu);
 		   fraction_regions[i_era*n_xa+i_xa] = _ch2->GetEntries(Form("beamXangle==%d",xangle[i_xa]));
 		   total_event_per_era[i_era*n_xa+i_xa] = isSignal ? fraction_regions[i_era*n_xa+i_xa] : _ch2->GetEntries();
+		   
 		   norm_weight[i_era*n_xa+i_xa] = n_p2/float(n); // probability of 2 tracks
 	       norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
 		   		   
@@ -243,8 +252,8 @@ kipped." << endl;
 	       norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
 		   // probabilities for 0 track in signal events
-	       norm_weight_0p[i_era*n_xa+i_xa] = (n_p0)/float(n); // probability of 0 tracks in both arms
-	       norm_weight_0p_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       //norm_weight_0p[i_era*n_xa+i_xa] = (n_p0)/float(n); // probability of 0 tracks in both arms
+	       //norm_weight_0p_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 		   
 	   }
 	   // normalize properly per selected crossing-angle (sometimes data contains unselected values like 100,110,...)
@@ -369,7 +378,7 @@ kipped." << endl;
 	//i_reg--; // region index should start from 0
 
     // Debugging the progress
-    std::cout << "\nProcessing event " << iMCEntry << "/" << nEventsToMix << std::endl;
+    //std::cout << "\nProcessing event " << iMCEntry << "/" << nEventsToMix << std::endl;
 
 	// ------------- new approach --------------------- //
 	// samples region index using flat PDF, and asign extra weight to event
@@ -377,7 +386,7 @@ kipped." << endl;
     float _extra_weight = (fraction_regions[i_reg]*float(n_PUregions));
 	// -------------------------------------------------- //
 
-    std::cout << "Selected region index: " << i_reg << ", Extra weight: " << _extra_weight << std::endl;
+    //std::cout << "Selected region index: " << i_reg << ", Extra weight: " << _extra_weight << std::endl;
 
 
 	int i_event = rand_gen->Rndm()*counter_regions[i_reg];  
@@ -414,7 +423,7 @@ kipped." << endl;
 	}
 	ppsSF_wgt_err = sqrt(ppsSF_wgt_err);
 
-    std::cout << "Proton efficiencies applied. ppsSF_wgt: " << ppsSF_wgt << ", ppsSF_wgt_err: " << ppsSF_wgt_err << std::endl;
+    //std::cout << "Proton efficiencies applied. ppsSF_wgt: " << ppsSF_wgt << ", ppsSF_wgt_err: " << ppsSF_wgt_err << std::endl;
 
 	
 	// mixing with the pileup protons (note the different treatment for the signal)
@@ -438,6 +447,23 @@ kipped." << endl;
 	// CASE 1: Signal, one proton in arm 1 => (0,1)
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi == 0 && p2_xi > 0) {
+
+		p1_xi = poll_p1_xi[i_reg];
+		
+		ptag_wgt = norm_weight_1pRP0[i_reg];
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 1);
+		
+		ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
+		weight *= ptag_wgt;
+
+		signal_protons = 1;
+		//weight *= ppsSF_wgt;
+
+
+
+
+		// Michael proposal 
+		/*
 		// (Already (0,1), no injection into arm 0 is required)
 		// => Assign weights:
 		// probability of having 0 proton is the prob of not having one.
@@ -448,23 +474,37 @@ kipped." << endl;
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
 
 		weight *= ptag_wgt;
-		signal_protons = 1;  
+		signal_protons = 1;  */
 	}
 
 	//----------------------------------------------------------------------------------
 	// CASE 2: Signal, one proton in arm 0 => (1,0)
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi > 0 && p2_xi == 0) {
-		// => Assign weights:
-		ptag_wgt = norm_weight_0p[i_reg];
+
+		p2_xi = poll_p2_xi[i_reg];
+
+		ptag_wgt = norm_weight_1pRP1[i_reg];
+		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
+		
+		ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
+		weight *= ptag_wgt;
+
+		signal_protons = 10;
+		
+		// => Assign weights Michael proposal:
+		/* ptag_wgt = norm_weight_0p[i_reg];
 		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
 
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
 
 		weight *= ptag_wgt;
-		signal_protons = 10;
+		signal_protons = 10;*/
+
 	}
 
+
+	/* // Injecting one proton randomly to signal events with (0,0) protons
 	//----------------------------------------------------------------------------------
 	// CASE 3: Signal with 0 protons => Inject 1 randomly
 	//----------------------------------------------------------------------------------
@@ -491,6 +531,8 @@ kipped." << endl;
 			signal_protons = 3;
 		}
 	}
+	*/
+	
 
 	//----------------------------------------------------------------------------------
 	// CASE 4: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
@@ -513,32 +555,34 @@ kipped." << endl;
 	pu_wgt = (w_mc) ? pu_weights[i_reg]->GetBinContent(nvtx+1)/w_mc : 0;
 	weight *= pu_wgt;
 	
-    std::cout << "Signal protons: " << signal_protons << ", p1_xi: " << p1_xi << ", p2_xi: " << p2_xi << std::endl;
+    //std::cout << "Signal protons: " << signal_protons << ", p1_xi: " << p1_xi << ", p2_xi: " << p2_xi << std::endl;
 
     // Additional debug info for weights
-    std::cout << "Weight details - ptag_wgt: " << ptag_wgt << ", ptag_wgt_err: " << ptag_wgt_err << ", pu_wgt: " << pu_wgt << std::endl;
+    //std::cout << "Weight details - ptag_wgt: " << ptag_wgt << ", ptag_wgt_err: " << ptag_wgt_err << ", pu_wgt: " << pu_wgt << std::endl;
 
 
 
 	// Electron trigger SF (Run dependent)
-	if(cat==4){
-		
+	if(cat==4) {  // Add opening brace
+
 		// set electron kinematics
 		std::vector<Particle> leptons={};
 		TLorentzVector lp4;
-		lp4.SetPtEtaPhiM(lep_pt,lep_eta,lep_phi,lep_m);
-        leptons.push_back(Particle(lp4, 1, 11, 1, 0, 1.0, 0));
-		
-        EffCorrection_t trigSF;
-		int era_i = i_reg/4;
-		if (0==era_i) trigSF = lepEffH_eraB.getTriggerCorrection(leptons,{},{},"");
-		if (1==era_i) trigSF = lepEffH_eraC.getTriggerCorrection(leptons,{},{},"");
-		if (2==era_i) trigSF = lepEffH_eraD.getTriggerCorrection(leptons,{},{},"");
-		if (3==era_i) trigSF = lepEffH_eraE.getTriggerCorrection(leptons,{},{},"");
-		if (4==era_i) trigSF = lepEffH_eraF.getTriggerCorrection(leptons,{},{},"");
+		lp4.SetPtEtaPhiM(lep_pt, lep_eta, lep_phi, lep_m);
+		leptons.push_back(Particle(lp4, 1, 11, 1, 0, 1.0, 0));
+
+		EffCorrection_t trigSF;
+		int era_i = i_reg / 4;
+
+		if (0 == era_i) trigSF = lepEffH_eraB.getTriggerCorrection(leptons, {}, {}, "");
+		if (1 == era_i) trigSF = lepEffH_eraC.getTriggerCorrection(leptons, {}, {}, "");
+		if (2 == era_i) trigSF = lepEffH_eraD.getTriggerCorrection(leptons, {}, {}, "");
+		if (3 == era_i) trigSF = lepEffH_eraE.getTriggerCorrection(leptons, {}, {}, "");
+		if (4 == era_i) trigSF = lepEffH_eraF.getTriggerCorrection(leptons, {}, {}, "");  // Fixed typo here
+
 		triggerSF = trigSF.first;
 		triggerSF_err = trigSF.second;
-		
+
 		// update event weight
 		weight *= triggerSF;
 	}
