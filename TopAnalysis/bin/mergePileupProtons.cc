@@ -109,14 +109,8 @@ kipped." << endl;
    // NEW code, create pools from the data files, calculate relative cross-sections and nvtx distributions (era,xangle)
    // Read data, prerare PU trees:
 
-   float lumi2017B = 2.360910165;
-   float lumi2017C = 8.577154400;
-   float lumi2017D = 4.074834625;
-   float lumi2017E = 1.440661783;
-   float lumi2017F = 13.219864250;
-   
 
-   float era_lumi[] = {lumi2017B + lumi2017C + lumi2017D + lumi2017E + lumi2017F };
+   float era_lumi[] = {2.360910165,8.577154400,4.074834625,1.440661783,13.219864250};;
    TString era[] = {"2017B", "2017C", "2017D", "2017E", "2017F"}; int n_era = (sizeof(era)/sizeof(TString));
    int xangle[] = {120, 130, 140, 150}; int n_xa = (sizeof(xangle)/sizeof(int));
    
@@ -138,7 +132,7 @@ kipped." << endl;
 			sig_total_event_per_era[i_era*n_xa+i_xa]=_ch2->GetEntries();
 	      }
 	    // normalize properly per selected crossing-angle (sometimes data contains unselected values lke 141,142...)
-	    for(int ii=0;ii<n_xa;ii++) signal_fraction_regions[i_era*n_xa+ii] *= (era_lumi[i_era]/(lumi2017B + lumi2017C + lumi2017D + lumi2017E + lumi2017F))/sig_total_event_per_era[i_era*n_xa+ii];
+	    for(int ii=0;ii<n_xa;ii++) signal_fraction_regions[i_era*n_xa+ii] *= (era_lumi[i_era]/(29.673425))/sig_total_event_per_era[i_era*n_xa+ii];
       }
 
 	  // reduce the number of regions in case if the sample is a simulated signal
@@ -191,9 +185,9 @@ kipped." << endl;
    int counter_regions[n_PUregions]; 
 
 
-   //float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
-   float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
-   float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
+   float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
+   //float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
+   //float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
    
    // Modification for efficiency
    for(int i_era=0;i_era<n_era;i_era++){
@@ -245,15 +239,15 @@ kipped." << endl;
 	       norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
 		   		   
 		   // probabilities for 1 track in signal events
-	       norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
-	       norm_weight_1pRP0_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       //norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
+	       //norm_weight_1pRP0_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
-	       norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1   P(0,1)
-	       norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       //norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1   P(0,1)
+	       //norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
 		   // probabilities for 0 track in signal events
-	       //norm_weight_0p[i_era*n_xa+i_xa] = (n_p0)/float(n); // probability of 0 tracks in both arms
-	       //norm_weight_0p_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       norm_weight_0p[i_era*n_xa+i_xa] = (n_p0)/float(n); // probability of 0 tracks in both arms
+	       norm_weight_0p_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 		   
 	   }
 	   // normalize properly per selected crossing-angle (sometimes data contains unselected values like 100,110,...)
@@ -448,6 +442,9 @@ kipped." << endl;
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi == 0 && p2_xi > 0) {
 
+		// First Analysis note version approach
+		/*
+
 		p1_xi = poll_p1_xi[i_reg];
 		
 		ptag_wgt = norm_weight_1pRP0[i_reg];
@@ -457,13 +454,12 @@ kipped." << endl;
 		weight *= ptag_wgt;
 
 		signal_protons = 1;
-		//weight *= ppsSF_wgt;
-
+		*/
 
 
 
 		// Michael proposal 
-		/*
+		
 		// (Already (0,1), no injection into arm 0 is required)
 		// => Assign weights:
 		// probability of having 0 proton is the prob of not having one.
@@ -474,13 +470,17 @@ kipped." << endl;
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
 
 		weight *= ptag_wgt;
-		signal_protons = 1;  */
+		signal_protons = 1; 
+		 
 	}
 
 	//----------------------------------------------------------------------------------
 	// CASE 2: Signal, one proton in arm 0 => (1,0)
 	//----------------------------------------------------------------------------------
 	else if (isSignal && p1_xi > 0 && p2_xi == 0) {
+
+		// First Analysis note version approach
+		/*
 
 		p2_xi = poll_p2_xi[i_reg];
 
@@ -491,19 +491,21 @@ kipped." << endl;
 		weight *= ptag_wgt;
 
 		signal_protons = 10;
+		*/
 		
 		// => Assign weights Michael proposal:
-		/* ptag_wgt = norm_weight_0p[i_reg];
+		 ptag_wgt = norm_weight_0p[i_reg];
 		ptag_wgt *= ptr.trueZeroTracksRatio(run, beamXangle, 0);
 
 		ptag_wgt_err = norm_weight_0p_err[i_reg];
 
 		weight *= ptag_wgt;
-		signal_protons = 10;*/
+		signal_protons = 10;
+		
 
 	}
 
-
+	/*
 	 // Injecting one proton randomly to signal events with (0,0) protons
 	//----------------------------------------------------------------------------------
 	// CASE 3: Signal with 0 protons => Inject 1 randomly
@@ -531,9 +533,10 @@ kipped." << endl;
 			signal_protons = 3;
 		}
 	}
+	*/
 	
+	// Background AN version
 	
-
 	//----------------------------------------------------------------------------------
 	// CASE 4: Background (0,0) => (e.g.) Inject 1 pileup proton randomly
 	//----------------------------------------------------------------------------------
@@ -545,6 +548,38 @@ kipped." << endl;
 		weight *= ptag_wgt;
 		signal_protons = 0;
 	}
+	
+
+	// Michal proposal of background
+	/*
+	else { // no signal protons in the acceptance region
+		// Not a signal => Allow injecting "pileup" 
+		// or leave as (0,0). Example: inject 1 proton
+		if (std::rand() % 2 == 0) {
+			// Inject 1 proton into arm 0
+			p1_xi = poll_p1_xi[i_reg]; 
+			p2_xi = 0;
+
+			// Assign weights for arm 0
+			ptag_wgt = norm_weight_1pRP0[i_reg];
+			ptag_wgt_err = norm_weight_1pRP0_err[i_reg];
+		} else {
+			// Inject 1 proton into arm 1
+			p1_xi = 0;
+			p2_xi = poll_p2_xi[i_reg];
+
+			// Assign weights for arm 1
+			ptag_wgt = norm_weight_1pRP1[i_reg];
+			ptag_wgt_err = norm_weight_1pRP1_err[i_reg];
+		}
+		
+		weight *= ptag_wgt;
+
+		// Mark as 0 => not a signal
+		signal_protons = 0; 
+	}
+	*/
+
 
 
 	// Fix ptag weight from w_sys/w_nom to 1 +/- err
