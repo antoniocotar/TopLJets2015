@@ -186,8 +186,8 @@ kipped." << endl;
 
 
    float norm_weight_0p[n_PUregions], norm_weight_0p_err[n_PUregions]; // for signal events
-   //float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
-   //float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
+   float norm_weight_1pRP0[n_PUregions], norm_weight_1pRP0_err[n_PUregions]; // for signal events
+   float norm_weight_1pRP1[n_PUregions], norm_weight_1pRP1_err[n_PUregions]; // for signal events
    
    // Modification for efficiency
    for(int i_era=0;i_era<n_era;i_era++){
@@ -239,11 +239,11 @@ kipped." << endl;
 	       norm_weight_err[i_era*n_xa+i_xa] = (n_p2_sys/float(n_sys)) / norm_weight[i_era*n_xa+i_xa];
 		   		   
 		   // probabilities for 1 track in signal events
-	       //norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
-	       //norm_weight_1pRP0_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       norm_weight_1pRP0[i_era*n_xa+i_xa] = n_p1_RP0/float(n); // probability of 0 tracks in RP0   P(1,0)
+	       norm_weight_1pRP0_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
-	       //norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1   P(0,1)
-	       //norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
+	       norm_weight_1pRP1[i_era*n_xa+i_xa] = n_p1_RP1/float(n); // probability of 0 tracks in RP1   P(0,1)
+	       norm_weight_1pRP1_err[i_era*n_xa+i_xa] = 0.95; // 5% flat
 
 		   // probabilities for 0 track in signal events
 	       norm_weight_0p[i_era*n_xa+i_xa] = (n_p0)/float(n); // probability of 0 tracks in both arms
@@ -505,7 +505,7 @@ kipped." << endl;
 
 	}
 
-	/*
+	
 	 // Injecting one proton randomly to signal events with (0,0) protons
 	//----------------------------------------------------------------------------------
 	// CASE 3: Signal with 0 protons => Inject 1 randomly
@@ -533,7 +533,7 @@ kipped." << endl;
 			signal_protons = 3;
 		}
 	}
-	*/
+	
 	
 	// Background AN version
 	
