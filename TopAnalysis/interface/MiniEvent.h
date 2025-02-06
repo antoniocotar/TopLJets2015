@@ -153,6 +153,9 @@ struct MiniEvent_t
   Int_t ntrk_ch_eta_3_to_5;
   Int_t ntrk_ch_eta_minus5_to_minus3;
 
+  // ntrk for high eta
+  Int_t nchPV_v_high_eta;
+
   // Variable declarations for HF energy variables
   Float_t HFtotalSumEnergy_eta_4_5;
   Float_t HFtotalSumEnergy_eta_3_5_5;
