@@ -431,6 +431,8 @@ void RunExclusiveTop(TString filename,
     outPT->Branch("nvtx",&ev.nvtx,"nvtx/I");
     outPT->Branch("rho",&ev.rho,"rho/F");
     outPT->Branch("nchPV",&ev.nchPV,"nchPV/I");
+    outPT->Branch("ntrk",&ev.ntrk,"ntrk/I");
+
     outPT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
     float m_protonVars_p1_xi=0, m_protonVars_p2_xi=0;
 	outPT->Branch("p1_xi",&m_protonVars_p1_xi);
@@ -445,8 +447,13 @@ void RunExclusiveTop(TString filename,
     outT->Branch("nvtx",&ev.nvtx,"nvtx/I");
     outT->Branch("rho",&ev.rho,"rho/F");
     outT->Branch("nchPV",&ev.nchPV,"nchPV/I");
+    outT->Branch("ntrk",&ev.nchPV,"ntrk/I");
     outT->Branch("zPV2",&ev.zPV2,"zPV2/F");
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
+
+    // Eta tracks
+    outT->Branch("track_eta",&ev.track_eta,"track_eta/F");
+    
 
     //HF variables
     outT->Branch("nHFRecHits", &ev.nHFRecHits, "nHFRecHits/I"); // Add this line
@@ -608,7 +615,7 @@ void RunExclusiveTop(TString filename,
         "lightJet2_pt", "lightJet2_eta", "lightJet2_phi", "lightJet2_m", "lightJet2_E",
         "lightJet3_pt", "lightJet3_eta", "lightJet3_phi", "lightJet3_m", "lightJet3_E",
 
-        // New quantities for BDT (Semi exclusive)
+        // New variables for BDT (Semi exclusive)
         "most_forward_jet_0", "most_forward_jet_1", "most_forward_jet_2", "most_forward_jet_3", 
         "most_forward_jet_0_pt", "most_forward_jet_1_pt", "most_forward_jet_2_pt", "most_forward_jet_3_pt",
         "most_forward_jet_0_phi", "most_forward_jet_1_phi", "most_forward_jet_2_phi", "most_forward_jet_3_phi",

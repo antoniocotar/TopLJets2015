@@ -6,8 +6,20 @@
 //
 BTagSFUtil::BTagSFUtil(TString era,BTagEntry::OperatingPoint btagOp,TString btagExp, int seed) {
 
+  std::cout << "BTagSFUtil Constructor:" << std::endl;
+  std::cout << "  Era: " << era << std::endl;
+  std::cout << "  btagOp: " << btagOp << std::endl;
+  std::cout << "  btagExp: '" << btagExp << "'" << std::endl;
+  std::cout << "  Seed: " << seed << std::endl;
+
+
+  // Try to print some indicator before calling readExpectedBtagEff
+  std::cout << "Calling readExpectedBtagEff..." << std::endl;
   readExpectedBtagEff(era,btagOp,btagExp);
+
+  std::cout << "Calling startBTVcalibrationReaders..." << std::endl;
   startBTVcalibrationReaders(era,btagOp);
+
   rand_ = new TRandom3(seed);
 
 }
@@ -130,10 +142,16 @@ bool BTagSFUtil::applySF(bool& isBTagged, float Btag_SF, float Btag_eff){
 void BTagSFUtil::startBTVcalibrationReaders(TString era,BTagEntry::OperatingPoint btagOP)
 {
   //start the btag calibration
-  TString btagUncUrl( era+"/DeepJet_102XSF_WP_V1.csv"); 
+  TString btagUncUrl( era+"/wp_deepJet_new_tag-v2.csv"); 
+
   if(era.Contains("2016")) btagUncUrl=era+"/DeepCSV_2016LegacySF_V1.csv"; 
   gSystem->ExpandPathName(btagUncUrl);
-  BTagCalibration btvcalib("DeepJet",btagUncUrl.Data());
+
+  std::cout << "In startBTVcalibrationReaders:" << std::endl;
+  std::cout << "  btagUncUrl: " << btagUncUrl << std::endl;
+
+
+  BTagCalibration btvcalib("DeepJET",btagUncUrl.Data());
 
   //start calibration readers for b,c and udsg separately including the up/down variations
   btvCalibReaders_[BTagEntry::FLAV_B]=new BTagCalibrationReader(btagOP, "central", {"up", "down"});

@@ -209,7 +209,7 @@ private:
   int totalEventCounter_;
 
   // Add this new member variable
-  bool doCaloTower_;
+  //bool doCaloTower_;
 
 };
 
@@ -1574,7 +1574,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       //  https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
 
       //ev_.j_btag[ev_.nj]    = (ev_.j_deepcsv[ev_.nj]>0.2770);
-	    ev_.j_btag[ev_.nj]    = (ev_.j_deepjet[ev_.nj]>0.2770); // Medium working point
+	    ev_.j_btag[ev_.nj]    = (ev_.j_deepjet[ev_.nj]>0.3040); // Medium working point
       ev_.j_emf[ev_.nj]     = CEMF+NEMF;
 
 	  
@@ -2059,6 +2059,14 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         std::cout << "HFnSumEnergy: " << HFnSumEnergy << ", HFnMaxEnergy: " << HFnMaxEnergy 
                   << ", HFnEtaMaxEnergy: " << HFnEtaMaxEnergy << ", Hits: " << HFnHitCount << std::endl;
     }*/
+
+    if (ev_.ntrk >= ev_.MAXTRACKS) {
+      return; // Skip the event if the number of tracks is too high
+    }
+
+    if (ev_.nchPV >= ev_.MAXTRACKS) {
+      return; // Skip the event if the number of tracks is too high
+    }
 
 
     tree_->Fill();
