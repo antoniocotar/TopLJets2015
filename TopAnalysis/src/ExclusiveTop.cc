@@ -447,7 +447,7 @@ void RunExclusiveTop(TString filename,
     outT->Branch("nvtx",&ev.nvtx,"nvtx/I");
     outT->Branch("rho",&ev.rho,"rho/F");
     outT->Branch("nchPV",&ev.nchPV,"nchPV/I");
-    outT->Branch("ntrk",&ev.nchPV,"ntrk/I");
+    outT->Branch("ntrk",&ev.ntrk,"ntrk/I");
     outT->Branch("zPV2",&ev.zPV2,"zPV2/F");
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
 
@@ -1567,8 +1567,8 @@ void RunExclusiveTop(TString filename,
                 t_rec_lep = bJets[marker[i_comb][3]].p4() + lepton.p4() + neutrino;                                              // b+l+nu
 
                 // Weighted squared difference metric
-                double sigma_had = 26.31; // Resolution for hadronic mass
-                double sigma_lep = 26.10; // Resolution for leptonic mass
+                double sigma_had = 25.44; // Resolution for hadronic mass
+                double sigma_lep = 27.94; // Resolution for leptonic mass
                 mistake.push_back(
                     pow((t_rec_had.M() - m_TOP) / sigma_had, 2) + 
                     pow((t_rec_lep.M() - m_TOP) / sigma_lep, 2)
@@ -1635,25 +1635,6 @@ void RunExclusiveTop(TString filename,
                 tbar_rec = t_rec_lep;
             }
 
-            // Compute the Δpt between the top and antitop
-            float delta_pt_tops = fabs(t_rec.Pt() - tbar_rec.Pt());            
-            // Compute the Δeta between the top and antitop
-            float delta_eta_tops = fabs(t_rec.Eta() - tbar_rec.Eta());
-            // Compute the Δphi between the top and antitop
-            float delta_phi_tops = fabs(t_rec.Phi() - tbar_rec.Phi());
-
-            // Delta R of most_forward_bjet_0_top and most_forward_bjet_0_anti_top
-
-            double top_eta = t_rec.Eta();
-            double top_phi = t_rec.Phi();
-
-            double anti_top_eta = tbar_rec.Eta();
-            double anti_top_phi = tbar_rec.Phi();
-
-            dR_most_forward_bjet_0_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, top_eta, top_phi);
-            dR_most_forward_bjet_0_anti_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, anti_top_eta, anti_top_phi);
-
-
 
             //reconstructed ttbar system
             TLorentzVector ttbarSystem_rec = t_rec_had + t_rec_lep;
@@ -1681,6 +1662,26 @@ void RunExclusiveTop(TString filename,
             }
 
             ttbarSystem_gen = t_gen+tbar_gen;
+
+
+            // Compute the Δpt between the top and antitop
+            float delta_pt_tops = fabs(t_rec.Pt() - tbar_rec.Pt());            
+            // Compute the Δeta between the top and antitop
+            float delta_eta_tops = fabs(t_rec.Eta() - tbar_rec.Eta());
+            // Compute the Δphi between the top and antitop
+            float delta_phi_tops = fabs(t_rec.Phi() - tbar_rec.Phi());
+
+            // Delta R of most_forward_bjet_0_top and most_forward_bjet_0_anti_top
+
+            double top_eta = t_rec.Eta();
+            double top_phi = t_rec.Phi();
+
+            double anti_top_eta = tbar_rec.Eta();
+            double anti_top_phi = tbar_rec.Phi();
+
+            dR_most_forward_bjet_0_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, top_eta, top_phi);
+            dR_most_forward_bjet_0_anti_top = dR_calc(most_forward_bjet_0, most_forward_bjet_0_phi, anti_top_eta, anti_top_phi);
+
 
 
             // ***** START OF GEN-LEVEL LIGHT QUARK VARIABLE DECLARATIONS *****

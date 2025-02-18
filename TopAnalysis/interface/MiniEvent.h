@@ -129,7 +129,6 @@ struct MiniEvent_t
     ppstrk_chisqnorm[MAXPROTONS];
   //ppstrk_t[MAXPROTONS],ppstrk_tUnc[MAXPROTONS]; // UFSD only (2018)
 
-
   Int_t nHFRecHits; // Actual number of HFRecHits
   
   // Variables for sum energies

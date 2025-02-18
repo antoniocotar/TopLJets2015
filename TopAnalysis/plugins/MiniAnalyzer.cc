@@ -464,7 +464,7 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.ng++;
 
         //gen level selection
-        if(genLep->pt()>25 && fabs(genLep->eta())<2.5) ngleptons_++;
+        if(genLep->pt()>25 && fabs(genLep->eta())<2.5) ngleptons_++;  
       }
   }
 
