@@ -42,8 +42,12 @@
 // Geometry and FWCore for HF
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 
+// Calo Jets
+#include "DataFormats/JetReco/interface/CaloJet.h"
+#include "DataFormats/JetReco/interface/CaloJetCollection.h"
 
 // Other tools
 #include "DataFormats/Common/interface/DetSetVector.h"
@@ -170,11 +174,12 @@ private:
   edm::EDGetTokenT<edm::View<pat::Electron>  >  electronToken_;
   edm::EDGetTokenT<edm::View<pat::Photon>  >  photonToken_;
   edm::EDGetTokenT<edm::View<pat::Jet> > jetToken_;
+  edm::EDGetTokenT<reco::CaloJetCollection> caloJetsToken_;  // <<=== Add here
   edm::EDGetTokenT<pat::METCollection> metToken_;
   edm::EDGetTokenT<pat::PackedCandidateCollection> pfToken_;
   edm::EDGetTokenT<edm::DetSetVector<TotemRPRecHit>> tokenStripHits_;
+  edm::EDGetTokenT<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>> tokenHFRecHits_;
   edm::EDGetTokenT<edm::DetSetVector<TotemRPUVPattern>> tokenStripPatterns_;
-  edm::EDGetTokenT<edm::SortedCollection<HFRecHit,edm::StrictWeakOrdering<HFRecHit>>> hfRecHitsToken_;
   edm::EDGetTokenT<std::vector<CTPPSLocalTrackLite> > ctppsToken_;
   std::vector< edm::EDGetTokenT<std::vector<reco::ForwardProton> > > tokenRecoProtons_;
   edm::EDGetTokenT<bool> BadChCandFilterToken_,BadPFMuonFilterToken_,BadPFMuonDzFilterToken_;
@@ -246,11 +251,12 @@ MiniAnalyzer::MiniAnalyzer(const edm::ParameterSet& iConfig) :
   rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rho"))),
   muonToken_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
   jetToken_(consumes<edm::View<pat::Jet> >(iConfig.getParameter<edm::InputTag>("jets"))),
+  caloJetsToken_(consumes<reco::CaloJetCollection>(edm::InputTag("slimmedCaloJets"))),
   metToken_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("mets"))),
   pfToken_(consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("pfCands"))),
   tokenStripHits_( mayConsume<edm::DetSetVector<TotemRPRecHit>>(iConfig.getParameter<edm::InputTag>("tagStripHits")) ),
+  tokenHFRecHits_(consumes<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>>(iConfig.getParameter<edm::InputTag>("hfRecHits"))),
   tokenStripPatterns_( consumes<edm::DetSetVector<TotemRPUVPattern>>(iConfig.getParameter<edm::InputTag>("tagStripPatterns")) ),
-  hfRecHitsToken_(consumes<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>>(iConfig.getParameter<edm::InputTag>("hfRecHits"))),
   ctppsToken_(consumes<std::vector<CTPPSLocalTrackLite> >(iConfig.getParameter<edm::InputTag>("ctppsLocalTracks"))),
   BadChCandFilterToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("badChCandFilter"))),
   BadPFMuonFilterToken_(consumes<bool>(iConfig.getParameter<edm::InputTag>("badPFMuonFilter"))),
@@ -712,150 +718,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   static int eventCounter_ = 0;
   eventCounter_++; // Increment the event counter
 
-////////////////////////////////////// HF ///////////////////////////////////////////////////////////////////
 
-
-////////////////////HF
-
-  // Get the calorimeter geometry from the EventSetup
-  edm::ESHandle<CaloGeometry> caloGeometry;
-  iSetup.get<CaloGeometryRecord>().get(caloGeometry);
-  const CaloGeometry* geo = caloGeometry.product();
-
-  edm::Handle<edm::SortedCollection<HFRecHit, edm::StrictWeakOrdering<HFRecHit>>> hfRecHitsHandle;
-  iEvent.getByToken(hfRecHitsToken_, hfRecHitsHandle);
-
-  if (!hfRecHitsHandle.isValid()) {
-      edm::LogError("MiniAnalyzer") << "HFRecHit collection not found";
-      return;
-  }
-
-  // Reset the counter for the number of HFRecHits
-  ev_.nHFRecHits = 0;
-  int hitCounter = 0; // Initialize a counter for the loop iterations
-  // Initialize variables to store the computed values
-  // Initialize variables to store the computed values
-  float HFpSumEnergy = 0.0, HFnSumEnergy = 0.0;
-  float HFpMaxEnergy = 0.0, HFnMaxEnergy = 0.0;
-  float HFpEtaMaxEnergy = 0.0, HFnEtaMaxEnergy = 0.0; // Eta values for max energy hits
-  int HFpHitCount = 0, HFnHitCount = 0; // Counters for positive and negative eta hits
-
-  // Initialize variables for storing energy sums in specified eta ranges
-  ev_.HFtotalSumEnergy_eta_4_5 = 0.0;
-  ev_.HFtotalSumEnergy_eta_3_5_5 = 0.0;
-  ev_.HFtotalSumEnergy_eta_4_5_5 = 0.0;
-
-  ev_.HFabsDiffEnergy_eta_4_5 = 0.0; // For absolute difference calculations in specified eta ranges
-  ev_.HFabsDiffEnergy_eta_3_5_5 = 0.0;
-  ev_.HFabsDiffEnergy_eta_4_5_5 = 0.0;
-
-  ev_.HFpSumEnergy_eta_4_5 = 0.0; // Similar for HF+ sum energies
-  ev_.HFpSumEnergy_eta_3_5_5 = 0.0;
-  ev_.HFpSumEnergy_eta_4_5_5 = 0.0;
-
-  ev_.HFnSumEnergy_eta_4_5 = 0.0; // And for HF- sum energies
-  ev_.HFnSumEnergy_eta_3_5_5 = 0.0;
-  ev_.HFnSumEnergy_eta_4_5_5 = 0.0;
-
-
-  for (const auto& hit : *hfRecHitsHandle) {
-      float energy = hit.energy();
-      float time = hit.time();
-      uint32_t id = hit.detid().rawId();
-
-      // Get the position for this hit
-      const GlobalPoint& posHcal = geo->getPosition(hit.detid());
-      float eta = posHcal.eta();
-      float absEta = std::abs(eta); // Use absolute eta for comparisons
-
-      // Increment the hit counter and print it with the hit details
-      hitCounter++;
-      //std::cout << "Hit " << hitCounter << std::endl;
-      //std::cout << "Eta: " << eta << ", Energy: " << energy << std::endl;
-
-      // Increment the total hit counter
-      ev_.nHFRecHits++;
-
-      //std::cout << "Hit number " << hitCounter << std::endl;
-      // Log detailed information about each hit
-      //std::cout << "Hit Information: " << std::endl;
-      //std::cout << "Energy: " << energy << ", Time: " << time << ", ID: " << id << std::endl;
-      //std::cout << "Position - X: " << posHcal.x() << ", Y: " << posHcal.y() << ", Z: " << posHcal.z() << std::endl;
-      //std::cout << "Eta: " << eta << ", AbsEta: " << absEta << std::endl;
-
-      
-      
-      // Sum energies and find max energy based on Eta value, increment hit counters
-      if (eta > 0) {
-          HFpSumEnergy += energy;
-          if (energy > HFpMaxEnergy) {
-              HFpMaxEnergy = energy;
-              HFpEtaMaxEnergy = eta; // Store Eta value for max energy hit
-          }
-          HFpHitCount++;
-      } else {
-          HFnSumEnergy += energy;
-          if (energy > HFnMaxEnergy) {
-              HFnMaxEnergy = energy;
-              HFnEtaMaxEnergy = eta; // Store Eta value for max energy hit
-          }
-          HFnHitCount++;
-      }
-
-      // Increment counters and sum energies based on absEta conditions
-      if (absEta > 4 && absEta <= 5) {
-          ev_.HFtotalSumEnergy_eta_4_5 += energy; // Update this and similar variables accordingly
-          // Note: You'll need to adjust the logic for calculating HFabsDiffEnergy for specific eta ranges
-      }
-      if (absEta > 3.5 && absEta <= 5) {
-          ev_.HFtotalSumEnergy_eta_3_5_5 += energy;
-      }
-      if (absEta > 4.5 && absEta <= 5) {
-          ev_.HFtotalSumEnergy_eta_4_5_5 += energy;
-      }
-
-      // Example for HFpSumEnergy and HFnSumEnergy, adjust the logic to add to HFp/HFn variables based on eta sign
-      if (eta > 0) { // For HF+
-          if (absEta > 4 && absEta <= 5) ev_.HFpSumEnergy_eta_4_5 += energy;
-          if (absEta > 3.5 && absEta <= 5) ev_.HFpSumEnergy_eta_3_5_5 += energy;
-          if (absEta > 4.5 && absEta <= 5) ev_.HFpSumEnergy_eta_4_5_5 += energy;
-      } else { // For HF-
-          if (absEta > 4 && absEta <= 5) ev_.HFnSumEnergy_eta_4_5 += energy;
-          if (absEta > 3.5 && absEta <= 5) ev_.HFnSumEnergy_eta_3_5_5 += energy;
-          if (absEta > 4.5 && absEta <= 5) ev_.HFnSumEnergy_eta_4_5_5 += energy;
-      }
-
-
-    }
-
-    
-    // Calculate new variables abs sum and difference
-    float HFtotalSumEnergy = HFpSumEnergy + HFnSumEnergy; // Sum of HF+ and HF- energies
-    float HFabsDiffEnergy = std::abs(HFpSumEnergy - HFnSumEnergy); // Absolute difference of HF+ and HF- energies
-
-    // Update the ev_ object with the computed valuess for the new variables
-    ev_.HFtotalSumEnergy = HFtotalSumEnergy;
-    ev_.HFabsDiffEnergy = HFabsDiffEnergy;
-
-    // Update the ev_ object with the computed values
-    ev_.HFpSumEnergy = HFpSumEnergy;
-    ev_.HFnSumEnergy = HFnSumEnergy;
-    ev_.HFpMaxEnergy = HFpMaxEnergy;
-    ev_.HFnMaxEnergy = HFnMaxEnergy;
-    ev_.HFpEtaMaxEnergy = HFpEtaMaxEnergy; 
-    ev_.HFnEtaMaxEnergy = HFnEtaMaxEnergy; 
-
-    // Calculate HFabsDiffEnergy for specified eta ranges after accumulating energies
-    ev_.HFabsDiffEnergy_eta_4_5 = std::abs(ev_.HFpSumEnergy_eta_4_5 - ev_.HFnSumEnergy_eta_4_5);
-    ev_.HFabsDiffEnergy_eta_3_5_5 = std::abs(ev_.HFpSumEnergy_eta_3_5_5 - ev_.HFnSumEnergy_eta_3_5_5);
-    ev_.HFabsDiffEnergy_eta_4_5_5 = std::abs(ev_.HFpSumEnergy_eta_4_5_5 - ev_.HFnSumEnergy_eta_4_5_5);
-
-
-
-
-
-
-  
   //
   //PPS local tracks (if present)
   //
@@ -1441,12 +1304,16 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   ev_.leading_bjet_pt = -999; 
   ev_.leading_ljet_pt = -999;  
 
+  // at the top of your analyze(...) before filling any jets:
+  double jet_E_sum_plus  = 0.0;
+  double jet_E_sum_minus = 0.0;
 
   edm::Handle<edm::View<pat::Jet> > jets;
   iEvent.getByToken(jetToken_,jets);
   JME::JetResolution jerResolution  = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
   JME::JetResolutionScaleFactor jerResolutionSF = JME::JetResolutionScaleFactor::get(iSetup, "AK4PFchs");
   std::vector< std::pair<const reco::Candidate *,int> > clustCands;
+
   for(auto j = jets->begin();  j != jets->end(); ++j)
     {
       //base kinematics
@@ -1502,6 +1369,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	  
 	    // Skip jets with corrected PT < 25 GeV
       if(corrP4.pt()<10 ) continue;
+
 
       //jet id cf. for AK4CHS jets
       //2017 https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVUL#Preliminary_Recommendations_for
@@ -1620,7 +1488,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	      }
 	        
 	        // count reconstructed objects (used in the analysis)
-	        if(ev_.j_pt[ev_.nj]>10 && abs(ev_.j_eta[ev_.nj])<4.7){
+	        if(ev_.j_pt[ev_.nj]>30 && abs(ev_.j_eta[ev_.nj])<4.7){
             
             // Update leading_j_pt if this jet has higher pt
             if(ev_.j_pt[ev_.nj] > ev_.leading_j_pt) {
@@ -1669,6 +1537,8 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	        clustCands.push_back(std::pair<const reco::Candidate *,int>(pf,ev_.nj-1));
 	      }
     }
+
+
   if(ev_.MAXJET<ev_.nj){
      cout << "ERROR: MAXJET ("<<ev_.MAXJETSYS<<") is smaller than the N jets in the sample ("<<ev_.nj<<")."<<endl;
 	   cout <<"\t\t... expect memory leaks!!!"<<endl;
@@ -1676,7 +1546,142 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   
   //std::cout << "The maximum value is: " << ev_.leading_j_pt << std::endl;
 
-	  
+  ////////////// start nchMPI
+
+  // 0) Prepare a temporary std::vector to collect MPI‐PFs
+  std::vector<float> tmp_eta, tmp_phi, tmp_pt, tmp_energy;
+  std::vector<int>   tmp_charge, tmp_pdgid;
+
+  // 1) Clear the temp vectors & reset event counter
+  tmp_eta   .clear();
+  tmp_phi   .clear();
+  tmp_pt    .clear();
+  tmp_energy.clear();
+  tmp_charge.clear();
+  tmp_pdgid .clear();
+  ev_.npf = 0;
+  ev_.nchMPI = 0;
+  ev_.sumMPIChHt = 0;     // <— NEW
+  
+  // 2) Prepare jet‐matching & HF sums
+  const float dRcut = 0.4f;
+  std::vector<int> jet_nch(ev_.nj, 0);
+  int   nchMPI_local = 0;
+
+
+  // 2) Loop over PF candidates with the same PV‐track selection
+  for (const auto &pf : *pfcands) {
+    if (pf.pt() <= 0.5f)                                continue;
+    if (pf.fromPV() < pat::PackedCandidate::PVTight)    continue;
+    if (pf.energy() < 0.0f)             continue;
+    //if (std::fabs(pf.eta()) >= 2.4f)                    continue;
+
+    // Check matching to any jet
+    bool matched = false;
+    for (int i = 0; i < ev_.nj; ++i) {
+      float dEta = pf.eta() - ev_.j_eta[i];
+      float dPhi = reco::deltaPhi(pf.phi(), ev_.j_phi[i]);
+      float dR   = std::hypot(dEta, dPhi);
+      if (dR < dRcut) {
+        ++jet_nch[i];
+        matched = true;
+      }
+    }
+    if (!matched) {
+
+      float eta = pf.eta();
+      float E   = pf.energy();
+      float phi = pf.phi();
+      float pt  = pf.pt();
+
+    if (pf.charge() != 0 && std::fabs(eta) < 2.4f) {
+      tmp_eta   .push_back(pf.eta());
+      tmp_phi   .push_back(pf.phi());
+      tmp_pt    .push_back(pf.pt());
+      tmp_energy.push_back(pf.energy());
+      tmp_charge.push_back(pf.charge());
+      tmp_pdgid .push_back(pf.pdgId());
+
+      ++nchMPI_local;
+
+      // **Accumulate the new MPI‐charged-track H_T**:
+      ev_.sumMPIChHt += pf.pt();        // <— NEW
+    }
+    }
+  }
+
+
+  float avgInternalGap = 0.0f;
+  int   nInternalGaps = 0;
+
+  // Only if we have at least two entries can we form an “internal” gap
+  if (tmp_eta.size() >= 2) {
+    // 1) sort ascending
+    std::sort(tmp_eta.begin(), tmp_eta.end());
+
+    // 2) sum all consecutive differences
+    float sumGaps = 0.0f;
+    for (size_t i = 0; i + 1 < tmp_eta.size(); ++i) {
+      sumGaps += (tmp_eta[i+1] - tmp_eta[i]);
+    }
+
+    // 3) number of internal gaps = N-1
+    nInternalGaps = static_cast<int>(tmp_eta.size()) - 1;
+
+    // 4) average
+    avgInternalGap = sumGaps / nInternalGaps;
+  }
+
+  // 5) store in your event struct
+  ev_.avgInternalRapidityGap = avgInternalGap;
+  ev_.nInternalRapidityGaps = nInternalGaps;
+
+  /*
+  // --- 4) Compute the maximal rapidity gap from tmp_eta ---------------
+  const float eta_lo = -2.4f, eta_hi = +2.4f;
+  float maxGap = eta_hi - eta_lo;    // default: no central PF → full gap
+  if (!tmp_eta.empty()) {
+    std::sort(tmp_eta.begin(), tmp_eta.end());
+    // edge gaps
+    float leftGap  = tmp_eta.front() - eta_lo;
+    float rightGap = eta_hi       - tmp_eta.back();
+    maxGap = std::max(leftGap, rightGap);
+    // internal gaps
+    for (size_t i = 0; i + 1 < tmp_eta.size(); ++i) {
+      float gap = tmp_eta[i+1] - tmp_eta[i];
+      if (gap > maxGap) maxGap = gap;
+    }
+  }
+  ev_.rapidityGapMax = maxGap;
+ */
+
+
+
+  // 4) Copy into event arrays, respecting MAXPF
+  ev_.npf = std::min((int)tmp_eta.size(), 10000);
+  for (int idx = 0; idx < ev_.npf; ++idx) {
+    ev_.pfMPI_eta   [idx] = tmp_eta   [idx];
+    ev_.pfMPI_phi   [idx] = tmp_phi   [idx];
+    ev_.pfMPI_pt    [idx] = tmp_pt    [idx];
+    ev_.pfMPI_energy[idx] = tmp_energy[idx];
+    ev_.pfMPI_charge[idx] = tmp_charge[idx];
+    ev_.pfMPI_pdgid [idx] = tmp_pdgid [idx];
+
+  }
+
+  // 3) Copy per‐jet counts into the event, set nchMPI
+  for (int i = 0; i < ev_.nj; ++i) {
+    ev_.jet_nch[i] = jet_nch[i];
+  }
+
+  ev_.nchMPI = nchMPI_local;
+
+
+
+
+  //////////////////// END nchMPI
+
+  
   // MET
   edm::Handle<pat::METCollection> mets;
   iEvent.getByToken(metToken_, mets);
@@ -1759,12 +1764,13 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   LorentzVector vtxPt[8]; 
   ev_.nchPV=0; ev_.sumPVChPt=0; ev_.sumPVChPz=0; ev_.sumPVChHt=0;
   ev_.ntrk=0;
+
   for(int i=0; i<8; i++){
-	vtxPt[i].SetXYZT(0,0,0,0);
-	ev_.nchPV_v[i]=0;
-	ev_.sumPVChPt_v[i]=0;
-	ev_.sumPVChPz_v[i]=0;
-	ev_.sumPVChHt_v[i]=0;
+    vtxPt[i].SetXYZT(0,0,0,0);
+    ev_.nchPV_v[i]=0;
+    ev_.sumPVChPt_v[i]=0;
+    ev_.sumPVChPz_v[i]=0;
+    ev_.sumPVChHt_v[i]=0;
 	
     ev_.nPFCands[i]=0;
     ev_.sumPFHt[i]=0;
@@ -1776,127 +1782,130 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
     ev_.sumPFChPz[i]=0;
   }
 
-    // Initialize counters for charged tracks in the specified eta regions
-  ev_.ntrk_ch_all_eta = 0; // For counting charged tracks in all eta regions
-  ev_.ntrk_ch_eta_3_to_5 = 0; // For counting charged tracks in 3 < eta < 5
-  ev_.ntrk_ch_eta_minus5_to_minus3 = 0; // For counting charged tracks in -5 < eta < -3
-  
-  for(auto pf = pfcands->begin();  pf != pfcands->end(); ++pf)
-    {
-      int ieta(-1);
-      if(pf->eta()>-4.7) ieta=0;
-      if(pf->eta()>-3)   ieta=1;
-      if(pf->eta()>-2.5) ieta=2;
-      if(pf->eta()>-1.5) ieta=3;
-      if(pf->eta()>0)    ieta=4;
-      if(pf->eta()>1.5)  ieta=5;
-      if(pf->eta()>2.5)  ieta=6;
-      if(pf->eta()>3.0)  ieta=7;
-      if(pf->eta()>4.7)  ieta=-1;
-      if(ieta<0) continue;
-      ev_.nPFCands[ieta]++;
-      ev_.sumPFHt[ieta] += pf->pt();
-      ev_.sumPFEn[ieta] += pf->energy();
-      ev_.sumPFPz[ieta] += pf->pz();
-      if(pf->charge()!=0){
-        ev_.nPFChCands[ieta]++;
-        ev_.sumPFChHt[ieta] += pf->pt();
-        ev_.sumPFChEn[ieta] += pf->energy();
-        ev_.sumPFChPz[ieta] += (pf->pz());
 
-                
-        // Counting for all eta regions
-        ev_.ntrk_ch_all_eta++;
+  for(auto pf = pfcands->begin();  pf != pfcands->end(); ++pf) {
+      
+    int ieta(-1);
+    if(pf->eta()>-4.7) ieta=0;
+    if(pf->eta()>-3)   ieta=1;
+    if(pf->eta()>-2.5) ieta=2;
+    if(pf->eta()>-1.5) ieta=3;
+    if(pf->eta()>0)    ieta=4;
+    if(pf->eta()>1.5)  ieta=5;
+    if(pf->eta()>2.5)  ieta=6;
+    if(pf->eta()>3.0)  ieta=7;
+    if(pf->eta()>4.7)  ieta=-1;
 
-        // Counting for 3 < eta < 5
-        if(pf->eta() > 3 && pf->eta() < 5) {
-            ev_.ntrk_ch_eta_3_to_5++;
-        }
-
-        // Counting for -5 < eta < -3
-        if(pf->eta() > -5 && pf->eta() < -3) {
-            ev_.ntrk_ch_eta_minus5_to_minus3++;
-        }
+    if(ieta<0) continue;
 
 
-        bool passChargeSel(pf->pt()>0.9 && fabs(pf->eta())<2.5); // split 2.1 and 2.5
-        const pat::PackedCandidate::PVAssoc pvassoc=pf->fromPV(); 
+    ev_.nPFCands[ieta]++;
+    ev_.sumPFHt[ieta] += pf->pt();
+    ev_.sumPFEn[ieta] += pf->energy();
+    ev_.sumPFPz[ieta] += pf->pz();
+
+    if(pf->charge()!=0){
+      ev_.nPFChCands[ieta]++;
+      ev_.sumPFChHt[ieta] += pf->pt();
+      ev_.sumPFChEn[ieta] += pf->energy();
+      ev_.sumPFChPz[ieta] += (pf->pz());
 
 
-        
-		const pat::PackedCandidate::PVAssoc pvassoc2=pf->fromPV(_second_vertex_index); 
-		int _bin;
-        if(passChargeSel && pvassoc>=pat::PackedCandidate::PVTight){
-          ev_.nchPV++;
-          ev_.sumPVChPz+=(pf->pz());
-          ev_.sumPVChHt+=pf->pt();
+
+      bool passChargeSel(pf->pt()>0.9 && fabs(pf->eta())<2.5); // split 2.1 and 2.5
+      const pat::PackedCandidate::PVAssoc pvassoc=pf->fromPV(); 
+      const pat::PackedCandidate::PVAssoc pvassoc2=pf->fromPV(_second_vertex_index); 
 		  
-		  // Add extra PV variables
-		  _bin = 0;
-		  ev_.nchPV_v[_bin]++;
-		  ev_.sumPVChPz_v[_bin]+=(pf->pz());
-		  ev_.sumPVChHt_v[_bin]+=pf->pt();
-		  vtxPt[_bin]+=pf->p4();
-		  if(fabs(pf->eta())<2.1) {_bin = 1;
-			  ev_.nchPV_v[_bin]++;
-			  ev_.sumPVChPz_v[_bin]+=(pf->pz());
-			  ev_.sumPVChHt_v[_bin]+=pf->pt();
-			  vtxPt[_bin]+=pf->p4();
-			  if(ev_.ntrk<ev_.MAXTRACKS){
-			    ev_.track_pt[ev_.ntrk] = pf->pt();
-			    ev_.track_eta[ev_.ntrk] = pf->eta();
-			    ev_.track_phi[ev_.ntrk] = pf->phi();
-			    ev_.ntrk++;
-			  }			  
-		      if(pvassoc>pat::PackedCandidate::PVTight) {_bin=3;
+      int _bin;
+      
+      if(passChargeSel && pvassoc>=pat::PackedCandidate::PVTight){
+        ev_.nchPV++;
+        ev_.sumPVChPz+=(pf->pz());
+        ev_.sumPVChHt+=pf->pt();
+		  
+        // Add extra PV variables
+        _bin = 0;
+        ev_.nchPV_v[_bin]++;
+        ev_.sumPVChPz_v[_bin]+=(pf->pz());
+        ev_.sumPVChHt_v[_bin]+=pf->pt();
+        vtxPt[_bin]+=pf->p4();
+		    
+        if(fabs(pf->eta())<2.1) {
+          _bin = 1;
 			    ev_.nchPV_v[_bin]++;
 			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
 			    ev_.sumPVChHt_v[_bin]+=pf->pt();
 			    vtxPt[_bin]+=pf->p4();
+			  
+          if(ev_.ntrk<ev_.MAXTRACKS){
+			      ev_.track_pt[ev_.ntrk] = pf->pt();
+			      ev_.track_eta[ev_.ntrk] = pf->eta();
+			      ev_.track_phi[ev_.ntrk] = pf->phi();
+			      ev_.ntrk++;
+			    }			  
+		      
+          if(pvassoc>pat::PackedCandidate::PVTight) {
+            _bin=3;
+			      ev_.nchPV_v[_bin]++;
+			      ev_.sumPVChPz_v[_bin]+=(pf->pz());
+			      ev_.sumPVChHt_v[_bin]+=pf->pt();
+			      vtxPt[_bin]+=pf->p4();
+		        }
 		      }
-		  }
-		  if(pvassoc>pat::PackedCandidate::PVTight) {_bin=2;
-			    ev_.nchPV_v[_bin]++;
-			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
-			    ev_.sumPVChHt_v[_bin]+=pf->pt();
-			    vtxPt[_bin]+=pf->p4();
-		  }
-		}
-		if(passChargeSel && pvassoc2>=pat::PackedCandidate::PVTight){
-		  _bin = 4;
-		  ev_.nchPV_v[_bin]++;
-		  ev_.sumPVChPz_v[_bin]+=(pf->pz());
-		  ev_.sumPVChHt_v[_bin]+=pf->pt();
-		  vtxPt[_bin]+=pf->p4();
-		  if(fabs(pf->eta())<2.1) {_bin = 4+1;
-			  ev_.nchPV_v[_bin]++;
-			  ev_.sumPVChPz_v[_bin]+=(pf->pz());
-			  ev_.sumPVChHt_v[_bin]+=pf->pt();
-			  vtxPt[_bin]+=pf->p4();
-		      if(pvassoc2>pat::PackedCandidate::PVTight) {_bin=4+3;
-			    ev_.nchPV_v[_bin]++;
-			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
-			    ev_.sumPVChHt_v[_bin]+=pf->pt();
-			    vtxPt[_bin]+=pf->p4();
+		  
+          if(pvassoc>pat::PackedCandidate::PVTight) {
+            _bin=2;
+			      ev_.nchPV_v[_bin]++;
+			      ev_.sumPVChPz_v[_bin]+=(pf->pz());
+			      ev_.sumPVChHt_v[_bin]+=pf->pt();
+			      vtxPt[_bin]+=pf->p4();
 		      }
-		  }
-		  if(pvassoc2>pat::PackedCandidate::PVTight) {_bin=4+2;
+		    }
+		
+      if(passChargeSel && pvassoc2>=pat::PackedCandidate::PVTight){
+		    _bin = 4;
+		    ev_.nchPV_v[_bin]++;
+		    ev_.sumPVChPz_v[_bin]+=(pf->pz());
+		    ev_.sumPVChHt_v[_bin]+=pf->pt();
+		    vtxPt[_bin]+=pf->p4();
+		  
+        if(fabs(pf->eta())<2.1) {_bin = 4+1;
 			    ev_.nchPV_v[_bin]++;
 			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
 			    ev_.sumPVChHt_v[_bin]+=pf->pt();
 			    vtxPt[_bin]+=pf->p4();
-		  }
-		}		
-      }
+		      
+          if(pvassoc2>pat::PackedCandidate::PVTight) {
+            _bin=4+3;
+			      ev_.nchPV_v[_bin]++;
+			      ev_.sumPVChPz_v[_bin]+=(pf->pz());
+			      ev_.sumPVChHt_v[_bin]+=pf->pt();
+			      vtxPt[_bin]+=pf->p4();
+		      }
+		    }
+		  
+        if(pvassoc2>pat::PackedCandidate::PVTight) {
+          _bin=4+2;
+			    ev_.nchPV_v[_bin]++;
+			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
+			    ev_.sumPVChHt_v[_bin]+=pf->pt();
+			    vtxPt[_bin]+=pf->p4();
+		    }
+		  }		
     }
+  }
+  
   ev_.sumPVChPt=vtxPt[0].pt();
   for(int i=0; i<8; i++)
     ev_.sumPVChPt_v[i]=vtxPt[i].pt();
+
 
 }
 
 
 
+
+///////// END HF PF CANDIDATES //////////
 
 
 

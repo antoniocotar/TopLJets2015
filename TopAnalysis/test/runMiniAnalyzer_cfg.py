@@ -175,7 +175,7 @@ if options.RedoProtons and (not options.redoProtonRecoFromRAW or not options.run
 #message logger
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = ''
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(40000) )
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 #options.maxEvents
@@ -238,12 +238,14 @@ process.TFileService = cms.Service("TFileService",
 from TopLJets2015.TopAnalysis.miniAnalyzer_cfi import  ANALYSISJETIDS,ANALYSISTRIGGERLISTS,ANALYSISVARS,ANALYSISRUNS
 process.load('TopLJets2015.TopAnalysis.miniAnalyzer_cfi')
 print 'MiniAnalyzer configuration is as follows:'
-process.analysis.hfRecHits = cms.InputTag("slimmedHcalRecHits", "reducedHcalRecHits")
+process.analysis.caloJets = cms.InputTag("slimmedCaloJets")
 process.analysis.saveTree  = cms.bool(options.saveTree)
 process.analysis.applyFilt = cms.bool(options.applyFilt)
 print '\t save tree=',options.saveTree,
 print (', using ListVars=\''+options.ListVars+'\'') if options.saveTree else ''
  
+process.analysis.hfRecHits = cms.InputTag("slimmedHcalRecHits", "reducedHcalRecHits")
+
 if options.runProtonFastSim: 
   print 'INFO:\t Run proton simulation with xangle = ',options.runProtonFastSim,'murad'
   if options.doPUProtons:

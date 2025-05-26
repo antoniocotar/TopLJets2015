@@ -14,7 +14,7 @@ struct MiniEvent_t
 
   static const int MAXWEIGHTS   =  120;  // QCD(10) PDF(10) HessianPDF(100)
   static const int MAXPSWEIGHTS =  46;
-  static const int MAXGENPAR    =  20;  // initialy was 500
+  static const int MAXGENPAR    =  20;  // initialy was 500+
   static const int MAXGENTOPAR  =  25;
   static const int MAXGAMMA     =  20;
   static const int MAXLEP       =  20;
@@ -24,6 +24,7 @@ struct MiniEvent_t
   static const int MAXRAWMU     =  50;
   static const int MAXPROTONS   =  50;
   static const int MAXTRACKS    =  100;
+  static const int MAXPF = 10000; // or higher if needed
 
   Bool_t isData;
   UInt_t run,lumi,fill;
@@ -112,8 +113,25 @@ struct MiniEvent_t
   Float_t sumPVChPt_v[8],sumPVChPz_v[8],sumPVChHt_v[8];
   Int_t nPFCands[8],nPFChCands[8];
   Float_t sumPFHt[8],sumPFEn[8],sumPFPz[8],sumPFChHt[8],sumPFChEn[8],sumPFChPz[8];
-  //Float_t ht; // Sum of the momentum of jets, leptons and met
- 		  
+  Float_t ht; // Sum of the momentum of jets, leptons and met
+
+  // PF variables diffractive top
+  Int_t npf;
+  Float_t pfMPI_eta[MAXPF], pfMPI_phi[MAXPF], pfMPI_pt[MAXPF], pfMPI_energy[MAXPF]; 
+  Int_t pfMPI_charge[MAXPF], pfMPI_pdgid[MAXPF];
+
+
+  // Your rapidity‐gap variable
+  Float_t avgInternalRapidityGap;
+  Int_t nInternalRapidityGaps;
+
+
+  // nchMPI
+  Int_t nchMPI;
+  Int_t jet_nch[MAXJET];
+
+  Float_t sumMPIChHt;
+
   //CTPPS protons
   Short_t nfwdtrk,fwdtrk_pot[MAXPROTONS],fwdtrk_method[MAXPROTONS],fwdtrk_shifted[MAXPROTONS];
   Float_t fwdtrk_thetax[MAXPROTONS],fwdtrk_thetay[MAXPROTONS],
@@ -128,52 +146,6 @@ struct MiniEvent_t
     ppstrk_tx[MAXPROTONS],ppstrk_ty[MAXPROTONS],ppstrk_txUnc[MAXPROTONS],ppstrk_tyUnc[MAXPROTONS],
     ppstrk_chisqnorm[MAXPROTONS];
   //ppstrk_t[MAXPROTONS],ppstrk_tUnc[MAXPROTONS]; // UFSD only (2018)
-
-  Int_t nHFRecHits; // Actual number of HFRecHits
-  
-  // Variables for sum energies
-  Float_t HFpSumEnergy; // Sum of energy for hits with eta > 0
-  Float_t HFnSumEnergy; // Sum of energy for hits with eta < 0
-
-  // Variables for maximum energies
-  Float_t HFpMaxEnergy; // Maximum energy of hits with eta > 0
-  Float_t HFnMaxEnergy; // Maximum energy of hits with eta < 0
-
-  // Variables for eta values associated with the max energy hits
-  Float_t HFpEtaMaxEnergy; // Eta value for the hit with max energy among hits with eta > 0
-  Float_t HFnEtaMaxEnergy; // Eta value for the hit with max energy among hits with eta < 0
-
-  Float_t HFtotalSumEnergy; 
-  Float_t HFabsDiffEnergy; 
-
-
-  // Variable declarations for ntrk variables
-  Int_t ntrk_ch_all_eta;
-  Int_t ntrk_ch_eta_3_to_5;
-  Int_t ntrk_ch_eta_minus5_to_minus3;
-
-  // ntrk for high eta
-  Int_t nchPV_v_high_eta;
-
-  // Variable declarations for HF energy variables
-  Float_t HFtotalSumEnergy_eta_4_5;
-  Float_t HFtotalSumEnergy_eta_3_5_5;
-  Float_t HFtotalSumEnergy_eta_4_5_5;
-
-  Float_t HFabsDiffEnergy_eta_4_5;
-  Float_t HFabsDiffEnergy_eta_3_5_5;
-  Float_t HFabsDiffEnergy_eta_4_5_5;
-
-  Float_t HFpSumEnergy_eta_4_5;
-  Float_t HFpSumEnergy_eta_3_5_5;
-  Float_t HFpSumEnergy_eta_4_5_5;
-
-  Float_t HFnSumEnergy_eta_4_5;
-  Float_t HFnSumEnergy_eta_3_5_5;
-  Float_t HFnSumEnergy_eta_4_5_5;
-
-
-  
 
 
   //these are crazy variables for the cross check

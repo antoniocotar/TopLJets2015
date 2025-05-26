@@ -211,6 +211,9 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("e_j_py",   ev.e_j_py,    "e_j_py[nj]/F");
   t->Branch("e_j_pz",   ev.e_j_pz,    "e_j_pz[nj]/F");
   t->Branch("e_j_pz",   ev.e_j_pz,    "e_j_pz[nj]/F");
+
+  t->Branch("jet_nch", ev.jet_nch, "jet_nch[nj]/I");
+
   } // end store jets
   
   //pf sums
@@ -235,18 +238,30 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("sumPFChHt",    ev.sumPFChHt,     "sumPFChHt[8]/F");  
   t->Branch("ntrk",         &ev.ntrk,         "ntrk/I");  
 
-  // The branches for ntrk_ch_all_eta, ntrk_ch_eta_3_to_5, and ntrk_ch_eta_minus5_to_minus3 should be added here
-  t->Branch("ntrk_ch_all_eta", &ev.ntrk_ch_all_eta, "ntrk_ch_all_eta/I");
-  t->Branch("ntrk_ch_eta_3_to_5", &ev.ntrk_ch_eta_3_to_5, "ntrk_ch_eta_3_to_5/I");
-  t->Branch("ntrk_ch_eta_minus5_to_minus3", &ev.ntrk_ch_eta_minus5_to_minus3, "ntrk_ch_eta_minus5_to_minus3/I");
+
+  t->Branch("nchMPI",     &ev.nchMPI,     "nchMPI/I");
+  t->Branch("sumMPIChHt", &ev.sumMPIChHt, "sumMPIChHt/F");
+
+  t->Branch("npf",        &ev.npf,        "npf/I");
+  t->Branch("pfMPI_eta",     ev.pfMPI_eta,      "pfMPI_eta[npf]/F");
+  t->Branch("pfMPI_phi",     ev.pfMPI_phi,      "pfMPI_phi[npf]/F");
+  t->Branch("pfMPI_pt",      ev.pfMPI_pt,       "pfMPI_pt[npf]/F");
+  t->Branch("pfMPI_energy",  ev.pfMPI_energy,   "pfMPI_energy[npf]/F");
+  t->Branch("pfMPI_charge",  ev.pfMPI_charge,   "pfMPI_charge[npf]/I");
+  t->Branch("pfMPI_pdgid",   ev.pfMPI_pdgid,    "pfMPI_pdgid[npf]/I");
+
+  t->Branch("avgInternalRapidityGap", &ev.avgInternalRapidityGap, "avgInternalRapidityGap/F");
+  t->Branch("nInternalRapidityGaps", &ev.nInternalRapidityGaps, "nInternalRapidityGaps/I");
 
 
   t->Branch("track_pt",     ev.track_pt,      "track_pt[ntrk]/F");  
   t->Branch("track_eta",    ev.track_eta,     "track_eta[ntrk]/F");  
   t->Branch("track_phi",    ev.track_phi,     "track_phi[ntrk]/F");  
-  //t->Branch("ht",      ev.ht,       "ht/F");
+  t->Branch("ht", &ev.ht, "ht/F");
   } // end store pflow
   
+
+
 
 
   
@@ -306,43 +321,6 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   } // end store pps
 
 
-  // Hadronic Forward calorimeter variables
-  t->Branch("nHFRecHits", &ev.nHFRecHits, "nHFRecHits/I");
- 
-  // New branches for sum energies
-  t->Branch("HFpSumEnergy", &ev.HFpSumEnergy, "HFpSumEnergy/F");
-  t->Branch("HFnSumEnergy", &ev.HFnSumEnergy, "HFnSumEnergy/F");
-
-  // New branches for maximum energies
-  t->Branch("HFpMaxEnergy", &ev.HFpMaxEnergy, "HFpMaxEnergy/F");
-  t->Branch("HFnMaxEnergy", &ev.HFnMaxEnergy, "HFnMaxEnergy/F");
-
-  // New branches for Eta values corresponding to maximum energies
-  t->Branch("HFpEtaMaxEnergy", &ev.HFpEtaMaxEnergy, "HFpEtaMaxEnergy/F");
-  t->Branch("HFnEtaMaxEnergy", &ev.HFnEtaMaxEnergy, "HFnEtaMaxEnergy/F");
-
-  t->Branch("HFtotalSumEnergy", &ev.HFtotalSumEnergy, "HFtotalSumEnergy/F");
-  t->Branch("HFabsDiffEnergy", &ev.HFabsDiffEnergy, "HFabsDiffEnergy/F");
-
-// For storing sum energies in specified eta ranges
-  t->Branch("HFtotalSumEnergy_eta_4_5", &ev.HFtotalSumEnergy_eta_4_5);
-  t->Branch("HFtotalSumEnergy_eta_3_5_5", &ev.HFtotalSumEnergy_eta_3_5_5);
-  t->Branch("HFtotalSumEnergy_eta_4_5_5", &ev.HFtotalSumEnergy_eta_4_5_5);
-
-  // For storing absolute difference energies in specified eta ranges
-  t->Branch("HFabsDiffEnergy_eta_4_5", &ev.HFabsDiffEnergy_eta_4_5);
-  t->Branch("HFabsDiffEnergy_eta_3_5_5", &ev.HFabsDiffEnergy_eta_3_5_5);
-  t->Branch("HFabsDiffEnergy_eta_4_5_5", &ev.HFabsDiffEnergy_eta_4_5_5);
-
-  // For storing HF+ sum energies in specified eta ranges
-  t->Branch("HFpSumEnergy_eta_4_5", &ev.HFpSumEnergy_eta_4_5);
-  t->Branch("HFpSumEnergy_eta_3_5_5", &ev.HFpSumEnergy_eta_3_5_5);
-  t->Branch("HFpSumEnergy_eta_4_5_5", &ev.HFpSumEnergy_eta_4_5_5);
-
-  // For storing HF- sum energies in specified eta ranges
-  t->Branch("HFnSumEnergy_eta_4_5", &ev.HFnSumEnergy_eta_4_5);
-  t->Branch("HFnSumEnergy_eta_3_5_5", &ev.HFnSumEnergy_eta_3_5_5);
-  t->Branch("HFnSumEnergy_eta_4_5_5", &ev.HFnSumEnergy_eta_4_5_5);
 
   
   for(size_t v=0; v<ListVars.size(); v++) if (ListVars[v].find("rawmu")!=std::string::npos){
@@ -561,6 +539,9 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("e_j_py",       ev.e_j_py);
   t->SetBranchAddress("e_j_pz",       ev.e_j_pz);
   
+  t->SetBranchAddress("jet_nch",     ev.jet_nch);
+
+
   }
   
   //PF Sums
@@ -584,14 +565,30 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("sumPFChPz",    ev.sumPFChPz);
   t->SetBranchAddress("sumPFChHt",    ev.sumPFChHt);
   t->SetBranchAddress("ntrk",         &ev.ntrk);
+
+  t->SetBranchAddress("npf",        &ev.npf);  // must come first
+  t->SetBranchAddress("nchMPI",     &ev.nchMPI);
+  t->SetBranchAddress("sumMPIChHt", &ev.sumMPIChHt);
+
+
+  t->SetBranchAddress("pfMPI_eta",     ev.pfMPI_eta);
+  t->SetBranchAddress("pfMPI_phi",     ev.pfMPI_phi);
+  t->SetBranchAddress("pfMPI_pt",      ev.pfMPI_pt);
+  t->SetBranchAddress("pfMPI_energy",  ev.pfMPI_energy);
+  t->SetBranchAddress("pfMPI_charge",  ev.pfMPI_charge);
+  t->SetBranchAddress("pfMPI_pdgid",   ev.pfMPI_pdgid);
+
+
+  t->SetBranchAddress("avgInternalRapidityGap", &ev.avgInternalRapidityGap);
+  t->SetBranchAddress("nInternalRapidityGaps", &ev.nInternalRapidityGaps);
+
+
+
   // ntrk new variables
-  t->SetBranchAddress("ntrk_ch_all_eta", &ev.ntrk_ch_all_eta);
-  t->SetBranchAddress("ntrk_ch_eta_3_to_5", &ev.ntrk_ch_eta_3_to_5);
-  t->SetBranchAddress("ntrk_ch_eta_minus5_to_minus3", &ev.ntrk_ch_eta_minus5_to_minus3);
   t->SetBranchAddress("track_pt",     ev.track_pt);
   t->SetBranchAddress("track_eta",    ev.track_eta);
   t->SetBranchAddress("track_phi",    ev.track_phi);
-  //t->SetBranchAddress("ht",    ev.ht);
+  t->SetBranchAddress("ht",    &ev.ht);
   }
   
   //MET
@@ -648,20 +645,7 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   }
 
 
-  // HF variables
-  t->SetBranchAddress("nHFRecHits", &ev.nHFRecHits);
-  t->SetBranchAddress("HFpSumEnergy", &ev.HFpSumEnergy);
-  t->SetBranchAddress("HFnSumEnergy", &ev.HFnSumEnergy);
-  t->SetBranchAddress("HFpMaxEnergy", &ev.HFpMaxEnergy);
-  t->SetBranchAddress("HFnMaxEnergy", &ev.HFnMaxEnergy);
-  t->SetBranchAddress("HFpEtaMaxEnergy", &ev.HFpEtaMaxEnergy);
-  t->SetBranchAddress("HFnEtaMaxEnergy", &ev.HFnEtaMaxEnergy);
-  t->SetBranchAddress("HFtotalSumEnergy", &ev.HFtotalSumEnergy);
-  t->SetBranchAddress("HFabsDiffEnergy", &ev.HFabsDiffEnergy);
-
   // Assuming t is a pointer to a TTree object and ev is an instance or pointer to your event structure
-
-
 
 
   

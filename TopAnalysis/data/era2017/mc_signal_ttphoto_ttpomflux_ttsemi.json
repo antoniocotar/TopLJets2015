@@ -1,0 +1,6 @@
+{
+  "APtoTT-positivePhotonDirection_TuneCP5_13TeV-amcatnlo-pythia8": [0.70, 0, "/APtoTT-positivePhotonDirection_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM", "ttbar_pos", 920, true, false, 1],
+  "APtoTT-negativePhotonDirection_TuneCP5_13TeV-amcatnlo-pythia8": [0.70, 0, "/APtoTT-negativePhotonDirection_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM", "ttbar_neg", 920, true, false, 1],
+  "TT-pomflux-H1FitB_TuneCP5_13TeV-pythia8": [14.9, 0, "/TT-pomflux-H1FitB_TuneCP5_13TeV-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM", "ttbar_diffractive", 920, true, false, 1],
+  "MC13TeV_2017_TTSemileptonic": [365.34, 0, "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "ttbar_semi", 920, true, false, 1]
+}

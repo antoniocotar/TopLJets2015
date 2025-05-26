@@ -372,6 +372,8 @@ void RunExclusiveTop(TString filename,
 
     //READ TREE FROM FILE
     MiniEvent_t ev;
+
+    // Open the input ROOT file
     TFile *f = TFile::Open(filename);
 	TH1 *counter=(TH1 *)f->Get("analysis/counter");
     if(!counter) {cout << "Corrupted or missing counter: \"analysis/counter\" " << endl;return;}
@@ -452,54 +454,18 @@ void RunExclusiveTop(TString filename,
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
 
     // Eta tracks
-    outT->Branch("track_eta",&ev.track_eta,"track_eta/F");
-    
-
-    //HF variables
-    outT->Branch("nHFRecHits", &ev.nHFRecHits, "nHFRecHits/I"); // Add this line
-    
-    // Branch for the sum of energy for hits with eta > 0
-    outT->Branch("HFpSumEnergy", &ev.HFpSumEnergy, "HFpSumEnergy/F");
-
-    // Branch for the sum of energy for hits with eta < 0
-    outT->Branch("HFnSumEnergy", &ev.HFnSumEnergy, "HFnSumEnergy/F");
-
-    // Branch for the maximum energy of hits with eta > 0
-    outT->Branch("HFpMaxEnergy", &ev.HFpMaxEnergy, "HFpMaxEnergy/F");
-
-    // Branch for the maximum energy of hits with eta < 0
-    outT->Branch("HFnMaxEnergy", &ev.HFnMaxEnergy, "HFnMaxEnergy/F");
-
-    // Branch for the eta value for the hit with max energy among hits with eta > 0
-    outT->Branch("HFpEtaMaxEnergy", &ev.HFpEtaMaxEnergy, "HFpEtaMaxEnergy/F");
-
-    // Branch for the eta value for the hit with max energy among hits with eta < 0
-    outT->Branch("HFnEtaMaxEnergy", &ev.HFnEtaMaxEnergy, "HFnEtaMaxEnergy/F");
-    
-    outT->Branch("HFtotalSumEnergy", &ev.HFtotalSumEnergy, "HFtotalSumEnergy/F");
-    outT->Branch("HFabsDiffEnergy", &ev.HFabsDiffEnergy, "HFabsDiffEnergy/F");
-
-    outT->Branch("ntrk_ch_all_eta", &ev.ntrk_ch_all_eta, "ntrk_ch_all_eta/I");
-    outT->Branch("ntrk_ch_eta_3_to_5", &ev.ntrk_ch_eta_3_to_5, "ntrntrk_ch_eta_3_to_5k_eta_3_to_5/I");
-    outT->Branch("ntrk_ch_eta_minus5_to_minus3", &ev.ntrk_ch_eta_minus5_to_minus3, "ntrk_ch_eta_minus5_to_minus3/I");
-
-    outT->Branch("HFtotalSumEnergy_eta_4_5", &ev.HFtotalSumEnergy_eta_4_5, "HFtotalSumEnergy_eta_4_5/F");
-    outT->Branch("HFtotalSumEnergy_eta_3_5_5", &ev.HFtotalSumEnergy_eta_3_5_5, "HFtotalSumEnergy_eta_3_5_5/F");
-    outT->Branch("HFtotalSumEnergy_eta_4_5_5", &ev.HFtotalSumEnergy_eta_4_5_5, "HFtotalSumEnergy_eta_4_5_5/F");
-
-    outT->Branch("HFabsDiffEnergy_eta_4_5", &ev.HFabsDiffEnergy_eta_4_5, "HFabsDiffEnergy_eta_4_5/F");
-    outT->Branch("HFabsDiffEnergy_eta_3_5_5", &ev.HFabsDiffEnergy_eta_3_5_5, "HFabsDiffEnergy_eta_3_5_5/F");
-    outT->Branch("HFabsDiffEnergy_eta_4_5_5", &ev.HFabsDiffEnergy_eta_4_5_5, "HFabsDiffEnergy_eta_4_5_5/F");
-
-    outT->Branch("HFpSumEnergy_eta_4_5", &ev.HFpSumEnergy_eta_4_5, "HFpSumEnergy_eta_4_5/F");
-    outT->Branch("HFpSumEnergy_eta_3_5_5", &ev.HFpSumEnergy_eta_3_5_5, "HFpSumEnergy_eta_3_5_5/F");
-    outT->Branch("HFpSumEnergy_eta_4_5_5", &ev.HFpSumEnergy_eta_4_5_5, "HFpSumEnergy_eta_4_5_5/F");
-
-    outT->Branch("HFnSumEnergy_eta_4_5", &ev.HFnSumEnergy_eta_4_5, "HFnSumEnergy_eta_4_5/F");
-    outT->Branch("HFnSumEnergy_eta_3_5_5", &ev.HFnSumEnergy_eta_3_5_5, "HFnSumEnergy_eta_3_5_5/F");
-    outT->Branch("HFnSumEnergy_eta_4_5_5", &ev.HFnSumEnergy_eta_4_5_5, "HFnSumEnergy_eta_4_5_5/F");
+    outT->Branch("track_eta", ev.track_eta, "track_eta[ntrk]/F");    
+    outT->Branch("track_pt", ev.track_pt, "track_pt[ntrk]/F");
+    outT->Branch("track_phi", ev.track_phi, "track_phi[ntrk]/F");
 
 
+
+    outT->Branch("npf", &ev.npf, "npf/I");
+    outT->Branch("nchMPI", &ev.nchMPI, "nchMPI/I");
+    outT->Branch("avgInternalRapidityGap", &ev.avgInternalRapidityGap, "avgInternalRapidityGap/F");
+    outT->Branch("nInternalRapidityGaps", &ev.nInternalRapidityGaps, "nInternalRapidityGaps/I");
+    outT->Branch("sumMPIChHt", &ev.sumMPIChHt, "sumMPIChHt/F");
+    outT->Branch("jet_nch", ev.jet_nch, "jet_nch/I");
 
 
 
@@ -635,6 +601,12 @@ void RunExclusiveTop(TString filename,
 
         "dR_bjet_leptonic", "dR_bjet_hadronic", 
 
+        // nMPI_had, nMPI_lep 
+        "nchPV_MPI", 
+
+        // track rapidity gap
+        "track_rapidity_gap",
+
         // For Delta R matching
 
         "t_reco_hadronic_mass",
@@ -660,7 +632,7 @@ void RunExclusiveTop(TString filename,
 
         "delta_pt_tops", "delta_eta_tops", "delta_phi_tops", "bJetsToLightJetsRatio", "ht_bjet", "total_pt",
 
-        "dR_mean_light_jets", "total_light_jet_energy", "total_jet_mass",
+        "dR_mean_light_jets", "total_light_jet_energy", "total_jet_mass", "total_invariant_jet_mass",
 
         // quantities of generated objects (MC truth)
         "gen_ttbar_pt","gen_ttbar_eta", "gen_ttbar_phi", "gen_ttbar_m", "gen_ttbar_E",
@@ -669,6 +641,9 @@ void RunExclusiveTop(TString filename,
         "gen_b_pt","gen_b_eta", "gen_b_phi", "gen_b_m",
         "gen_bbar_pt","gen_bbar_eta", "gen_bbar_phi", "gen_bbar_m"
         };
+
+
+
     std::map<TString,Float_t> outVars;
     for(size_t i=0; i<sizeof(fvars)/sizeof(TString); i++){
         outVars[fvars[i]]=0.;
@@ -913,7 +888,13 @@ void RunExclusiveTop(TString filename,
         double total_light_jet_energy = 0;
         double total_jet_mass = 0;
 
+        double jets_px_total = 0.0;
+        double jets_py_total = 0.0;
+        double jets_pz_total = 0.0;
+        double jets_E_total  = 0.0;
 
+        int nchPV_MPI = 0;
+        double track_rapidity_gap = 0.0;
 
         double p1_xi =0.; // proton in positive pot
         double p2_xi =0.; // proton in negative pot
@@ -922,12 +903,37 @@ void RunExclusiveTop(TString filename,
         double p1_220_x = 0, p1_220_y =0.; // proton near track position in positive pot
 	    double p2_220_x = 0, p2_220_y =0.; // proton near track position in positive pot
 
-        //  selection of lightJets and bJets
+
+
+        ////////////////////////////////////////////////////////////
+        // Selection of lightJets and bJets
+        ////////////////////////////////////////////////////////////
+
         for(size_t ij=0; ij<allJets.size(); ij++) {
+
+            // Get the index of the jet in the original MiniEvent array
 			int idx=allJets[ij].getJetIndex();
-			int jid=ev.j_id[idx];
-			bool passLoosePu((jid>>2)&0x1);
-			double current_eta = fabs(allJets[ij].eta());
+			
+            // Retrieve the jet ID bitfield (e.g. for pileup ID flags)
+            int jid=ev.j_id[idx];
+			
+            // Check if the jet passes the "loose" pileup ID
+            bool passLoosePu((jid>>2)&0x1);
+			
+            // If it does not pass loose pileup ID, skip this jet
+            if (!passLoosePu) continue;
+
+            // Add the jet to the general selected jets collection
+            jets.push_back(allJets[ij]);
+
+            // If the jet has parton flavor = 5 (b-quark), add to bJets
+            if(allJets[ij].flavor()==5) bJets.push_back(allJets[ij]);
+            
+            // Otherwise, classify it as a light jet (u, d, s, g, c)
+            else                     
+                lightJets.push_back(allJets[ij]);
+            
+            double current_eta = fabs(allJets[ij].eta());
 
 
             // Increment njets_central or njets_forward based on jet eta value
@@ -948,14 +954,6 @@ void RunExclusiveTop(TString filename,
                     }
                 }
 
-
-            if(!passLoosePu) {continue;}
-
-			jets.push_back(allJets[ij]);
-            if(allJets[ij].flavor()==5) bJets.push_back(allJets[ij]);
-            else                     lightJets.push_back(allJets[ij]);
-
-
         }
 
 
@@ -969,11 +967,6 @@ void RunExclusiveTop(TString filename,
             bJetsToLightJetsRatio = static_cast<double>(bJets.size()) / lightJets.size();
         }
         
-
-        // Print sizes of the vectors
-        //std::cout << "Size of allJets: " << allJets.size() << std::endl;
-        //std::cout << "Size of bJets: " << bJets.size() << std::endl;
-
 
         // New loop for forward b-jets
         for(size_t i=0; i<bJets.size(); i++) {
@@ -1060,14 +1053,48 @@ void RunExclusiveTop(TString filename,
         for(const Jet& jet : jets) {
             total_jet_mass += jet.M();  // Assuming Mass() returns the mass of the jet
         }
+        
+        // Sum momenta and energy over all jets
+        for (const Jet& jet : jets) {
+            jets_px_total += jet.Px();
+            jets_py_total += jet.Py();
+            jets_pz_total += jet.Pz();
+            jets_E_total  += jet.E();
+        }
+
+        // Compute invariant mass
+        double p2 = jets_px_total*jets_px_total + jets_py_total*jets_py_total + jets_pz_total*jets_pz_total;
+        double total_invariant_jet_mass = std::sqrt(std::max(0.0, jets_E_total*jets_E_total - p2));
 
 
+        // ---- inside your for(iev=0; …) loop, before you call outT->Fill():
+
+        if (ev.ntrk < 40) {
+        // initialize to extremes
+        float eta_max = -1e6, eta_min = +1e6;
+        bool any = false;
+        for (int i = 0; i < ev.ntrk; ++i) {
+            if (ev.track_pt[i] <= 0.2f) continue;
+            float e = ev.track_eta[i];
+            any = true;
+            if (e > eta_max) eta_max = e;
+            if (e < eta_min) eta_min = e;
+        }
+        if (any) {
+            track_rapidity_gap = eta_max - eta_min;
+        } else {
+            track_rapidity_gap = 0;  // no tracks above 0.2
+        }
+        }
+        else {
+        track_rapidity_gap = 0;  // skip events with too many tracks
+        }
 
 
+        //////////////////////////////////////////
+		// Met selection:
+        //////////////////////////////////////////
 
-
-
-		// met selection:
 		met_pt=ev.met_pt;
 		met_phi=ev.met_phi;
 
@@ -1116,8 +1143,10 @@ void RunExclusiveTop(TString filename,
 			met_phi=ev.met_phiShifted[met_err];
 		}
 
-
-        // selection of leptons
+        //////////////////////////////////////////////
+        // Selection of leptons
+        //////////////////////////////////////////////
+        
         for( size_t i_lept=0;i_lept<leptons.size();i_lept++) {
             if (leptons[i_lept].pt()<30.) continue;
 			if (leptons[i_lept].id()==11 && fabs(leptons[i_lept].eta())>2.1) continue;
@@ -1136,9 +1165,10 @@ void RunExclusiveTop(TString filename,
         }
 
 
-
+        ////////////////////////////////////////////
         // DeltaR calculation
-        
+        ////////////////////////////////////////////
+
         double dR_bjet_lepton = -99.0;  // Default value
         double dR_jet_lepton = -99.0;  // Default value
         double dR_bjet_leptonic = -99.0;  // Default value
@@ -1579,6 +1609,31 @@ void RunExclusiveTop(TString filename,
 
             int correct_index=dump_index(mistake);   // index of best candidate
             combination = marker[correct_index];     // combination of best candidate
+
+
+            // — Michael’s suggestion: subtract tracks in the tt̄ jets —
+
+            //
+            // 1) find the MiniEvent‐tree index of each jet in the chosen combination
+            //
+            // 1) find the MiniEvent‐tree index …
+            int idx_b_h = bJets[ combination[0] ].getJetIndex();
+            int idx_q1  = lightJets[ combination[1] ].getJetIndex();
+            int idx_q2  = lightJets[ combination[2] ].getJetIndex();
+            int idx_b_l = bJets[ combination[3] ].getJetIndex();
+
+            // 1) sum their charged‐track counts
+            int nTracksHad = ev.jet_nch[idx_b_h]
+                        + ev.jet_nch[idx_q1]
+                        + ev.jet_nch[idx_q2];
+
+            // 2) subtract both from the global MPI count
+            nchPV_MPI = std::max(0, ev.nchPV - nTracksHad);
+
+
+            ///////////// End Michael Trick
+
+
 
             // build the best top candidates
             bJet_had  = bJets[ combination[0] ].p4();
@@ -2171,10 +2226,10 @@ void RunExclusiveTop(TString filename,
             outVars["dR_mean_light_jets"] = dR_mean_light_jets;
             outVars["total_light_jet_energy"] = total_light_jet_energy;
             outVars["total_jet_mass"] = total_jet_mass;
+            outVars["total_invariant_jet_mass"] = total_invariant_jet_mass;
 
-
-            
-
+            outVars["nchPV_MPI"] = nchPV_MPI;
+            outVars["track_rapidity_gap"] = track_rapidity_gap;
 
 
             
