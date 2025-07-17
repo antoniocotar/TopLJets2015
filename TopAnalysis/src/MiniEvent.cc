@@ -61,6 +61,12 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("gtop_eta",   ev.gtop_eta,   "gtop_eta[ngtop]/F");
   t->Branch("gtop_phi",   ev.gtop_phi,   "gtop_phi[ngtop]/F");
   t->Branch("gtop_m",     ev.gtop_m,     "gtop_m[ngtop]/F");
+
+  t->Branch("ngjets",       &ev.ngjets,       "ngjets/I");
+  t->Branch("ngbjets",      &ev.ngbjets,      "ngbjets/I");
+  t->Branch("ngleptons_",   &ev.ngleptons_,   "ngleptons_/I");
+  t->Branch("ngphotons_",   &ev.ngphotons_,   "ngphotons_/I");
+
   } // and list mc generator variables
   
   //reco level event
@@ -262,7 +268,10 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   
 
 
-
+  t->Branch("nCaloJets",   &ev.nCaloJets,   "nCaloJets/I");
+  t->Branch("nForwardCaloJets",   &ev.nForwardCaloJets,   "nForwardCaloJets/I");
+  t->Branch("sumCaloJetEForward", &ev.sumCaloJetEForward, "sumCaloJetEForward/F");
+  t->Branch("maxCaloJetEta", &ev.maxCaloJetEta, "maxCaloJetEta/F");
 
   
   //MET
@@ -390,6 +399,12 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("gtop_eta",   ev.gtop_eta);
   t->SetBranchAddress("gtop_phi",   ev.gtop_phi);
   t->SetBranchAddress("gtop_m",     ev.gtop_m);
+
+  t->SetBranchAddress("ngjets",      &ev.ngjets);
+  t->SetBranchAddress("ngbjets",     &ev.ngbjets);
+  t->SetBranchAddress("ngleptons_",  &ev.ngleptons_);
+  t->SetBranchAddress("ngphotons_",  &ev.ngphotons_);
+  
   }
   
   //reco level event
@@ -606,6 +621,18 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("e_met_pxpy",  &ev.e_met_pxpy);  
   }
   
+
+  if (t->FindBranch("nCaloJets")) {
+    t->SetBranchAddress("nCaloJets",    &ev.nCaloJets);
+    t->SetBranchAddress("nForwardCaloJets",    &ev.nForwardCaloJets);
+    t->SetBranchAddress("sumCaloJetEForward", &ev.sumCaloJetEForward);
+    t->SetBranchAddress("maxCaloJetEta", &ev.maxCaloJetEta);
+
+  }
+
+
+
+
   //CTPPS local tracks
   if(t->FindBranch("nppstrk")){
   t->SetBranchAddress("nppstrk",         &ev.nppstrk);

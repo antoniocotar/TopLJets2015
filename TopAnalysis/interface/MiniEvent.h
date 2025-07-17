@@ -14,7 +14,7 @@ struct MiniEvent_t
 
   static const int MAXWEIGHTS   =  120;  // QCD(10) PDF(10) HessianPDF(100)
   static const int MAXPSWEIGHTS =  46;
-  static const int MAXGENPAR    =  20;  // initialy was 500+
+  static const int MAXGENPAR    =  500;  // initialy was 500+
   static const int MAXGENTOPAR  =  25;
   static const int MAXGAMMA     =  20;
   static const int MAXLEP       =  20;
@@ -46,6 +46,11 @@ struct MiniEvent_t
   Int_t g_nchPV, ntrk;
   Float_t track_pt[MAXTRACKS],track_eta[MAXTRACKS],track_phi[MAXTRACKS];
   Float_t g_sumPVChPt,g_sumPVChPz,g_sumPVChHt;
+
+  Int_t   ngjets;     // number of generator‐level jets
+  Int_t   ngbjets;    // number of gen b‐jets  
+  Int_t   ngleptons_; // number of generator‐level leptons
+  Int_t   ngphotons_; // number of generator‐level photons
 
   //reco level event
   Int_t nvtx;
@@ -131,6 +136,16 @@ struct MiniEvent_t
   Int_t jet_nch[MAXJET];
 
   Float_t sumMPIChHt;
+
+
+  // Calojets 
+
+  Int_t   nCaloJets;     // number of CaloJets stored
+  Int_t   nForwardCaloJets; // number of forward CaloJets stored
+  Float_t sumCaloJetEForward; // scalar HF energy sum per event
+  Float_t maxCaloJetEta; // maximum |eta| of CaloJets in the event
+
+
 
   //CTPPS protons
   Short_t nfwdtrk,fwdtrk_pot[MAXPROTONS],fwdtrk_method[MAXPROTONS],fwdtrk_shifted[MAXPROTONS];

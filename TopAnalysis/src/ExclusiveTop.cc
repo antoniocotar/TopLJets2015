@@ -1631,7 +1631,7 @@ void RunExclusiveTop(TString filename,
             nchPV_MPI = std::max(0, ev.nchPV - nTracksHad);
 
 
-            ///////////// End Michael Trick
+            ///////////// End Michael suggestion
 
 
 

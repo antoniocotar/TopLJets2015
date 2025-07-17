@@ -28,6 +28,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
+
 // TOTEM/PPS/HF related
 #include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
@@ -237,7 +238,7 @@ MiniAnalyzer::MiniAnalyzer(const edm::ParameterSet& iConfig) :
   puToken_(consumes<std::vector<PileupSummaryInfo>>(edm::InputTag("slimmedAddPileupInfo"))),
   genPhotonsToken_(consumes<std::vector<reco::GenParticle> >(edm::InputTag("particleLevel:photons"))),
   genLeptonsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:leptons"))),
-  genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:jets"))),
+  genJetsToken_(consumes<std::vector<reco::GenJet>>(edm::InputTag("slimmedGenJets"))),
   genMetsToken_(consumes<reco::METCollection>(edm::InputTag("particleLevel:mets"))),
   genParticlesToken_(consumes<pat::PackedGenParticleCollection>(edm::InputTag("packedGenParticles"))),
   genPUProtonsToken_(consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("PUprotons"))),
@@ -415,68 +416,163 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   //
   // GENERATOR LEVEL EVENT
   //
-  ev_.ng=0;
+  ev_.ng=0; // Initialize counter for number of generator-level objects stored in ev_
   edm::Handle<std::vector<reco::GenJet> > genJets;
+
+  //-------------------- gen jets
+
+
   iEvent.getByToken(genJetsToken_,genJets);
-  std::map<const reco::Candidate *,int> jetConstsMap;
+  std::map<const reco::Candidate *,int> jetConstsMap; // Map each generator-level constituent to the index of the GenJet it belongs to
   //edm::Handle<edm::ValueMap<float> > petersonFrag;
   //iEvent.getByToken(petersonFragToken_,petersonFrag);
-  int ngjets(0),ngbjets(0);
+  ev_.ngjets=0; // Initialize counter for number of generator-level objects stored in ev_
+  ev_.ngbjets=0; // Initialize counter for number of generator-level objects stored in ev_
+
+  //int ngjets(0),ngbjets(0); // Initialize counters for number of gen jets and number of gen b-jets
+
   if(genJets.isValid()){
-    for(auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet)
+
+    //std::cout << "[GENJET DEBUG] genJets is valid with size = " << genJets->size() << std::endl;
+
+    for(auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet) // Loop over each generator-level jet in the collection
       {
+
+        /*std::cout << "\n[GENJET DEBUG] Looping genJet #" << (genJet - genJets->begin())
+        << " → pt: " << genJet->pt()
+        << ", eta: " << genJet->eta()
+        << ", phi: " << genJet->phi()
+        << ", mass: " << genJet->mass()
+        << ", pdgId: " << genJet->pdgId() << std::endl;*/
+
+
+
         edm::Ref<std::vector<reco::GenJet> > genJetRef(genJets,genJet-genJets->begin());
 
         //map the gen particles which are clustered in this jet
         JetFragInfo_t jinfo=analyzeJet(*genJet);
 
-        std::vector< const reco::Candidate * > jconst=genJet->getJetConstituentsQuick();
+        /*
+        std::cout << "[GENJET DEBUG] analyzeJet() → n_btags: " << jinfo.nbtags
+        << ", n_ctags: " << jinfo.nctags
+        << ", n_tautags: " << jinfo.ntautags
+        << ", x_b: " << jinfo.xb
+        << ", leadTagId: " << jinfo.leadTagId
+        << ", semiLepDecay: " << jinfo.hasSemiLepDecay << std::endl;
+        */
+      
+        std::vector< const reco::Candidate * > jconst=genJet->getJetConstituentsQuick(); // Get the list of constituent particles of this gen jet
+        
+        //auto jconst = genJet->getJetConstituentsQuick();
+
+        //std::cout << "[GENJET DEBUG] Jet has " << jconst.size() << " constituents" << std::endl;
+
+        // Map each constituent particle to this jet index in ev_
         for(size_t ijc=0; ijc <jconst.size(); ijc++) jetConstsMap[ jconst[ijc] ] = ev_.ng;
+
+        // Store compact tag counter: lower 4 bits = n_btags, next 4 = n_ctags, next 4 = n_tau tags
         ev_.g_tagCtrs[ev_.ng]       = (jinfo.nbtags&0xf) | ((jinfo.nctags&0xf)<<4) | ((jinfo.ntautags&0xf)<<8);
+
+        // Store x_b: momentum fraction of the b-hadron in the jet
         ev_.g_xb[ev_.ng]            = jinfo.xb;
+
+        // Store PDG ID of the leading tagging particle in the jet (b, c, etc.)    
         ev_.g_bid[ev_.ng]           = jinfo.leadTagId;
+
+        // Store whether the b-hadron had a semileptonic decay
         ev_.g_isSemiLepBhad[ev_.ng] = jinfo.hasSemiLepDecay;
+
+        // Store PDG ID of the jet (may be placeholder or inferred)
         ev_.g_id[ev_.ng]   = genJet->pdgId();
+
+        // Store transverse momentum, eta, phi and mass of the gen jet
         ev_.g_pt[ev_.ng]   = genJet->pt();
         ev_.g_eta[ev_.ng]  = genJet->eta();
         ev_.g_phi[ev_.ng]  = genJet->phi();
         ev_.g_m[ev_.ng]    = genJet->mass();
+
+        // Increment the total count of generator-level objects stored
         ev_.ng++;
 
-        //gen level selection
+        // gen-level jet selection (accept jets within central detector acceptance)
         if(genJet->pt()>25 && fabs(genJet->eta())<2.5)
           {
-            ngjets++;
-            if(abs(genJet->pdgId())==5) ngbjets++;
+            // Count number of selected gen-level jets
+            ev_.ngjets++;
+
+            // If the jet is identified as a b-jet, increment b-jet counter
+            if(abs(genJet->pdgId())==5) ev_.ngbjets++;
           }
       }
   }
+  //--------------------------------------------------------------
 
-  //leptons
-  edm::Handle<std::vector<reco::GenJet> > dressedLeptons;
-  iEvent.getByToken(genLeptonsToken_,dressedLeptons);
-  if(dressedLeptons.isValid()) {
-    for(auto genLep = dressedLeptons->begin();  genLep != dressedLeptons->end(); ++genLep)
+
+  //-------------------- gen leptons
+
+  // Added for diffractive top
+  edm::Handle<pat::PackedGenParticleCollection> genParticles;
+  iEvent.getByToken(genParticlesToken_, genParticles);
+
+  ev_.ngleptons_ =0;
+
+  // Exclusive Top code
+  // edm::Handle<std::vector<reco::GenJet> > dressedLeptons;
+  // iEvent.getByToken(genLeptonsToken_,dressedLeptons);
+
+  // Debug: check if handle is valid
+  //std::cout << "[GENLEP DEBUG] Handle valid? " << dressedLeptons.isValid() << std::endl;
+
+  // Exclusive top
+  //if(dressedLeptons.isValid()) {
+
+  // Added for diffractive top
+  if (genParticles.isValid()) {
+    //std::cout << "[GENLEP DEBUG] packedGenParticles is valid, size = " << genParticles->size() << std::endl;
+
+    // Exclusive top
+    // for(auto genLep = dressedLeptons->begin();  genLep != dressedLeptons->end(); ++genLep)
+    // Added for diffractive top
+    for (const auto &p : *genParticles)  
       {
+      
+        if (p.status() != 1) continue; // Only final-state particles
+        int absId = abs(p.pdgId());
+        if (absId != 11 && absId != 13) continue; // Only electrons or muons
+
+        /*
+        std::cout << "[GENLEP DEBUG] Found lepton: pt=" << p.pt()
+        << ", eta=" << p.eta()
+        << ", phi=" << p.phi()
+        << ", pdgId=" << p.pdgId() << std::endl;
+        */
+
         //map the gen particles which are clustered in this lepton
-        std::vector< const reco::Candidate * > jconst=genLep->getJetConstituentsQuick();
-        for(size_t ijc=0; ijc <jconst.size(); ijc++) jetConstsMap[ jconst[ijc] ] = ev_.ng;
+        //std::vector< const reco::Candidate * > jconst=genLep->getJetConstituentsQuick();
+        //std::cout << "  [GENLEP DEBUG] Lepton has " << jconst.size() << " constituents" << std::endl;
 
-        ev_.g_pt[ev_.ng]   = genLep->pt();
-        ev_.g_id[ev_.ng]   = genLep->pdgId();
-        ev_.g_eta[ev_.ng]  = genLep->eta();
-        ev_.g_phi[ev_.ng]  = genLep->phi();
-        ev_.g_m[ev_.ng]    = genLep->mass();
+
+        //for(size_t ijc=0; ijc <jconst.size(); ijc++) jetConstsMap[ jconst[ijc] ] = ev_.ng;
+
+        ev_.g_pt[ev_.ng]  = p.pt();
+        ev_.g_id[ev_.ng]  = p.pdgId();
+        ev_.g_eta[ev_.ng] = p.eta();
+        ev_.g_phi[ev_.ng] = p.phi();
+        ev_.g_m[ev_.ng]   = p.mass();
         ev_.ng++;
-
-        //gen level selection
-        if(genLep->pt()>25 && fabs(genLep->eta())<2.5) ngleptons_++;  
+    
+        if (p.pt() > 25 && fabs(p.eta()) < 2.5) ev_.ngleptons_++;
       }
   }
+
+  //--------------------------------------------------------------
 
   //Photons  
   edm::Handle<std::vector<reco::GenParticle> > genPhotons;
   iEvent.getByToken(genPhotonsToken_,genPhotons);
+
+  ev_.ngphotons_= 0;
+
   if(genPhotons.isValid()){
     for(auto genPhoton = genPhotons->begin();  genPhoton != genPhotons->end(); ++genPhoton)
       {
@@ -491,7 +587,7 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.ng++;
 
         //gen level selection
-        if(genPhoton->pt()>20 && fabs(genPhoton->eta())<2.5) ngphotons_++;
+        if(genPhoton->pt()>20 && fabs(genPhoton->eta())<2.5) ev_.ngphotons_++;
       }
   }
 
@@ -505,8 +601,8 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   ev_.g_sumPVChPt=0;
   ev_.g_sumPVChPz=0;
   ev_.g_sumPVChHt=0;
-  edm::Handle<pat::PackedGenParticleCollection> genParticles;
-  iEvent.getByToken(genParticlesToken_,genParticles);
+  //edm::Handle<pat::PackedGenParticleCollection> genParticles;
+  //iEvent.getByToken(genParticlesToken_,genParticles);
   LorentzVector pvP4(0,0,0,0);
   if(genParticles.isValid()){
     for (size_t i = 0; i < genParticles->size(); ++i)
@@ -624,24 +720,35 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
     ev_.ngtop++;
   }
 
-  //fiducial counters
-  for(Int_t iw=0; iw<ev_.g_nw; iw++)
-    {
-      Double_t x(iw);
-      Double_t wgt(ev_.g_w[iw]);
-      TH2F *fidCounter=(TH2F *)histContainer_["fidcounter"];
-      fidCounter->Fill(x,0.,wgt);
-      if(ngleptons_>0)               fidCounter->Fill(x, 1., wgt);
-      if(ngleptons_>1)               fidCounter->Fill(x, 2., wgt);
-      if(ngleptons_>0 && ngjets>0)   fidCounter->Fill(x, 3., wgt);
-      if(ngleptons_>1 && ngjets>0)   fidCounter->Fill(x, 4., wgt);
-      if(ngleptons_>0 && ngjets>1)   fidCounter->Fill(x, 5., wgt);
-      if(ngleptons_>1 && ngjets>1)   fidCounter->Fill(x, 6., wgt);
-      if(ngleptons_>0 && ngjets>2)   fidCounter->Fill(x, 7., wgt);
-      if(ngleptons_>1 && ngjets>2)   fidCounter->Fill(x, 8., wgt);
-      if(ngleptons_>0 && ngjets>3)   fidCounter->Fill(x, 9., wgt);
-      if(ngleptons_>1 && ngjets>3)   fidCounter->Fill(x, 10.,wgt);
-    }
+  // fiducial counters
+  TH2F* fidCounter = static_cast<TH2F*>(histContainer_["fidcounter"]);
+  for (Int_t iw = 0; iw < ev_.g_nw; ++iw) {
+    Double_t x   = iw;
+    Double_t wgt = ev_.g_w[iw];
+
+    // always fill bin 0
+    fidCounter->Fill(x, 0., wgt);
+
+    // 1 or 2 leptons
+    if (ev_.ngleptons_ > 0) fidCounter->Fill(x, 1., wgt);
+    if (ev_.ngleptons_ > 1) fidCounter->Fill(x, 2., wgt);
+
+    // require at least 1 lepton + jets
+    if (ev_.ngleptons_ > 0 && ev_.ngjets   > 0) fidCounter->Fill(x, 3., wgt);
+    if (ev_.ngleptons_ > 1 && ev_.ngjets   > 0) fidCounter->Fill(x, 4., wgt);
+
+    // require at least 1 lepton + ≥2 jets
+    if (ev_.ngleptons_ > 0 && ev_.ngjets   > 1) fidCounter->Fill(x, 5., wgt);
+    if (ev_.ngleptons_ > 1 && ev_.ngjets   > 1) fidCounter->Fill(x, 6., wgt);
+
+    // require at least 1 lepton + ≥3 jets
+    if (ev_.ngleptons_ > 0 && ev_.ngjets   > 2) fidCounter->Fill(x, 7., wgt);
+    if (ev_.ngleptons_ > 1 && ev_.ngjets   > 2) fidCounter->Fill(x, 8., wgt);
+
+    // require at least 1 lepton + ≥4 jets
+    if (ev_.ngleptons_ > 0 && ev_.ngjets   > 3) fidCounter->Fill(x, 9.,  wgt);
+    if (ev_.ngleptons_ > 1 && ev_.ngjets   > 3) fidCounter->Fill(x, 10., wgt);
+  }
 
 }
 
@@ -751,30 +858,6 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.nppstrk++;
       }
   }
-
-  // Print pps_0 and pps_1 values if either pps_0 is true and pps_1 is false or pps_0 is false and pps_1 is true
-  //if ((pps_0 && !pps_1) || (!pps_0 && pps_1)) {
-    //std::cout << "pps_0: " << (pps_0 ? "true" : "false") << std::endl;
-    //std::cout << "pps_1: " << (pps_1 ? "true" : "false") << std::endl;    //} else {
-    //} else {
-    //return; // Skip the rest of the function if the condition is false
-    //}
-
-  //if (ev_.nppstrk != 0) {
-    //std::cout << "  ev_.nppstrk: " << ev_.nppstrk << std::endl;
-  //}
-
-
-
-
-  //if (ev_.nppstrk != 0) {
-  //cout << "Event (final pps local tracks)" << eventCounter_ << endl; // Print the current event number
-  //cout << "ev.nppstrk = " << ev_.nppstrk << endl;
-  //}
-
-  //cout << "Event (final pps local tracks)" << eventCounter_ << endl; // Print the current event number
-  //cout << "ev.nppstrk = " << ev_.nppstrk << endl;
-
 
   //
   //PPS protons, loop over multi- and single-RP reco
@@ -1546,6 +1629,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   
   //std::cout << "The maximum value is: " << ev_.leading_j_pt << std::endl;
 
+  
   ////////////// start nchMPI
 
   // 0) Prepare a temporary std::vector to collect MPI‐PFs
@@ -1900,12 +1984,65 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
     ev_.sumPVChPt_v[i]=vtxPt[i].pt();
 
 
+
+  // --- grab the CaloJet collection ---
+  edm::Handle<reco::CaloJetCollection> caloJets;
+  iEvent.getByToken(caloJetsToken_, caloJets);
+
+  // --- reset counters ---
+  ev_.nCaloJets           = 0;       // <- start at zero
+  ev_.nForwardCaloJets    = 0;
+  ev_.sumCaloJetEForward  = 0.0f;
+  ev_.maxCaloJetEta       = 0.0f;
+
+  // --- loop all jets ---
+  for (size_t i = 0; i < caloJets->size(); ++i) {
+    const auto &jet = caloJets->at(i);
+    float E   = jet.energy();
+    float eta = jet.eta();
+
+    // count every jet
+    ++ev_.nCaloJets;
+
+    // keep track of the most forward jet
+    ev_.maxCaloJetEta = std::max(ev_.maxCaloJetEta, std::fabs(eta));
+
+    // jets in the forward window [3.0, ∞)
+    if (std::fabs(eta) > 3.0f) {
+      ++ev_.nForwardCaloJets;
+      ev_.sumCaloJetEForward += E;
+      //std::cout
+      //  << "[DEBUG] jet#" << i
+      //  << "  eta=" << eta
+      //  << "  E="   << E
+     //   << " ➞ forward\n";
+    }
+  }
+
+  // debug summary
+  //std::cout
+  //  << "[DEBUG] nCaloJets = "          << ev_.nCaloJets          << "\n"
+ //   << "[DEBUG] nForwardCaloJets = "   << ev_.nForwardCaloJets   << "\n"
+  //  << "[DEBUG] sumCaloJetEForward = " << ev_.sumCaloJetEForward << "\n"
+  //  << "[DEBUG] maxCaloJetEta = "      << ev_.maxCaloJetEta      << "\n";
+
+  // --- simple SD‐cut example ---
+  //const float hfThresh = 30.0f;
+  //bool isSD = (ev_.sumCaloJetEForward < hfThresh && ev_.maxCaloJetEta < 4.0f);
+  //ev_.eventType = isSD ? 2 : 1;  // 2=SD‐like, 1=central‐like
+
+//  std::cout << "[DEBUG] eventType = " << ev_.eventType << "\n";
+
+
+
 }
 
 
 
 
-///////// END HF PF CANDIDATES //////////
+///////// END PF CANDIDATES //////////
+
+
 
 
 
