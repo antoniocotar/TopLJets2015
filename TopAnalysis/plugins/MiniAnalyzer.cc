@@ -1450,7 +1450,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 
       auto corrP4  = j->p4() * jerSF[0]; 
 	  
-	    // Skip jets with corrected PT < 25 GeV
+	    // Skip jets with corrected PT < 10 GeV
       if(corrP4.pt()<10 ) continue;
 
 

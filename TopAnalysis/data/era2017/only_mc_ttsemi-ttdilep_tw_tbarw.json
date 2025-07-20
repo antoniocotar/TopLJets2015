@@ -1,0 +1,6 @@
+{
+    "MC13TeV_2017_tbarW"                : [35.85, 0,     "/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "tbarw", 920, true, false, 1],
+    "MC13TeV_2017_tW"                : [35.85, 0,     "/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "tw", 920, true, false, 1],
+    "MC13TeV_2017_TTSemileptonic"                : [365.34, 0,     "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "ttbar_semi", 920, true, false, 1],
+    "MC13TeV_2017_TTTo2L2Nu"                     : [88.29, 0,     "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM", "ttdilep", 920, true, false, 1]
+}

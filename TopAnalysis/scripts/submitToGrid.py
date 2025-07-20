@@ -22,7 +22,7 @@ def submitProduction(tag,lfnDirBase,dataset,isData,cfg,workDir,lumiMask,era='era
     config_file.write('config = Configuration()\n')
     config_file.write('\n')
     config_file.write('config.section_("General")\n')
-    config_file.write('config.General.requestName = "%s_v2"\n' % tag)
+    config_file.write('config.General.requestName = "%s"\n' % tag)
     config_file.write('config.General.workArea = "%s"\n' % workDir)
     config_file.write('config.General.transferOutputs=True\n')
     #config_file.write('config.General.transferLogs=True\n')
@@ -77,8 +77,8 @@ def submitProduction(tag,lfnDirBase,dataset,isData,cfg,workDir,lumiMask,era='era
             #config_file.write('config.Data.unitsPerJob = 1\n')
     else : 
         config_file.write('config.Data.splitting = "FileBased"\n')
-        config_file.write('config.Data.unitsPerJob = 2\n')
-        config_file.write('config.Data.totalUnits = 6\n')
+        config_file.write('config.Data.unitsPerJob = 6\n')
+        #config_file.write('config.Data.totalUnits = 30\n')
         #config_file.write('config.Data.totalUnits = 1\n')
      
     config_file.write('config.Data.publication = False\n')
@@ -100,6 +100,7 @@ def isSignal(tag):
   if 'APtoTT' in tag: return True
   if 'APtoTW' in tag: return True
   if 'TT-pomflux' in tag: return True
+  if 'ST_t-channel-pomflux' in tag: return True
   return False
 
 """

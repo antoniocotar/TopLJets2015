@@ -121,13 +121,10 @@ def main():
     #parse list of systematic variations
     varList=[]
     if opt.systVar == 'all':
-        allSystVars = ['jec_CorrelationGroupMPFInSitu', 'jec_RelativeFSR',
-                       'jec_CorrelationGroupUncorrelated', 'jec_FlavorPureGluon', 'jec_FlavorPureQuark',
-                       'jec_FlavorPureCharm', 'jec_FlavorPureBottom', 'jer',
-                       'btag_heavy', 'btag_light', 'tracking', "UnclusteredEnUp", "UnclusteredEnDn"]
+        allSystVars = ['UnclusteredEn', 'btaghf', 'btaglf', 'jecAbs', 'jec', 'jecFlav', 'jecHighPt', 'jecPileup', 'jecRel', 'jecTime', 'jec', 'jer', 'pps45', 'pps56']
         for var in allSystVars:
-            varList.append(var+'_up')
-            varList.append(var+'_down')
+            varList.append(var+'Up')
+            varList.append(var+'Down')
     else:
         try:
             varList=opt.systVar.split(',')
