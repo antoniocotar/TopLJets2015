@@ -418,10 +418,11 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   //
   // GENERATOR LEVEL EVENT
   //
-  ev_.ng=0; // Initialize counter for number of generator-level objects stored in ev_
-  edm::Handle<std::vector<reco::GenJet> > genJets;
 
   //-------------------- gen jets
+
+  ev_.ng=0; // Initialize counter for number of generator-level objects stored in ev_
+  edm::Handle<std::vector<reco::GenJet> > genJets;
 
 
   iEvent.getByToken(genJetsToken_,genJets);
@@ -598,6 +599,7 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	cout <<"\t\t... can cause memory leaks!!!"<<endl;
   }   
 
+
   //final state particles
   ev_.g_nchPV=0;
   ev_.g_sumPVChPt=0;
@@ -619,6 +621,9 @@ void MiniAnalyzer::genAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
       }
   }
   ev_.g_sumPVChPt=pvP4.Pt();
+
+
+
 
   // Save generator particles //
   ev_.ngtop=0; 
@@ -822,7 +827,9 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
           if(!isZeroBias) continue;
           ev_.zeroBiasPS=prescale*l1prescale;
 	}
-    }
+  }
+
+
   bool passTrigger((ev_.triggerBits + ev_.addTriggerBits)!=0);
   //if(!passTrigger) return; not obvious that triggers are simulated properly
   if(ev_.isData && !passTrigger) return;
@@ -830,6 +837,9 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   // Add a static event counter
   static int eventCounter_ = 0;
   eventCounter_++; // Increment the event counter
+
+
+/////////////////////////////////////////////////////////////////////////////////
 
 
   //
@@ -951,7 +961,6 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
     }
   }// end loop over all protons (single-, multi-RP)
 
-    
   // For 2017 check number of strip hits to count for truth/unsuff zero hits
   // Jan's presentation: https://indico.cern.ch/event/935869/
   // https://github.com/CTPPS/cmssw/blob/pps_event_cat/Validation/CTPPS/plugins/CTPPSEventCategoryPlotter.cc##L162
@@ -1635,8 +1644,11 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
   
   //std::cout << "The maximum value is: " << ev_.leading_j_pt << std::endl;
 
+
+
+
   
-  ////////////// start nchMPI
+  /////////////////////////////////////////// start nchMPI
 
   // 0) Prepare a temporary std::vector to collect MPI‐PFs
   std::vector<float> tmp_eta, tmp_phi, tmp_pt, tmp_energy;
@@ -2087,10 +2099,6 @@ bool MiniAnalyzer::isMediumMuon2016ReReco(const reco::Muon & recoMu)
 
 }
 
-
-//----------------------------------------------------------------------------------------------------------------------------------------------
-// GENERATOR LEVEL  ANALYSIS ----------------------------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------------------------
 
 void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
