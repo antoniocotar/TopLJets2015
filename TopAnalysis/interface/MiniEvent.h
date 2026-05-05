@@ -137,6 +137,9 @@ struct MiniEvent_t
 
   Float_t sumMPIChHt;
 
+  Float_t mpiNPlus;
+  Float_t mpiNMinus;
+  Float_t mpiNAsym;
 
   // Calojets 
 

@@ -1,4 +1,13 @@
-// ROOT includes
+// =================================================================================================
+// BLOCK 01 — GLOBAL INCLUDES, CONSTANTS, MACROS, AND ANALYSIS SWITCHES
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Load ROOT, C++, and TopLJets2015/CMS analysis headers.
+//   - Define global constants such as m_TOP, m_W, and m_NU.
+//   - Define compile-time switches such as HISTOGRAMS_ON, SAVEERRORS_ON, DEBUG_ON.
+//   - Define helper macros such as ADDVAR for ROOT branch creation.
+// =================================================================================================
+
 #include "TFile.h"
 #include "TROOT.h"
 #include "TH1.h"
@@ -41,6 +50,28 @@ double m_NU  =  0.;
 #define HISTOGRAMS_ON           // comment to avoid creating histograms in root file
 #define SAVEERRORS_ON           // comment to avoid saving the quantities error in root file
 
+
+
+
+
+
+// =================================================================================================
+// BLOCK 02 — GENERIC HELPER FUNCTIONS
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Provide small utility functions used later in the event loop.
+//   - dump_index() selects the best reconstruction candidate by finding the minimum chi2-like score.
+//   - dR_calc() computes angular separation between two objects.
+// =================================================================================================
+
+
+
+
+
+
+
+
+
 // Returns the index of the lesser element of sum_squared vector
 int dump_index(vector<double> sum_squared){
     int index=0;
@@ -57,6 +88,26 @@ int dump_index(vector<double> sum_squared){
     //cout << "index " << index << endl;
     return index;
 }
+
+
+
+
+
+
+
+// =================================================================================================
+// BLOCK 03 — DETECTOR RESOLUTION PARAMETERIZATIONS
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Define object-resolution models for b jets, light jets, muons, and electrons.
+//   - These functions return uncertainties on momentum, eta, or phi depending on err_type.
+//   - Used later for uncertainty propagation of reconstructed ttbar objects.
+// =================================================================================================
+
+
+
+
+
 
 // PARTICLE_err returns the uncertainty on the particle: p (if err_type==0), eta (if err_type==1), phi (if err_type==2).
 // The uncertainties are extracted from tables
@@ -330,6 +381,28 @@ double dR_calc(double eta1, double phi1, double eta2, double phi2) {
     return sqrt(pow(delta_eta, 2) + pow(delta_phi, 2));
 }
 
+
+
+
+
+// =================================================================================================
+// BLOCK 04 — MAIN ANALYSIS FUNCTION: INPUTS, SAMPLE TYPE, AND FILE INITIALIZATION
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Define the RunExclusiveTop(...) analysis function.
+//   - Identify whether the input sample is data, ttbar MC, or another MC sample.
+//   - Open the input ROOT file and the output ROOT file.
+//   - Read input histograms and attach the MiniEvent_t structure to the input TTree.
+// =================================================================================================
+
+
+
+
+
+
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 //      MAIN
 // ---------------------------------------------------------------------------------------------------------------------
@@ -396,6 +469,19 @@ void RunExclusiveTop(TString filename,
     t->GetEntry(0);
 
     std::cout << "--- producing " << outname << " from " << nentries << " events" << std::endl;
+
+
+
+    // =================================================================================================
+    // BLOCK 05 — CMS CORRECTION TOOLS AND OUTPUT TREE BOOKING
+    // -------------------------------------------------------------------------------------------------
+    // Purpose:
+    //   - Initialize CMS correction tools: luminosity, pileup, L1 prefire, lepton SFs, b-tag SFs, PPS reco.
+    //   - Book the proton-only output tree.
+    //   - Book the main enriched output tree.
+    //   - Define all scalar branches stored in outVars.
+    // =================================================================================================
+
 
     //auxiliary to solve neutrino pZ using MET
     MEzCalculator neutrinoPzComputer;
@@ -652,6 +738,27 @@ void RunExclusiveTop(TString filename,
     ADDVAR(&(outVars["nJets"]),"nJets","/F",outPT);
     ADDVAR(&(outVars["nBjets"]),"nBjets","/F",outPT);
 
+
+
+
+// =================================================================================================
+// BLOCK 06 — CONTROL HISTOGRAM BOOKING
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Book diagnostic histograms for event yields, pileup weights, jet multiplicities, b-jet counts,
+//     ttbar reconstruction, and generator-vs-reconstruction resolution checks.
+//   - These histograms are used for validation, not for the main output tree.
+// =================================================================================================
+
+
+
+
+
+
+
+
+
+
 #ifdef HISTOGRAMS_ON
     //BOOK HISTOGRAMS
     HistTool ht;
@@ -721,6 +828,26 @@ void RunExclusiveTop(TString filename,
 #endif
 
     std::cout << "--- init done" << std::endl;
+
+
+
+
+
+
+    // =================================================================================================
+    // BLOCK 07 — SYSTEMATIC VARIATION CONFIGURATION
+    // -------------------------------------------------------------------------------------------------
+    // Purpose:
+    //   - Configure which systematic variation is being processed.
+    //   - Handles JEC/JER variations, b-tag SF variations, PPS xi reconstruction shifts,
+    //     and MET unclustered-energy shifts.
+    //   - The chosen systematic settings affect object selection, MET, proton xi, and event weights.
+    // =================================================================================================
+
+
+
+
+
 
     //EVENT SELECTION WRAPPER
     SelectionTool selector(filename, false, triggerList, SelectionTool::AnalysisType::TOP);
@@ -802,6 +929,21 @@ void RunExclusiveTop(TString filename,
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////  LOOP OVER EVENTS  /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // =================================================================================================
+    // BLOCK 08 — EVENT LOOP: EVENT LOADING, CLEANING, AND BASIC OBJECT COLLECTIONS
+    // -------------------------------------------------------------------------------------------------
+    // Purpose:
+    //   - Loop over all events in the input tree.
+    //   - Load one MiniEvent_t event at a time.
+    //   - Apply event cleaning flags.
+    //   - Apply b-tag decisions and systematic b-tag variations.
+    //   - Run the SelectionTool to obtain selected leptons and jets.
+    // =================================================================================================
+
+
+
 
     for (Int_t iev=0;iev<nentries;iev++) {
         t->GetEntry(iev);
@@ -902,6 +1044,20 @@ void RunExclusiveTop(TString filename,
 	    double p2_x = 0, p2_y =0.; // proton near track position in positive pot
         double p1_220_x = 0, p1_220_y =0.; // proton near track position in positive pot
 	    double p2_220_x = 0, p2_220_y =0.; // proton near track position in positive pot
+
+
+
+
+        // =================================================================================================
+        // BLOCK 09 — OBJECT-LEVEL VARIABLES: JETS, B JETS, LIGHT JETS, FORWARD ACTIVITY, TRACKS, AND MET
+        // -------------------------------------------------------------------------------------------------
+        // Purpose:
+        //   - Build selected jet, b-jet, and light-jet collections.
+        //   - Compute forward-jet and forward-b-jet observables.
+        //   - Compute semi-exclusive/MVA variables such as central/forward jet counts, HT, total jet mass,
+        //     total light-jet energy, track rapidity gap, and nchPV_MPI inputs.
+        //   - Propagate JEC/JER and unclustered-energy shifts to MET.
+        // =================================================================================================
 
 
 
@@ -1143,6 +1299,20 @@ void RunExclusiveTop(TString filename,
 			met_phi=ev.met_phiShifted[met_err];
 		}
 
+
+
+        // =================================================================================================
+        // BLOCK 10 — LEPTON SELECTION AND PPS PROTON RECONSTRUCTION
+        // -------------------------------------------------------------------------------------------------
+        // Purpose:
+        //   - Select the final analysis lepton candidates.
+        //   - Compute lepton-related angular variables.
+        //   - Read MultiRP PPS proton candidates from MiniEvent_t.
+        //   - Store proton xi and near/far detector track positions for both PPS arms.
+        // =================================================================================================
+
+
+
         //////////////////////////////////////////////
         // Selection of leptons
         //////////////////////////////////////////////
@@ -1239,6 +1409,30 @@ void RunExclusiveTop(TString filename,
 			outPT->Fill();
 		}
 
+
+
+    // =================================================================================================
+    // BLOCK 11 — FINAL EVENT SELECTION AND EVENT WEIGHT COMPUTATION
+    // -------------------------------------------------------------------------------------------------
+    // Purpose:
+    //   - Apply the final semileptonic ttbar selection:
+    //       * single electron or single muon channel,
+    //       * exactly one tight lepton,
+    //       * at least 4 jets,
+    //       * at least 2 b jets,
+    //       * at least 2 light jets.
+    //   - Compute nominal MC event weight and store individual correction factors.
+    //   - Store generator, scale, PDF, ISR, and FSR systematic weights.
+    // =================================================================================================
+
+
+
+
+
+
+
+
+
     // ---- EVENT SELECTION --------------------------------------------------------------
 
 	if(chTag!="E" && chTag!="M" )   continue; // events with electrons (id=11) or muons (id=13)
@@ -1299,6 +1493,7 @@ void RunExclusiveTop(TString filename,
 
         if (!ev.isData) {
             wgt  = (normH? normH->GetBinContent(1) : 1.0);          // norm weight
+            //std::cout << "[normH] " << (normH ? normH->GetBinContent(1) : 1.0) << std::endl;
             double puWgt(lumi.pileupWeight(ev.g_pu,period)[0]);     // pu weight
             std::vector<double>puPlotWgts(1,puWgt);
 
@@ -1503,6 +1698,27 @@ void RunExclusiveTop(TString filename,
 
         double dR_most_forward_bjet_0_top = -99.0;
         double dR_most_forward_bjet_0_anti_top = -99.0;
+
+
+
+
+
+        // =================================================================================================
+        // BLOCK 12 — TTBAR RECONSTRUCTION, GEN MATCHING, UNCERTAINTIES, TREE FILLING, AND FILE WRITING
+        // -------------------------------------------------------------------------------------------------
+        // Purpose:
+        //   - Reconstruct neutrino pz using the W-mass constraint.
+        //   - Build semileptonic ttbar candidates from b jets, light jets, lepton, and MET.
+        //   - Choose the best jet assignment using a chi2-like top-mass metric.
+        //   - Reconstruct t, tbar, and ttbar four-vectors.
+        //   - Fill reco-level, gen-level, PPS, MVA, and uncertainty branches.
+        //   - Fill control histograms and write the output ROOT file.
+        // =================================================================================================
+
+
+
+
+
 
         // ----- START RECONSTRUCTION OF TTBAR -------------------------------------------------------
         if(bJets.size()>=2 && lightJets.size()>=2)        {    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2293,6 +2509,26 @@ void RunExclusiveTop(TString filename,
 			outT->Fill();
 		}
     } // end of loop over events
+
+
+
+
+
+
+        // =================================================================================================
+        // BLOCK 13 — FINALIZATION: WRITE HISTOGRAMS, TREES, AND CLOSE FILES
+        // -------------------------------------------------------------------------------------------------
+        // Purpose:
+        //   - Print the number of selected output events.
+        //   - Close the input ROOT file.
+        //   - Write control histograms.
+        //   - Write the main output tree and proton tree.
+        //   - Close the output ROOT file.
+        // =================================================================================================
+
+
+
+
         std::cout << std::endl;
 		std::cout << "saved " << outT->GetEntries() << " events " << std::endl;
         //close input file

@@ -1586,7 +1586,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 	      }
 	        
 	        // count reconstructed objects (used in the analysis)
-	        if(ev_.j_pt[ev_.nj]>30 && abs(ev_.j_eta[ev_.nj])<4.7){
+	        if(ev_.j_pt[ev_.nj]>25 && abs(ev_.j_eta[ev_.nj])<4.7){
             
             // Update leading_j_pt if this jet has higher pt
             if(ev_.j_pt[ev_.nj] > ev_.leading_j_pt) {
@@ -1914,7 +1914,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 
 
 
-      bool passChargeSel(pf->pt()>0.9 && fabs(pf->eta())<2.5); // split 2.1 and 2.5
+      bool passChargeSel(pf->pt()>0.4 && fabs(pf->eta())<2.5); // split 2.1 and 2.5
       const pat::PackedCandidate::PVAssoc pvassoc=pf->fromPV(); 
       const pat::PackedCandidate::PVAssoc pvassoc2=pf->fromPV(_second_vertex_index); 
 		  
@@ -1932,7 +1932,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
         ev_.sumPVChHt_v[_bin]+=pf->pt();
         vtxPt[_bin]+=pf->p4();
 		    
-        if(fabs(pf->eta())<2.1) {
+        if(fabs(pf->eta())<2.4) {
           _bin = 1;
 			    ev_.nchPV_v[_bin]++;
 			    ev_.sumPVChPz_v[_bin]+=(pf->pz());
@@ -2158,15 +2158,13 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
   if(applyFilt_){
 	//if (FilterType_.find("ttbar")!=std::string::npos) if(nrecbjets_<2 || nrecjets_<4 || nrecleptons_==0) return;
       if (FilterType_.find("ttbar")!=std::string::npos) {
-		  // skim (nJ>=4 and nL>0) OR (nL>1)
-		  if((nrecjets_<4 || nrecleptons_==0) && (nrecleptons_<2)) return;
-		  if(!ev_.isData && nrecbjets_<2) return;
-		  if(!ev_.isData && nreclightjets_<2) return;
-                  //if(!ev_.isData && nrecbjets_<1) return;
-		  if(!ev_.isData && nrecjets_>=4 && nrecbjets_<2) return;
-      // apply conditional for nreclightjets_
-      //if(!ev_.isData && (nrecjets_ - nrecbjets_ < 2)) return;
-	  }
+
+          // optimized semileptonic topology
+          if(nrecleptons_ != 1) return;
+          if(nrecjets_     < 2) return;
+          if(nrecbjets_    < 1) return;
+          if(nreclightjets_< 1) return;
+      }
 
       if (FilterType_.find("QCD4Fake")!=std::string::npos) {
 		  // skim (nJ>=4 and nL>0 and MET<20 and nBJ=0)
@@ -2190,10 +2188,10 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 
     if (ev_.isData){ 
-		  if (FilterType_.find("ttbar")!=std::string::npos)
-		  if(  ( nmultiprotons_[0]==0 &&  nmultiprotons_[1]==0) ) return;
-		//if (FilterType_.find("dilep")!=std::string::npos)
-		//	if( nmultiprotons_[0]!=1 &&  nmultiprotons_[1]!=1 ) return;
+        if (FilterType_.find("ttbar")!=std::string::npos){
+            if (!((nmultiprotons_[0]==1 && nmultiprotons_[1]==0) ||
+                  (nmultiprotons_[0]==0 && nmultiprotons_[1]==1))) return;
+        }
     }
 
   }

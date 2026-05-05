@@ -296,10 +296,39 @@ kipped." << endl;
   TH1F * evt_count = (TH1F*)oldfile->Get("evt_count"); // event counter with SumWeights
   
   //list of branches to update:
-  unsigned int run; int nvtx;
-  float beamXangle, p1_xi, p2_xi, weight, ppsSF_wgt, ppsSF_wgt_err, pu_wgt, ptag_wgt, ptag_wgt_err; 
-  float lep_pt, lep_eta, lep_phi, lep_m, cat, triggerSF, triggerSF_err;
-  float p1_x = 0, p1_y = 0, p2_x = 0, p2_y = 0;  
+	unsigned int run; int nvtx;
+	float beamXangle, p1_xi, p2_xi, weight, ppsSF_wgt, ppsSF_wgt_err, pu_wgt, ptag_wgt, ptag_wgt_err; 
+	float lep_pt, lep_eta, lep_phi, lep_m, cat, triggerSF, triggerSF_err;
+	float p1_x = 0, p1_y = 0, p2_x = 0, p2_y = 0;  
+
+	// new explicit stored weight factors
+	float w_region    = 1.0;
+	float w_etrig     = 1.0;
+	float w_extra_sig = 1.0;
+
+	// new stored physics/probability factors
+	float Pr_2p  = 1.0;
+	float Pr_1_0 = 1.0;
+	float Pr_0_1 = 1.0;
+	float Pr_0_0 = 1.0;
+
+	float t1_run_thetax = 1.0;
+	float t0_run_thetax = 1.0;
+
+	float e_strip_0   = 1.0;
+	float e_strip_1   = 1.0;
+	float e_multiRP_0 = 1.0;
+	float e_multiRP_1 = 1.0;
+
+	int   delta_0 = 0;
+	int   delta_1 = 0;
+
+	float u_0 = -1.0;
+	float u_1 = -1.0;
+
+	float SF_eff_0 = 1.0;
+	float SF_eff_1 = 1.0;
+
   //float p1_220_x = 0, p1_220_y = 0, p2_220_x = 0, p2_220_y = 0;  
   chMCEvents->SetBranchAddress("run",&run);
   chMCEvents->SetBranchAddress("beamXangle",&beamXangle);
@@ -351,11 +380,39 @@ kipped." << endl;
     return 5;
   }
  
-  // Create new output with updated PPS values:
-  TTree* tMCMixed = chMCEvents->CloneTree(0);
-  
-  int signal_protons = 0; // additional variables used for signal to indecate if all/part/none of the protons are from pileup
-  tMCMixed->Branch("signal_protons",&signal_protons);
+	TTree* tMCMixed = chMCEvents->CloneTree(0);
+
+	int signal_protons = 0; // additional variables used for signal to indecate if all/part/none of the protons are from pileup
+	tMCMixed->Branch("signal_protons",&signal_protons);
+
+	// new branches weight factors
+	tMCMixed->Branch("w_region",    &w_region,    "w_region/F");
+	tMCMixed->Branch("w_etrig",     &w_etrig,     "w_etrig/F");
+	tMCMixed->Branch("w_extra_sig", &w_extra_sig, "w_extra_sig/F");
+
+	// new branches for probabilities and efficiencies
+	tMCMixed->Branch("Pr_2p",  &Pr_2p,  "Pr_2p/F");
+	tMCMixed->Branch("Pr_1_0", &Pr_1_0, "Pr_1_0/F");
+	tMCMixed->Branch("Pr_0_1", &Pr_0_1, "Pr_0_1/F");
+	tMCMixed->Branch("Pr_0_0", &Pr_0_0, "Pr_0_0/F");
+
+	tMCMixed->Branch("t1_run_thetax", &t1_run_thetax, "t1_run_thetax/F");
+	tMCMixed->Branch("t0_run_thetax", &t0_run_thetax, "t0_run_thetax/F");
+
+	tMCMixed->Branch("e_strip_0",   &e_strip_0,   "e_strip_0/F");
+	tMCMixed->Branch("e_strip_1",   &e_strip_1,   "e_strip_1/F");
+	tMCMixed->Branch("e_multiRP_0", &e_multiRP_0, "e_multiRP_0/F");
+	tMCMixed->Branch("e_multiRP_1", &e_multiRP_1, "e_multiRP_1/F");
+
+	tMCMixed->Branch("delta_0", &delta_0, "delta_0/I");
+	tMCMixed->Branch("delta_1", &delta_1, "delta_1/I");
+
+	tMCMixed->Branch("u_0", &u_0, "u_0/F");
+	tMCMixed->Branch("u_1", &u_1, "u_1/F");
+
+	tMCMixed->Branch("SF_eff_0", &SF_eff_0, "SF_eff_0/F");
+	tMCMixed->Branch("SF_eff_1", &SF_eff_1, "SF_eff_1/F");
+
    
   int times,timed;
   times=time(NULL);  
@@ -378,6 +435,7 @@ kipped." << endl;
 	// samples region index using flat PDF, and asign extra weight to event
     int i_reg = rand_gen->Rndm() * n_PUregions;
     float _extra_weight = (fraction_regions[i_reg]*float(n_PUregions));
+
 	// -------------------------------------------------- //
 
     //std::cout << "Selected region index: " << i_reg << ", Extra weight: " << _extra_weight << std::endl;
@@ -393,28 +451,112 @@ kipped." << endl;
 	//}
 	
 	// asign the protons to the MC event
-    chMCEvents->GetEntry(iMCEntry + nMCEventsToSkip);
-	weight *= _extra_weight;
-	
+	chMCEvents->GetEntry(iMCEntry + nMCEventsToSkip);
+
+	// reset stored factors every event
+	w_region    = 1.0;
+	w_etrig     = 1.0;
+	w_extra_sig = 1.0;
+
+	Pr_2p  = 1.0;
+	Pr_1_0 = 1.0;
+	Pr_0_1 = 1.0;
+	Pr_0_0 = 1.0;
+
+	t1_run_thetax = 1.0;
+	t0_run_thetax = 1.0;
+
+	e_strip_0   = 1.0;
+	e_strip_1   = 1.0;
+	e_multiRP_0 = 1.0;
+	e_multiRP_1 = 1.0;
+
+	delta_0 = 0;
+	delta_1 = 0;
+
+	u_0 = -1.0;
+	u_1 = -1.0;
+
+	SF_eff_0 = 1.0;
+	SF_eff_1 = 1.0;
+
+	// region weight
+	w_region = _extra_weight;
+	weight *= w_region;
+
 	// fix run number and crossing-angle from proton pool
 	run = poll_run[i_reg];
 	beamXangle = xangle[i_reg % n_xa];
+
+	// store region probabilities
+	Pr_2p  = norm_weight[i_reg];
+	Pr_1_0 = norm_weight_1pRP0[i_reg];
+	Pr_0_1 = norm_weight_1pRP1[i_reg];
+	Pr_0_0 = norm_weight_0p[i_reg];
+
+	// store true-zero-track ratios
+	t1_run_thetax = ptr.trueZeroTracksRatio(run, beamXangle, 1);
+	t0_run_thetax = ptr.trueZeroTracksRatio(run, beamXangle, 0);
 	
 	// From Exclusive
 	// proton efficiency implementation (xi of protons that fail reco. will be set to zero)
-	ppsSF_wgt = 1.; ppsSF_wgt_err=0;
-	if(p1_xi>0){ 
-		float SF = Strip_eff->getEff(p1_x,p1_y,0,run) * MultiRP_eff->getEff(p1_x,p1_y,0,run);
-		if(rand_gen->Rndm()>SF) p1_xi=0;
-		else ppsSF_wgt *= SF;
-		ppsSF_wgt_err += MultiRP_eff->getRelEffErrSq(p1_x,p1_y,0,run);
+	ppsSF_wgt = 1.;
+	ppsSF_wgt_err = 0.0;
+
+	// -------------------- ARM 0 --------------------
+	if(p1_xi > 0){
+		e_strip_0   = Strip_eff->getEff(p1_x, p1_y, 0, run);
+		e_multiRP_0 = MultiRP_eff->getEff(p1_x, p1_y, 0, run);
+
+		SF_eff_0 = e_strip_0 * e_multiRP_0;
+
+		u_0 = rand_gen->Rndm();
+
+		if(u_0 > SF_eff_0){
+			delta_0 = 0;
+			p1_xi = 0;
+		} else {
+			delta_0 = 1;
+			ppsSF_wgt *= SF_eff_0;
+		}
+
+		ppsSF_wgt_err += MultiRP_eff->getRelEffErrSq(p1_x, p1_y, 0, run);
 	}
-	if(p2_xi>0){
-		float SF = Strip_eff->getEff(p2_x,p2_y,1,run) * MultiRP_eff->getEff(p2_x,p2_y,1,run);
-		if(rand_gen->Rndm()>SF) p2_xi=0;
-		else ppsSF_wgt *= SF;
-		ppsSF_wgt_err += MultiRP_eff->getRelEffErrSq(p2_x,p2_y,1,run);
+	else{
+		e_strip_0   = 1.0;
+		e_multiRP_0 = 1.0;
+		SF_eff_0    = 1.0;
+		u_0         = -1.0;
+		delta_0     = 0;
 	}
+
+	// -------------------- ARM 1 --------------------
+	if(p2_xi > 0){
+		e_strip_1   = Strip_eff->getEff(p2_x, p2_y, 1, run);
+		e_multiRP_1 = MultiRP_eff->getEff(p2_x, p2_y, 1, run);
+
+		SF_eff_1 = e_strip_1 * e_multiRP_1;
+
+		u_1 = rand_gen->Rndm();
+
+		if(u_1 > SF_eff_1){
+			delta_1 = 0;
+			p2_xi = 0;
+		} else {
+			delta_1 = 1;
+			ppsSF_wgt *= SF_eff_1;
+		}
+
+		ppsSF_wgt_err += MultiRP_eff->getRelEffErrSq(p2_x, p2_y, 1, run);
+	}
+	else{
+		e_strip_1   = 1.0;
+		e_multiRP_1 = 1.0;
+		SF_eff_1    = 1.0;
+		u_1         = -1.0;
+		delta_1     = 0;
+	}
+
 	ppsSF_wgt_err = sqrt(ppsSF_wgt_err);
 
     //std::cout << "Proton efficiencies applied. ppsSF_wgt: " << ppsSF_wgt << ", ppsSF_wgt_err: " << ppsSF_wgt_err << std::endl;
@@ -548,6 +690,8 @@ kipped." << endl;
 		weight *= ptag_wgt;
 		signal_protons = 0;
 	}
+
+
 	
 
 	// Michal proposal of background
@@ -618,13 +762,23 @@ kipped." << endl;
 		triggerSF = trigSF.first;
 		triggerSF_err = trigSF.second;
 
+		w_etrig = triggerSF;
+
 		// update event weight
-		weight *= triggerSF;
+		weight *= w_etrig;
 	}
 	
+	else {
+		w_etrig = 1.0;
+	}
+
+
 	// Add extra weight to signal since we have simulation for each era/xangle
 	if(isSignal) {
-		weight *= extra_signal_normalization;
+		w_extra_sig = extra_signal_normalization;
+		weight *= w_extra_sig;
+	} else {
+		w_extra_sig = 1.0;
 	}
 	   
 	// add extra weight in case of signal events:
