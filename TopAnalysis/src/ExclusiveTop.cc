@@ -12,6 +12,7 @@
 #include "TROOT.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TDirectory.h"
 #include "TSystem.h"
 #include "TGraph.h"
 #include "TLorentzVector.h"
@@ -28,6 +29,8 @@
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <map>
+#include <iomanip>
 
 // package includes
 #include "TopLJets2015/TopAnalysis/interface/CommonTools.h"
@@ -87,6 +90,120 @@ int dump_index(vector<double> sum_squared){
     }
     //cout << "index " << index << endl;
     return index;
+}
+
+
+// =================================================================================================
+// REGION SCAN HELPERS
+// -------------------------------------------------------------------------------------------------
+// Purpose:
+//   - Build all regions from:
+//       nLeptons in {0,1,2}
+//       nJets    in {0,1,2,3,4}
+//       nBJets   in {0,1,2}
+//       operator in {>=, ==, <=}
+//   - Evaluate every region independently.
+//   - Fill one global event-count histogram and one nchMPI histogram per region.
+// =================================================================================================
+
+struct RegionDef_t {
+    int id;
+
+    std::string lepOp;
+    int lepValue;
+
+    std::string jetOp;
+    int jetValue;
+
+    std::string bjetOp;
+    int bjetValue;
+
+    std::string label;
+    std::string histName;
+};
+
+
+bool passMultiplicityCut(int value, const std::string &op, int cutValue)
+{
+    if(op == ">=") return value >= cutValue;
+    if(op == "==") return value == cutValue;
+    if(op == "<=") return value <= cutValue;
+
+    return false;
+}
+
+
+std::string opToken(const std::string &op)
+{
+    if(op == ">=") return "ge";
+    if(op == "==") return "eq";
+    if(op == "<=") return "le";
+
+    return "badop";
+}
+
+
+std::vector<RegionDef_t> buildRegionDefinitions()
+{
+    std::vector<RegionDef_t> regions;
+
+    const int lepValues[]  = {0, 1, 2};
+    const int jetValues[]  = {0, 1, 2, 3, 4};
+    const int bjetValues[] = {0, 1, 2};
+
+    const std::string ops[] = {">=", "==", "<="};
+
+    int region_id = 0;
+
+    for(size_t ilepOp = 0; ilepOp < 3; ++ilepOp) {
+        for(size_t ilep = 0; ilep < 3; ++ilep) {
+
+            for(size_t ijetOp = 0; ijetOp < 3; ++ijetOp) {
+                for(size_t ijet = 0; ijet < 5; ++ijet) {
+
+                    for(size_t ibjetOp = 0; ibjetOp < 3; ++ibjetOp) {
+                        for(size_t ibjet = 0; ibjet < 3; ++ibjet) {
+
+                            region_id++;
+
+                            RegionDef_t r;
+
+                            r.id = region_id;
+
+                            r.lepOp    = ops[ilepOp];
+                            r.lepValue = lepValues[ilep];
+
+                            r.jetOp    = ops[ijetOp];
+                            r.jetValue = jetValues[ijet];
+
+                            r.bjetOp    = ops[ibjetOp];
+                            r.bjetValue = bjetValues[ibjet];
+
+                            r.label = Form(
+                                "R%04d: nLep %s %d, nJets %s %d, nBJets %s %d",
+                                r.id,
+                                r.lepOp.c_str(),  r.lepValue,
+                                r.jetOp.c_str(),  r.jetValue,
+                                r.bjetOp.c_str(), r.bjetValue
+                            );
+
+                            r.histName = Form(
+                                "h_nchMPI_R%04d_nlep_%s_%d_njets_%s_%d_nbjets_%s_%d",
+                                r.id,
+                                opToken(r.lepOp).c_str(),  r.lepValue,
+                                opToken(r.jetOp).c_str(),  r.jetValue,
+                                opToken(r.bjetOp).c_str(), r.bjetValue
+                            );
+
+                            regions.push_back(r);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return regions;
 }
 
 
@@ -471,6 +588,34 @@ void RunExclusiveTop(TString filename,
     std::cout << "--- producing " << outname << " from " << nentries << " events" << std::endl;
 
 
+    // =================================================================================================
+    // REGION SCAN FLAGS
+    // -------------------------------------------------------------------------------------------------
+    // SAVE_REGION_SCAN = true
+    //   Creates a ROOT directory called:
+    //       region_scan
+    //
+    //   Inside:
+    //       region_event_count
+    //       region_weighted_count
+    //       nchMPI_by_region / h_nchMPI_R0001_...
+    //
+    // SAVE_REGION_SCAN = false
+    //   Normal behavior. No region-scan histograms are produced.
+    //
+    // REGION_SCAN_USE_EVENT_WEIGHT = false
+    //   nchMPI histograms are filled with raw event counts.
+    //
+    // REGION_SCAN_USE_EVENT_WEIGHT = true
+    //   nchMPI histograms are filled with the final event weight.
+    // =================================================================================================
+
+    const bool SAVE_REGION_SCAN = false;
+    const bool REGION_SCAN_USE_EVENT_WEIGHT = false;
+
+    const int   REGION_SCAN_NCHMPI_NBINS = 20;
+    const float REGION_SCAN_NCHMPI_MIN   = -0.5;
+    const float REGION_SCAN_NCHMPI_MAX   = 200.5;
 
     // =================================================================================================
     // BLOCK 05 — CMS CORRECTION TOOLS AND OUTPUT TREE BOOKING
@@ -548,10 +693,50 @@ void RunExclusiveTop(TString filename,
 
     outT->Branch("npf", &ev.npf, "npf/I");
     outT->Branch("nchMPI", &ev.nchMPI, "nchMPI/I");
+
+    outT->Branch("sumMPIChHt", &ev.sumMPIChHt, "sumMPIChHt/F");
+    outT->Branch("maxMPIChPt", &ev.maxMPIChPt, "maxMPIChPt/F");
+    outT->Branch("meanMPIChPt", &ev.meanMPIChPt, "meanMPIChPt/F");
+
+    outT->Branch("mpiNPlus", &ev.mpiNPlus, "mpiNPlus/F");
+    outT->Branch("mpiNMinus", &ev.mpiNMinus, "mpiNMinus/F");
+    outT->Branch("mpiNMin", &ev.mpiNMin, "mpiNMin/F");
+    outT->Branch("mpiNMax", &ev.mpiNMax, "mpiNMax/F");
+    outT->Branch("mpiNAsym", &ev.mpiNAsym, "mpiNAsym/F");
+    outT->Branch("mpiNSignedAsym", &ev.mpiNSignedAsym, "mpiNSignedAsym/F");
+
+    outT->Branch("mpiHTPlus", &ev.mpiHTPlus, "mpiHTPlus/F");
+    outT->Branch("mpiHTMinus", &ev.mpiHTMinus, "mpiHTMinus/F");
+    outT->Branch("mpiHTMin", &ev.mpiHTMin, "mpiHTMin/F");
+    outT->Branch("mpiHTMax", &ev.mpiHTMax, "mpiHTMax/F");
+    outT->Branch("mpiHTAsym", &ev.mpiHTAsym, "mpiHTAsym/F");
+    outT->Branch("mpiHTSignedAsym", &ev.mpiHTSignedAsym, "mpiHTSignedAsym/F");
+
+    outT->Branch("mpiEMin", &ev.mpiEMin, "mpiEMin/F");
+    outT->Branch("mpiEEdgeMin", &ev.mpiEEdgeMin, "mpiEEdgeMin/F");
+    outT->Branch("mpiMinOfHFSums", &ev.mpiMinOfHFSums, "mpiMinOfHFSums/F");
+
+    outT->Branch("mpiEtaGapMax", &ev.mpiEtaGapMax, "mpiEtaGapMax/F");
+    outT->Branch("mpiEdgeGapMax", &ev.mpiEdgeGapMax, "mpiEdgeGapMax/F");
+
     outT->Branch("avgInternalRapidityGap", &ev.avgInternalRapidityGap, "avgInternalRapidityGap/F");
     outT->Branch("nInternalRapidityGaps", &ev.nInternalRapidityGaps, "nInternalRapidityGaps/I");
-    outT->Branch("sumMPIChHt", &ev.sumMPIChHt, "sumMPIChHt/F");
-    outT->Branch("jet_nch", ev.jet_nch, "jet_nch/I");
+
+    outT->Branch("deltaEtaEdgeMax", &ev.deltaEtaEdgeMax, "deltaEtaEdgeMax/F");
+    outT->Branch("maxPairwiseDeltaEta", &ev.maxPairwiseDeltaEta, "maxPairwiseDeltaEta/F");
+
+    outT->Branch("sumJetNch", &ev.sumJetNch, "sumJetNch/I");
+    outT->Branch("RNOutIn", &ev.RNOutIn, "RNOutIn/F");
+
+    outT->Branch("pfMPI_eta", ev.pfMPI_eta, "pfMPI_eta[npf]/F");
+    outT->Branch("pfMPI_phi", ev.pfMPI_phi, "pfMPI_phi[npf]/F");
+    outT->Branch("pfMPI_pt", ev.pfMPI_pt, "pfMPI_pt[npf]/F");
+    outT->Branch("pfMPI_energy", ev.pfMPI_energy, "pfMPI_energy[npf]/F");
+    outT->Branch("pfMPI_charge", ev.pfMPI_charge, "pfMPI_charge[npf]/I");
+    outT->Branch("pfMPI_pdgid", ev.pfMPI_pdgid, "pfMPI_pdgid[npf]/I");
+
+    outT->Branch("nj", &ev.nj, "nj/I");
+    outT->Branch("jet_nch", ev.jet_nch, "jet_nch[nj]/I");
 
 
 
@@ -739,6 +924,107 @@ void RunExclusiveTop(TString filename,
     ADDVAR(&(outVars["nBjets"]),"nBjets","/F",outPT);
 
 
+    // =================================================================================================
+    // REGION SCAN HISTOGRAM BOOKING
+    // -------------------------------------------------------------------------------------------------
+    // One bin per region:
+    //   region_event_count    : raw event count per region
+    //   region_weighted_count : weighted event count per region
+    //
+    // One nchMPI histogram per region:
+    //   h_nchMPI_R0001_...
+    //   h_nchMPI_R0002_...
+    //   ...
+    // =================================================================================================
+
+
+    std::vector<RegionDef_t> regionDefs;
+
+    TH1F *h_region_event_count            = nullptr;
+    TH1F *h_region_weighted_count         = nullptr;
+    TH1F *h_region_sumweights_denominator = nullptr;
+
+    std::vector<TH1F*> h_region_nchMPI;
+
+    if(SAVE_REGION_SCAN) {
+
+        regionDefs = buildRegionDefinitions();
+
+        const int nRegions = static_cast<int>(regionDefs.size());
+
+        // This is the same denominator that appears later as evt_count bin 2.
+        // In Python/uproot:
+        //     evt_count.values()[1]
+        // corresponds to ROOT bin 2.
+        const double globalSumWeights = counter->GetBinContent(2);
+
+        std::cout << "[REGION SCAN] Booking " << nRegions
+                << " regions and " << nRegions
+                << " nchMPI histograms." << std::endl;
+
+        std::cout << "[REGION SCAN] evt_count[1] denominator = "
+                << globalSumWeights << std::endl;
+
+        h_region_event_count = new TH1F(
+            "region_event_count",
+            ";Region;Raw events",
+            nRegions,
+            0.5,
+            nRegions + 0.5
+        );
+
+        h_region_weighted_count = new TH1F(
+            "region_weighted_count",
+            ";Region;Weighted events",
+            nRegions,
+            0.5,
+            nRegions + 0.5
+        );
+
+        h_region_sumweights_denominator = new TH1F(
+            "region_sumweights_denominator",
+            ";Region;evt_count[1]",
+            nRegions,
+            0.5,
+            nRegions + 0.5
+        );
+
+        h_region_event_count->SetDirectory(0);
+        h_region_weighted_count->SetDirectory(0);
+        h_region_sumweights_denominator->SetDirectory(0);
+
+        h_region_nchMPI.reserve(nRegions);
+
+        for(size_t ireg = 0; ireg < regionDefs.size(); ++ireg) {
+
+            const RegionDef_t &r = regionDefs[ireg];
+
+            h_region_event_count->GetXaxis()->SetBinLabel(r.id, r.label.c_str());
+            h_region_weighted_count->GetXaxis()->SetBinLabel(r.id, r.label.c_str());
+            h_region_sumweights_denominator->GetXaxis()->SetBinLabel(r.id, r.label.c_str());
+
+            h_region_sumweights_denominator->SetBinContent(r.id, globalSumWeights);
+            h_region_sumweights_denominator->SetBinError(r.id, 0.0);
+
+            TH1F *h = new TH1F(
+                r.histName.c_str(),
+                Form("%s;nchMPI;Events", r.label.c_str()),
+                REGION_SCAN_NCHMPI_NBINS,
+                REGION_SCAN_NCHMPI_MIN,
+                REGION_SCAN_NCHMPI_MAX
+            );
+
+            h->SetDirectory(0);
+            h_region_nchMPI.push_back(h);
+        }
+    }
+
+
+
+
+
+
+
 
 
 // =================================================================================================
@@ -805,9 +1091,9 @@ void RunExclusiveTop(TString filename,
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(5,"trigger");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(6,"event cleaning");
     ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(7,"=1 lep");
-    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(8,"#geq4 jets");
-    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(9,"#geq2 bjets");
-    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(10,"#geq2 ljets");
+    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(8,"#geq2 jets");
+    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(9,"#geq1 bjet");
+    ht.getPlots()["evt_count"]->GetXaxis()->SetBinLabel(10,"#geq1 ljet");
     ht.getPlots()["evt_count"]->SetBinContent(1,counter->GetBinContent(1));
     ht.getPlots()["evt_count"]->SetBinContent(2,counter->GetBinContent(2));
     ht.getPlots()["evt_count"]->SetBinContent(3,counter->GetBinContent(3));
@@ -930,6 +1216,65 @@ void RunExclusiveTop(TString filename,
     //////////////////////////  LOOP OVER EVENTS  /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // =========================================================================================
+    // DEBUG CUTFLOW COUNTERS
+    // Raw event counters only. These do NOT modify the analysis selection.
+    // =========================================================================================
+    unsigned long long dbg_input_entries              = 0;
+
+    unsigned long long dbg_after_flagFinalState       = 0;
+
+    unsigned long long dbg_ch_E                       = 0;
+    unsigned long long dbg_ch_M                       = 0;
+    unsigned long long dbg_ch_EM                      = 0;
+    unsigned long long dbg_ch_EE                      = 0;
+    unsigned long long dbg_ch_MM                      = 0;
+    unsigned long long dbg_ch_other                   = 0;
+
+    unsigned long long dbg_pass_channel_EMu           = 0;
+    unsigned long long dbg_fail_channel_EMu           = 0;
+
+    unsigned long long dbg_pass_event_cleaning        = 0;
+    unsigned long long dbg_fail_event_cleaning        = 0;
+
+    unsigned long long dbg_nlep_raw_0                 = 0;
+    unsigned long long dbg_nlep_raw_1                 = 0;
+    unsigned long long dbg_nlep_raw_ge2               = 0;
+
+    unsigned long long dbg_nlep_selected_0            = 0;
+    unsigned long long dbg_nlep_selected_1            = 0;
+    unsigned long long dbg_nlep_selected_ge2          = 0;
+
+    unsigned long long dbg_pass_nlep_ge1              = 0;
+    unsigned long long dbg_fail_nlep_ge1              = 0;
+
+    unsigned long long dbg_alljets_0                  = 0;
+    unsigned long long dbg_alljets_1                  = 0;
+    unsigned long long dbg_alljets_2                  = 0;
+    unsigned long long dbg_alljets_3                  = 0;
+    unsigned long long dbg_alljets_ge4                = 0;
+
+    unsigned long long dbg_jets_after_puid_0          = 0;
+    unsigned long long dbg_jets_after_puid_1          = 0;
+    unsigned long long dbg_jets_after_puid_2          = 0;
+    unsigned long long dbg_jets_after_puid_3          = 0;
+    unsigned long long dbg_jets_after_puid_ge4        = 0;
+
+    unsigned long long dbg_bjets_0                    = 0;
+    unsigned long long dbg_bjets_1                    = 0;
+    unsigned long long dbg_bjets_ge2                  = 0;
+
+    unsigned long long dbg_lightjets_0                = 0;
+    unsigned long long dbg_lightjets_1                = 0;
+    unsigned long long dbg_lightjets_ge2              = 0;
+
+    unsigned long long dbg_can_reco_ttbar             = 0;
+    unsigned long long dbg_cannot_reco_ttbar          = 0;
+
+    unsigned long long dbg_saved_reco                 = 0;
+    unsigned long long dbg_saved_fallback             = 0;
+    unsigned long long dbg_saved_total                = 0;
+
 
     // =================================================================================================
     // BLOCK 08 — EVENT LOOP: EVENT LOADING, CLEANING, AND BASIC OBJECT COLLECTIONS
@@ -947,6 +1292,8 @@ void RunExclusiveTop(TString filename,
 
     for (Int_t iev=0;iev<nentries;iev++) {
         t->GetEntry(iev);
+        dbg_input_entries++;
+
         if(iev%10==0) printf ("\r [%3.0f%%] done", 100.*(float)iev/(float)nentries);
 
         //      int fill_number = run_to_fill.getFillNumber(ev.run);
@@ -988,23 +1335,54 @@ void RunExclusiveTop(TString filename,
         //////////////////////////
         // RECO LEVEL SELECTION //
         //////////////////////////
+
+
+
+
         TString chTag = selector.flagFinalState(ev, {}, {}, sys); // writes the name in chTag, last argument is JEC/JER systematics
 		selector_nominal.flagFinalState(ev, {}, {}, 0); // selector tool with nominal event selection
+
+        dbg_after_flagFinalState++;
+
         // ch
 		Int_t ch_tag = 0;
+
+        if      (chTag=="EM") { ch_tag = 1; dbg_ch_EM++;    }
+        else if (chTag=="MM") { ch_tag = 2; dbg_ch_MM++;    }
+        else if (chTag=="EE") { ch_tag = 3; dbg_ch_EE++;    }
+        else if (chTag=="E")  { ch_tag = 4; dbg_ch_E++;     }
+        else if (chTag=="M")  { ch_tag = 5; dbg_ch_M++;     }
+        else                  { ch_tag = 9; dbg_ch_other++; }
+
 #ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 3, plotwgts); // count all events before any selection
-        if      (chTag=="EM")    ch_tag = 1;
-        else if (chTag=="MM")    ch_tag = 2;
-        else if (chTag=="EE")    ch_tag = 3;
-        else if (chTag=="E")     ch_tag = 4;
-        else if (chTag=="M")     ch_tag = 5;
-        else                     ch_tag = 9;
+        ht.fill("evt_count", 3, plotwgts); // count all events before final explicit selections
         ht.fill("ch_tag", ch_tag, plotwgts);
 #endif
+
+
+
+
+
         std::vector<Particle> &leptons     = selector.getSelLeptons();
+
+        if      (leptons.size() == 0) dbg_nlep_raw_0++;
+        else if (leptons.size() == 1) dbg_nlep_raw_1++;
+        else                          dbg_nlep_raw_ge2++;
+
 		//std::vector<Particle> allPhotons=selector.getSelPhotons();
         std::vector<Jet>      &allJets        = selector.getJets();
+
+        if      (allJets.size() == 0) dbg_alljets_0++;
+        else if (allJets.size() == 1) dbg_alljets_1++;
+        else if (allJets.size() == 2) dbg_alljets_2++;
+        else if (allJets.size() == 3) dbg_alljets_3++;
+        else                          dbg_alljets_ge4++;
+
+
+
+
+
+
         std::vector<Jet>      &nominalJets        = selector_nominal.getJets();
         std::vector<Jet>      jets,bJets,lightJets;
         std::vector<Particle> selectedLeptons;
@@ -1324,6 +1702,10 @@ void RunExclusiveTop(TString filename,
             selectedLeptons.push_back(leptons[i_lept]);
         }
 
+        if      (selectedLeptons.size() == 0) dbg_nlep_selected_0++;
+        else if (selectedLeptons.size() == 1) dbg_nlep_selected_1++;
+        else                                  dbg_nlep_selected_ge2++;
+
         // Add transverse momentum for all jets
         for(const auto& jet : allJets) {
             total_pt += jet.Pt();
@@ -1401,6 +1783,23 @@ void RunExclusiveTop(TString filename,
 
         outVars["nJets"]=jets.size();
         outVars["nBjets"]=bJets.size();
+        outVars["nLightJets"] = lightJets.size();
+
+        if      (jets.size() == 0) dbg_jets_after_puid_0++;
+        else if (jets.size() == 1) dbg_jets_after_puid_1++;
+        else if (jets.size() == 2) dbg_jets_after_puid_2++;
+        else if (jets.size() == 3) dbg_jets_after_puid_3++;
+        else                       dbg_jets_after_puid_ge4++;
+
+        if      (bJets.size() == 0) dbg_bjets_0++;
+        else if (bJets.size() == 1) dbg_bjets_1++;
+        else                        dbg_bjets_ge2++;
+
+        if      (lightJets.size() == 0) dbg_lightjets_0++;
+        else if (lightJets.size() == 1) dbg_lightjets_1++;
+        else                            dbg_lightjets_ge2++;
+
+		// Store proton pool at preselection
 
 		// Store proton pool at preselection
 		if(ev.isData){
@@ -1428,43 +1827,77 @@ void RunExclusiveTop(TString filename,
 
 
 
+    // -------------------------------
+    // No final event cuts.
+    // Every input event is kept.
+    // -------------------------------
+
+    // Channel diagnostic only. No continue.
+    if(chTag=="E" || chTag=="M") {
+        dbg_pass_channel_EMu++;
+    }
+    else {
+        dbg_fail_channel_EMu++;
+    }
+
+    #ifdef HISTOGRAMS_ON
+        ht.fill("evt_count", 4, plotwgts); // no channel cut
+    #endif
+
+    // Event-cleaning diagnostic only. No continue.
+    if(!ev.isData || passMETfilters) {
+        dbg_pass_event_cleaning++;
+    }
+    else {
+        dbg_fail_event_cleaning++;
+    }
+
+    #ifdef HISTOGRAMS_ON
+        ht.fill("evt_count", 5, plotwgts); // no event-cleaning cut
+    #endif
+
+
+
+
+    // Lepton diagnostic only. No continue.
+    // MiniAnalyzer already applied the event-level topology filter.
+    if (selectedLeptons.size() >= 1) {
+        dbg_pass_nlep_ge1++;
+    }
+    else {
+        dbg_fail_nlep_ge1++;
+    }
+
+    bool has_lepton = (selectedLeptons.size() > 0);
+
+    TLorentzVector dummyLeptonP4(0.0, 0.0, 0.0, 0.0);
+    Particle lepton(dummyLeptonP4, 0, 0, 0, -1, 1.0, 0.0);
+
+    if (has_lepton) {
+        lepton = selectedLeptons[0];
+    }
+
+    bool is_systVar =
+        (systVar.empty() || (systVar.find("nominal") != string::npos)) ? false : true;
+
+    #ifdef HISTOGRAMS_ON
+        ht.fill("evt_count", 6, plotwgts);
+        ht.fill("evt_count", 7, plotwgts);
+        ht.fill("evt_count", 8, plotwgts);
+        ht.fill("evt_count", 9, plotwgts);
+    #endif
+
+    #ifdef HISTOGRAMS_ON
+        ht.fill("evt_count", 9, plotwgts);
+    #endif
 
 
 
 
 
-    // ---- EVENT SELECTION --------------------------------------------------------------
 
-	if(chTag!="E" && chTag!="M" )   continue; // events with electrons (id=11) or muons (id=13)
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 4, plotwgts); // count events after channel selection
-#endif
-	if(ev.isData && !passMETfilters)   continue; // event cleaning
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 5, plotwgts); // count events after channel selection
-#endif
-	if (selectedLeptons.size()!=1) continue; // ONLY events with 1 selected lepton
-	Particle lepton = selectedLeptons[0];
-	bool is_systVar = (systVar.empty() || (systVar.find("nominal")!=string::npos))  ? false : true;
-	//if(is_systVar && !lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // remove non-tight leptons from systematics
-        if(!lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT)) continue; // Apply tight selection to all events
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 6, plotwgts); // count events after selection on number of leptons (SHOULD BE SAME)
-#endif
-        if ( jets.size()  < 4 )        continue; // ONLY events with at least 4 jets
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 7, plotwgts); // count events after selection on number of jets
-#endif
-        // Comment this line when running over QCD Control retion
-        // yes, this is related to deepjet (uncomment to cut bjets n <= 2)
-		if ( bJets.size() < 2 )        continue; // ONLY events with at least 2 BJets
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 8, plotwgts); // count events after selection on number of Bjets
-#endif
-        if(lightJets.size()<2)       continue; // ONLY events with at least 2 light Jets
-#ifdef HISTOGRAMS_ON
-        ht.fill("evt_count", 9, plotwgts); // count events after selection on number of light jets
-#endif
+
+
 
 #ifdef HISTOGRAMS_ON
         ht.fill("puwgtctr",0,plotwgts);
@@ -1502,28 +1935,34 @@ void RunExclusiveTop(TString filename,
 #endif
 
 
-            // lepton trigger*selection weights (update the code later)
-            EffCorrection_t trigSF = lepEffH.getTriggerCorrection(selectedLeptons,{},{},"");
-            EffCorrection_t  selSF = lepEffH.getOfflineCorrection(lepton, period);
-			if(lepton.id()==11){
-				outVars["EL_trigSF_wgt"] = trigSF.first;
-				outVars["EL_trigSF_wgt_err"] = trigSF.second;
-				if(!outVars["EL_trigSF_wgt"]) cout << "WARNING: EL_trigSF_wgt = 0, check your selection! " << endl;
-				outVars["EL_SF_wgt"] = selSF.first;
-				outVars["EL_SF_wgt_err"] = selSF.second;
-			}
-			else if(lepton.id()==13){
-				outVars["MU_trigSF_wgt"] = trigSF.first;
-				outVars["MU_trigSF_wgt_err"] = trigSF.second;
-				if(!outVars["MU_trigSF_wgt"]) cout << "WARNING: MU_trigSF_wgt = 0, check your selection! " << endl;
-				outVars["MU_SF_wgt"] = selSF.first;
-				outVars["MU_SF_wgt_err"] = selSF.second;
-			}
-			else cout << "ERROR: lepton.id()="<<lepton.id()<<" cannot set triggerSF"<<endl;
+        // Lepton trigger*selection weights.
+        // Only compute them if a selected lepton exists.
+        // If no lepton exists, the lepton SFs remain equal to 1.
 
+        if (has_lepton) {
+            EffCorrection_t trigSF = lepEffH.getTriggerCorrection(selectedLeptons, {}, {}, "");
+            EffCorrection_t selSF  = lepEffH.getOfflineCorrection(lepton, period);
+
+            if(lepton.id()==11){
+                outVars["EL_trigSF_wgt"] = trigSF.first;
+                outVars["EL_trigSF_wgt_err"] = trigSF.second;
+                if(!outVars["EL_trigSF_wgt"]) cout << "WARNING: EL_trigSF_wgt = 0, check your selection! " << endl;
+
+                outVars["EL_SF_wgt"] = selSF.first;
+                outVars["EL_SF_wgt_err"] = selSF.second;
+            }
+            else if(lepton.id()==13){
+                outVars["MU_trigSF_wgt"] = trigSF.first;
+                outVars["MU_trigSF_wgt_err"] = trigSF.second;
+                if(!outVars["MU_trigSF_wgt"]) cout << "WARNING: MU_trigSF_wgt = 0, check your selection! " << endl;
+
+                outVars["MU_SF_wgt"] = selSF.first;
+                outVars["MU_SF_wgt_err"] = selSF.second;
+            }
 
             wgt *= outVars["EL_SF_wgt"]*outVars["MU_SF_wgt"];
             wgt *= outVars["EL_trigSF_wgt"]*outVars["MU_trigSF_wgt"];
+        }
 
 			//L1 pre-fire
 			EffCorrection_t l1prefireProb=l1PrefireWR.getCorrection(allJets,{});
@@ -1715,13 +2154,89 @@ void RunExclusiveTop(TString filename,
         //   - Fill control histograms and write the output ROOT file.
         // =================================================================================================
 
+        // =================================================================================================
+        // REGION SCAN FILLING
+        // -------------------------------------------------------------------------------------------------
+        // This must be placed BEFORE the hard event selection.
+        //
+        // Reason:
+        //   The region scan should test all possible regions independently.
+        //   If this code is placed after:
+        //
+        //       if(selectedLeptons.size() != 3) continue;
+        //       if(jets.size()              != 2) continue;
+        //       if(bJets.size()             != 2) continue;
+        //
+        //   then only the fixed region nLep==3, nJets==2, nBJets==2 survives,
+        //   and the scan becomes useless.
+        // =================================================================================================
+
+
+
+        if(SAVE_REGION_SCAN) {
+
+            const int nLep_region   = static_cast<int>(selectedLeptons.size());
+            const int nJets_region  = static_cast<int>(jets.size());
+            const int nBJets_region = static_cast<int>(bJets.size());
+
+            // This is the same value stored later in the branch:
+            //     outVars["weight"] = wgt;
+            const double eventWeight = static_cast<double>(wgt);
+
+            const double nchMPIWeight =
+                (REGION_SCAN_USE_EVENT_WEIGHT ? eventWeight : 1.0);
+
+            for(size_t ireg = 0; ireg < regionDefs.size(); ++ireg) {
+
+                const RegionDef_t &r = regionDefs[ireg];
+
+                const bool passRegion =
+                    passMultiplicityCut(nLep_region,   r.lepOp,  r.lepValue)  &&
+                    passMultiplicityCut(nJets_region,  r.jetOp,  r.jetValue)  &&
+                    passMultiplicityCut(nBJets_region, r.bjetOp, r.bjetValue);
+
+                if(!passRegion) continue;
+
+                // Raw histogram:
+                // one unit per event passing the region.
+                h_region_event_count->Fill(r.id);
+
+                // Weighted histogram:
+                // same region histogram, but filled with the event branch weight.
+                // This is what you need for:
+                //     N_expected = region_weighted_count * lumi * xs / evt_count[1]
+                h_region_weighted_count->Fill(r.id, eventWeight);
+
+                // nchMPI histogram:
+                // raw by default, weighted only if REGION_SCAN_USE_EVENT_WEIGHT = true.
+                h_region_nchMPI[ireg]->Fill(ev.nchMPI, nchMPIWeight);
+            }
+        }
 
 
 
 
 
-        // ----- START RECONSTRUCTION OF TTBAR -------------------------------------------------------
-        if(bJets.size()>=2 && lightJets.size()>=2)        {    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+        // Hard event selection.
+        // Events failing this are not saved, not even as fallback.
+        if(selectedLeptons.size() != 1) continue;
+        if(jets.size()              < 2) continue;
+        if(bJets.size()             < 2) continue;
+
+
+        bool can_reconstruct_ttbar =
+            has_lepton &&
+            jets.size() >= 4 &&
+            bJets.size() >= 2 &&
+            lightJets.size() >= 2;
+
+        if (can_reconstruct_ttbar) dbg_can_reco_ttbar++;
+        else                       dbg_cannot_reco_ttbar++;
+
+        if(can_reconstruct_ttbar) {  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //  in theory this selection was made already
 
             //determine the neutrino kinematics
@@ -2485,29 +3000,78 @@ void RunExclusiveTop(TString filename,
             outVars["gen_lepton_eta"] = gen_lepton_eta;
             outVars["gen_lepton_phi"] = gen_lepton_phi;
 
+
+
+
+
             //---------------------------------
             // FILL TREE
+            dbg_saved_reco++;
+            dbg_saved_total++;
+
+            #ifdef HISTOGRAMS_ON
+                ht.fill("evt_count", 10, plotwgts); // saved reconstructed
+            #endif
+
             outT->Fill();
 
-        } // end of if(bJets.size()>=2 && lightJets.size()>=2)
-		else{
-	        //continue;
-			// still fill the tree with leptons only (for QCD FF estimate)
-            outVars["cat"]=float(ch_tag);
-            outVars["l_px"]=lepton.p4().Px();
-            outVars["l_py"]=lepton.p4().Py();
-            outVars["l_pz"]=lepton.p4().Pz();
-            outVars["l_pt"]=lepton.Pt();
-            outVars["l_eta"]=lepton.Rapidity();
-            outVars["l_phi"]=lepton.Phi();
-            outVars["l_m"]=lepton.M();
-            outVars["l_E"]=lepton.E();
-            outVars["lepton_isolation"]=ev.l_relIso[lepton.originalReference()];
-            outVars["l_tight"]=lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
+            } // end of if(can_reconstruct_ttbar)
 
-			// FILL TREE
-			outT->Fill();
-		}
+
+
+        // AFTER
+
+        else{
+            // Event passes loose topology:
+            //   Nleptons == 1
+            //   Njets    >= 2
+            //   Nbjets   >= 1
+            //   Nljets   >= 1
+            //
+            // but cannot reconstruct full ttbar because full reconstruction requires:
+            //   Nbjets >= 2
+            //   Nljets >= 2
+
+            outVars["cat"] = float(ch_tag);
+
+            outVars["nJets"]      = jets.size();
+            outVars["nBjets"]     = bJets.size();
+            outVars["nLightJets"] = lightJets.size();
+
+            outVars["l_px"] = lepton.p4().Px();
+            outVars["l_py"] = lepton.p4().Py();
+            outVars["l_pz"] = lepton.p4().Pz();
+
+            outVars["l_pt"]  = lepton.Pt();
+            outVars["l_eta"] = lepton.Rapidity();
+            outVars["l_phi"] = lepton.Phi();
+            outVars["l_m"]   = lepton.M();
+            outVars["l_E"]   = lepton.E();
+
+            outVars["lepton_isolation"] = ev.l_relIso[lepton.originalReference()];
+            outVars["l_tight"] = lepton.hasQualityFlag(SelectionTool::QualityFlags::TIGHT);
+
+            dbg_saved_fallback++;
+            dbg_saved_total++;
+
+        #ifdef HISTOGRAMS_ON
+            ht.fill("evt_count", 10, plotwgts);
+        #endif
+
+            outT->Fill();
+        }
+
+
+
+
+
+
+
+
+
+
+
+        
     } // end of loop over events
 
 
@@ -2530,24 +3094,196 @@ void RunExclusiveTop(TString filename,
 
 
         std::cout << std::endl;
+        std::cout << "================================================================================" << std::endl;
+        std::cout << "DETAILED RAW CUTFLOW DEBUG SUMMARY" << std::endl;
+        std::cout << "================================================================================" << std::endl;
+
+        auto print_count = [](const std::string &label,
+                              unsigned long long n,
+                              unsigned long long denom)
+        {
+            double eff = (denom > 0 ? 100.0 * double(n) / double(denom) : 0.0);
+
+            std::cout << std::left  << std::setw(45) << label
+                      << std::right << std::setw(12) << n
+                      << "   eff = "
+                      << std::fixed << std::setprecision(3)
+                      << std::setw(10) << eff << " %"
+                      << std::endl;
+        };
+
+        print_count("Input tree entries",                 dbg_input_entries,        dbg_input_entries);
+        print_count("After flagFinalState",               dbg_after_flagFinalState, dbg_input_entries);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "Channel composition after flagFinalState" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("chTag == E",                         dbg_ch_E,                dbg_after_flagFinalState);
+        print_count("chTag == M",                         dbg_ch_M,                dbg_after_flagFinalState);
+        print_count("chTag == EM",                        dbg_ch_EM,               dbg_after_flagFinalState);
+        print_count("chTag == EE",                        dbg_ch_EE,               dbg_after_flagFinalState);
+        print_count("chTag == MM",                        dbg_ch_MM,               dbg_after_flagFinalState);
+        print_count("chTag other",                        dbg_ch_other,            dbg_after_flagFinalState);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "Explicit event-loss points" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("PASS channel E/M",                   dbg_pass_channel_EMu,    dbg_after_flagFinalState);
+        print_count("FAIL channel E/M",                   dbg_fail_channel_EMu,    dbg_after_flagFinalState);
+
+        print_count("PASS event cleaning",                dbg_pass_event_cleaning, dbg_pass_channel_EMu);
+        print_count("FAIL event cleaning",                dbg_fail_event_cleaning, dbg_pass_channel_EMu);
+
+        print_count("PASS selected leptons >= 1",         dbg_pass_nlep_ge1,       dbg_pass_event_cleaning);
+        print_count("FAIL selected leptons >= 1",         dbg_fail_nlep_ge1,       dbg_pass_event_cleaning);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "Lepton multiplicities" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("Raw leptons == 0",                   dbg_nlep_raw_0,          dbg_after_flagFinalState);
+        print_count("Raw leptons == 1",                   dbg_nlep_raw_1,          dbg_after_flagFinalState);
+        print_count("Raw leptons >= 2",                   dbg_nlep_raw_ge2,        dbg_after_flagFinalState);
+
+        print_count("Selected leptons == 0",              dbg_nlep_selected_0,     dbg_after_flagFinalState);
+        print_count("Selected leptons == 1",              dbg_nlep_selected_1,     dbg_after_flagFinalState);
+        print_count("Selected leptons >= 2",              dbg_nlep_selected_ge2,   dbg_after_flagFinalState);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "Jet multiplicities before and after loose PU ID" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("allJets == 0",                       dbg_alljets_0,           dbg_after_flagFinalState);
+        print_count("allJets == 1",                       dbg_alljets_1,           dbg_after_flagFinalState);
+        print_count("allJets == 2",                       dbg_alljets_2,           dbg_after_flagFinalState);
+        print_count("allJets == 3",                       dbg_alljets_3,           dbg_after_flagFinalState);
+        print_count("allJets >= 4",                       dbg_alljets_ge4,         dbg_after_flagFinalState);
+
+        print_count("jets after PU ID == 0",              dbg_jets_after_puid_0,   dbg_after_flagFinalState);
+        print_count("jets after PU ID == 1",              dbg_jets_after_puid_1,   dbg_after_flagFinalState);
+        print_count("jets after PU ID == 2",              dbg_jets_after_puid_2,   dbg_after_flagFinalState);
+        print_count("jets after PU ID == 3",              dbg_jets_after_puid_3,   dbg_after_flagFinalState);
+        print_count("jets after PU ID >= 4",              dbg_jets_after_puid_ge4, dbg_after_flagFinalState);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "B-jet and light-jet multiplicities after loose PU ID" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("bJets == 0",                         dbg_bjets_0,             dbg_after_flagFinalState);
+        print_count("bJets == 1",                         dbg_bjets_1,             dbg_after_flagFinalState);
+        print_count("bJets >= 2",                         dbg_bjets_ge2,           dbg_after_flagFinalState);
+
+        print_count("lightJets == 0",                     dbg_lightjets_0,         dbg_after_flagFinalState);
+        print_count("lightJets == 1",                     dbg_lightjets_1,         dbg_after_flagFinalState);
+        print_count("lightJets >= 2",                     dbg_lightjets_ge2,       dbg_after_flagFinalState);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "Reconstruction and saved events" << std::endl;
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        print_count("Can reconstruct ttbar",              dbg_can_reco_ttbar,      dbg_pass_nlep_ge1);
+        print_count("Cannot reconstruct ttbar",           dbg_cannot_reco_ttbar,   dbg_pass_nlep_ge1);
+
+        print_count("Saved reconstructed branch",         dbg_saved_reco,          dbg_pass_nlep_ge1);
+        print_count("Saved fallback branch",              dbg_saved_fallback,      dbg_pass_nlep_ge1);
+        print_count("Saved total",                        dbg_saved_total,         dbg_input_entries);
+
+        std::cout << "--------------------------------------------------------------------------------" << std::endl;
+        std::cout << "ROOT outT entries = " << outT->GetEntries() << std::endl;
+        std::cout << "debug saved total = " << dbg_saved_total << std::endl;
+        std::cout << "================================================================================" << std::endl;
+
 		std::cout << "saved " << outT->GetEntries() << " events " << std::endl;
+
         //close input file
         f->Close();
+
 
         //save histos to file
         fOut->cd();
 
-    #ifdef HISTOGRAMS_ON
-        for (auto& it : ht.getPlots())  {
-            it.second->SetDirectory(fOut); it.second->Write();
+        #ifdef HISTOGRAMS_ON
+            for (auto& it : ht.getPlots())  {
+                it.second->SetDirectory(fOut); it.second->Write();
+            }
+            for (auto& it : ht.get2dPlots())  {
+                it.second->SetDirectory(fOut); it.second->Write();
+            }
+        #endif
+
+
+        // =================================================================================================
+        // WRITE REGION SCAN HISTOGRAMS
+        // -------------------------------------------------------------------------------------------------
+        // Output ROOT structure:
+        //
+        //   region_scan/
+        //       region_event_count
+        //       region_weighted_count
+        //       nchMPI_by_region/
+        //           h_nchMPI_R0001_...
+        //           h_nchMPI_R0002_...
+        //           ...
+        //           h_nchMPI_R1215_...
+        // =================================================================================================
+
+
+
+
+        if(SAVE_REGION_SCAN) {
+
+            fOut->cd();
+
+            TDirectory *regionDir = fOut->mkdir("region_scan");
+            regionDir->cd();
+
+            h_region_event_count->SetDirectory(regionDir);
+            h_region_event_count->Write();
+
+            h_region_weighted_count->SetDirectory(regionDir);
+            h_region_weighted_count->Write();
+
+            h_region_sumweights_denominator->SetDirectory(regionDir);
+            h_region_sumweights_denominator->Write();
+
+            TDirectory *nchMPIDir = regionDir->mkdir("nchMPI_by_region");
+            nchMPIDir->cd();
+
+            for(size_t ireg = 0; ireg < h_region_nchMPI.size(); ++ireg) {
+                h_region_nchMPI[ireg]->SetDirectory(nchMPIDir);
+                h_region_nchMPI[ireg]->Write();
+            }
+
+            fOut->cd();
+
+            std::cout << "[REGION SCAN] Wrote "
+                    << regionDefs.size()
+                    << " region bins and "
+                    << h_region_nchMPI.size()
+                    << " nchMPI histograms into directory region_scan/"
+                    << std::endl;
+
+            std::cout << "[REGION SCAN] Histograms written:" << std::endl;
+            std::cout << "              region_event_count" << std::endl;
+            std::cout << "              region_weighted_count" << std::endl;
+            std::cout << "              region_sumweights_denominator" << std::endl;
         }
-        for (auto& it : ht.get2dPlots())  {
-            it.second->SetDirectory(fOut); it.second->Write();
-        }
-    #endif
+
+
+
+
+
+
+
+
+
         outT->Write();
         if(isData) outPT->Write();
         fOut->Close();
+
+
+
+
+
+
+
+        
 }  // end of RunExclusiveTop()
 
 // --- THAT'S ALL FOLKS ---

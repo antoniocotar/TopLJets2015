@@ -23,7 +23,7 @@ struct MiniEvent_t
   static const int MAXJETSYS    =  29;
   static const int MAXRAWMU     =  50;
   static const int MAXPROTONS   =  50;
-  static const int MAXTRACKS    =  100;
+  static const int MAXTRACKS    =  10000;
   static const int MAXPF = 10000; // or higher if needed
 
   Bool_t isData;
@@ -130,16 +130,58 @@ struct MiniEvent_t
   Float_t avgInternalRapidityGap;
   Int_t nInternalRapidityGaps;
 
+  Float_t deltaEtaEdgeMax;
+  Float_t maxPairwiseDeltaEta;
 
-  // nchMPI
+
+  // ============================================================
+  // PF-MPI / outside-jet activity variables
+  // ============================================================
+
+  // Main outside-jet charged PF multiplicity
   Int_t nchMPI;
+
+  // Charged PF multiplicity inside jets
   Int_t jet_nch[MAXJET];
 
+  // Total charged outside-jet HT
   Float_t sumMPIChHt;
 
+  // Extra PF-MPI pT information
+  Float_t maxMPIChPt;
+  Float_t meanMPIChPt;
+
+  // Hemispheric multiplicity variables
   Float_t mpiNPlus;
   Float_t mpiNMinus;
+  Float_t mpiNMin;
+  Float_t mpiNMax;
   Float_t mpiNAsym;
+  Float_t mpiNSignedAsym;
+
+  // Hemispheric HT variables
+  Float_t mpiHTPlus;
+  Float_t mpiHTMinus;
+  Float_t mpiHTMin;
+  Float_t mpiHTMax;
+  Float_t mpiHTAsym;
+  Float_t mpiHTSignedAsym;
+
+  // HF-like energy variables using PF-MPI candidates
+  Float_t mpiEMin;
+  Float_t mpiEEdgeMin;
+
+  // HF-window-like PF-MPI sum variable
+  // min(sumE_plus, sumE_minus) in new eta window, e.g. 3.0 <= |eta| <= 5.2
+  Float_t mpiMinOfHFSums;
+
+  // Rapidity-gap variables from PF-MPI candidates
+  Float_t mpiEtaGapMax;
+  Float_t mpiEdgeGapMax;
+
+  // Inside/outside charged activity ratio
+  Int_t   sumJetNch;
+  Float_t RNOutIn;
 
   // Calojets 
 

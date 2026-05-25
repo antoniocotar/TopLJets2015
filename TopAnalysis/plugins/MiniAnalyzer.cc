@@ -1648,140 +1648,542 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 
 
   
-  /////////////////////////////////////////// start nchMPI
+  /////////////////////////////////////////// start PF-MPI / nchMPI
 
-  // 0) Prepare a temporary std::vector to collect MPI‐PFs
+  // ============================================================
+  // Manual tunable parameters
+  // ============================================================
+  // Change these values by hand and rerun MiniAnalyzer.
+  //
+  // Recommended manual scans:
+  //
+  // pfPtMin        = 0.5, 1.0
+  // dRJetVeto      = 0.4, 0.5, 0.6
+  // dRLepVeto      = 0.3
+  // pfEtaMax       = 2.4
+  // minPVAssoc     = pat::PackedCandidate::PVTight
+  // useChargedHadronsOnly = false, true
+  //
+  // Meaning:
+  //   useChargedHadronsOnly = false  -> all charged PF candidates
+  //   useChargedHadronsOnly = true   -> only abs(pdgId)==211
+  // ============================================================
+
+  const float pfPtMin   = 0.5f;   // tune: 0.5, 1.0
+  const float pfEtaMax  = 2.4f;   // usually keep 2.4 for tracker
+  const float dRJetVeto = 0.4f;   // tune: 0.4, 0.5, 0.6
+  const float dRLepVeto = 0.3f;   // recommended fixed value
+  const float etaEdgeMin = 1.5f;   // HF-like edge region: |eta| > 1.5
+  const float mpiHFLikeEtaMin = 3.0f;   // new HF-like lower eta edge
+  const float mpiHFLikeEtaMax = 5.2f;   // new HF-like upper eta edge
+  const float mpiHFLikeEMin   = 0.0f;   // minimum PF energy
+  const float eps       = 1e-6f;
+
+  // Tunable eta boundary used to compute:
+  //   deltaEtaEdgeMax      = max gap from selected PF-MPI activity to eta edges
+  //   maxPairwiseDeltaEta  = max |eta_i - eta_j| among selected PF-MPI candidates
+  const float deltaEtaEdgeBoundary = 2.4f;
+
+
+  const pat::PackedCandidate::PVAssoc minPVAssoc = pat::PackedCandidate::PVTight;
+
+  // false = all charged PF candidates
+  // true  = only charged hadrons, abs(pdgId)==211
+  const bool useChargedHadronsOnly = false;
+
+
+  // ============================================================
+  // Temporary vectors for selected PF-MPI candidates
+  // ============================================================
+
   std::vector<float> tmp_eta, tmp_phi, tmp_pt, tmp_energy;
   std::vector<int>   tmp_charge, tmp_pdgid;
 
-  // 1) Clear the temp vectors & reset event counter
-  tmp_eta   .clear();
-  tmp_phi   .clear();
-  tmp_pt    .clear();
+  tmp_eta.clear();
+  tmp_phi.clear();
+  tmp_pt.clear();
   tmp_energy.clear();
   tmp_charge.clear();
-  tmp_pdgid .clear();
+  tmp_pdgid.clear();
+
+
+  // ============================================================
+  // Reset event-level PF-MPI variables
+  // ============================================================
+
   ev_.npf = 0;
   ev_.nchMPI = 0;
-  ev_.sumMPIChHt = 0;     // <— NEW
-  
-  // 2) Prepare jet‐matching & HF sums
-  const float dRcut = 0.4f;
+  ev_.sumMPIChHt = 0.0f;
+
+  ev_.maxMPIChPt = 0.0f;
+  ev_.meanMPIChPt = 0.0f;
+
+  ev_.mpiNPlus = 0.0f;
+  ev_.mpiNMinus = 0.0f;
+  ev_.mpiNMin = 0.0f;
+  ev_.mpiNMax = 0.0f;
+  ev_.mpiNAsym = 0.0f;
+  ev_.mpiNSignedAsym = 0.0f;
+
+  ev_.mpiHTPlus = 0.0f;
+  ev_.mpiHTMinus = 0.0f;
+  ev_.mpiHTMin = 0.0f;
+  ev_.mpiHTMax = 0.0f;
+  ev_.mpiHTAsym = 0.0f;
+  ev_.mpiHTSignedAsym = 0.0f;
+
+  // HF-like energy variables using PF-MPI candidates
+  ev_.mpiEMin = 0.0f;
+  ev_.mpiEEdgeMin = 0.0f;
+  ev_.mpiMinOfHFSums = 0.0f;
+
+  ev_.mpiEtaGapMax = 0.0f;
+  ev_.mpiEdgeGapMax = 0.0f;
+
+  ev_.deltaEtaEdgeMax = 0.0f;
+  ev_.maxPairwiseDeltaEta = 0.0f;
+
+
+  ev_.sumJetNch = 0;
+  ev_.RNOutIn = 0.0f;
+
+  ev_.avgInternalRapidityGap = 0.0f;
+  ev_.nInternalRapidityGaps = 0;
+
+
+  // ============================================================
+  // Charged PF multiplicity inside jets
+  // ============================================================
+
   std::vector<int> jet_nch(ev_.nj, 0);
-  int   nchMPI_local = 0;
+  int nchMPI_local = 0;
 
 
-  // 2) Loop over PF candidates with the same PV‐track selection
+  // Local energy sums for HF-like PF-MPI variables
+  float mpiEPlus = 0.0f;
+  float mpiEMinus = 0.0f;
+
+  float mpiEEdgePlus = 0.0f;
+  float mpiEEdgeMinus = 0.0f;
+
+  float mpiHFLikeSumPlus = 0.0f;
+  float mpiHFLikeSumMinus = 0.0f;
+
+  // ============================================================
+  // Loop over PF candidates
+  // ============================================================
+
+  // AFTER CORRECT
+
   for (const auto &pf : *pfcands) {
-    if (pf.pt() <= 0.5f)                                continue;
-    if (pf.fromPV() < pat::PackedCandidate::PVTight)    continue;
-    if (pf.energy() < 0.0f)             continue;
-    //if (std::fabs(pf.eta()) >= 2.4f)                    continue;
 
-    // Check matching to any jet
-    bool matched = false;
-    for (int i = 0; i < ev_.nj; ++i) {
-      float dEta = pf.eta() - ev_.j_eta[i];
-      float dPhi = reco::deltaPhi(pf.phi(), ev_.j_phi[i]);
-      float dR   = std::hypot(dEta, dPhi);
-      if (dR < dRcut) {
-        ++jet_nch[i];
-        matched = true;
+    float eta = pf.eta();
+    float phi = pf.phi();
+    float pt  = pf.pt();
+    float ene = pf.energy();
+
+    // ------------------------------------------------------------
+    // Basic positive-energy requirement
+    // ------------------------------------------------------------
+
+    if (ene <= 0.0f) continue;
+
+    // ------------------------------------------------------------
+    // HF-like PF energy sums
+    // IMPORTANT:
+    // This is computed BEFORE:
+    //   pfPtMin
+    //   fromPV
+    //   charge
+    //   pfEtaMax
+    //
+    // Therefore mpiMinOfHFSums is a real forward-energy variable.
+    // nchMPI remains tracker-only and charged-only.
+    // ------------------------------------------------------------
+
+    if (std::fabs(eta) >= mpiHFLikeEtaMin &&
+        std::fabs(eta) <= mpiHFLikeEtaMax &&
+        ene >= mpiHFLikeEMin) {
+
+      if (eta > 0.0f) {
+        mpiHFLikeSumPlus += ene;
+      }
+      else if (eta < 0.0f) {
+        mpiHFLikeSumMinus += ene;
       }
     }
-    if (!matched) {
 
-      float eta = pf.eta();
-      float E   = pf.energy();
-      float phi = pf.phi();
-      float pt  = pf.pt();
+    // ------------------------------------------------------------
+    // Basic PF-MPI tracker selection
+    // ------------------------------------------------------------
 
-    if (pf.charge() != 0 && std::fabs(eta) < 2.4f) {
-      tmp_eta   .push_back(pf.eta());
-      tmp_phi   .push_back(pf.phi());
-      tmp_pt    .push_back(pf.pt());
-      tmp_energy.push_back(pf.energy());
-      tmp_charge.push_back(pf.charge());
-      tmp_pdgid .push_back(pf.pdgId());
+    if (pt <= pfPtMin) continue;
+    if (pf.fromPV() < minPVAssoc) continue;
 
-      ++nchMPI_local;
+    // Use charged PF candidates only.
+    // This makes vertex association cleaner and makes jet_nch consistent.
+    if (pf.charge() == 0) continue;
 
-      // **Accumulate the new MPI‐charged-track H_T**:
-      ev_.sumMPIChHt += pf.pt();        // <— NEW
+    if (std::fabs(eta) >= pfEtaMax) continue;
+
+
+
+
+
+
+
+
+
+    
+    // Optional: use only charged hadrons
+    if (useChargedHadronsOnly && std::abs(pf.pdgId()) != 211) continue;
+
+
+    // ------------------------------------------------------------
+    // Lepton veto
+    // ------------------------------------------------------------
+    // Removes PF candidates close to selected electrons/muons.
+    // This avoids counting the W lepton or its nearby activity as MPI.
+    // ------------------------------------------------------------
+
+    bool nearLepton = false;
+
+    for (int il = 0; il < ev_.nl; ++il) {
+      float dEta = eta - ev_.l_eta[il];
+      float dPhi = reco::deltaPhi(phi, ev_.l_phi[il]);
+      float dR   = std::hypot(dEta, dPhi);
+
+      if (dR < dRLepVeto) {
+        nearLepton = true;
+        break;
+      }
     }
+
+    if (nearLepton) continue;
+
+
+    // ------------------------------------------------------------
+    // Jet veto / inside-jet charged multiplicity
+    // ------------------------------------------------------------
+    // If the PF candidate is close to a selected jet, count it inside
+    // that jet and do not include it in nchMPI.
+    // ------------------------------------------------------------
+
+    bool matchedJet = false;
+
+    for (int i = 0; i < ev_.nj; ++i) {
+      float dEta = eta - ev_.j_eta[i];
+      float dPhi = reco::deltaPhi(phi, ev_.j_phi[i]);
+      float dR   = std::hypot(dEta, dPhi);
+
+      if (dR < dRJetVeto) {
+        ++jet_nch[i];
+        matchedJet = true;
+        break;
+      }
     }
-  }
+
+    if (matchedJet) continue;
 
 
-  float avgInternalGap = 0.0f;
-  int   nInternalGaps = 0;
+    // ------------------------------------------------------------
+    // PF candidate is now classified as outside-jet PF-MPI activity
+    // ------------------------------------------------------------
 
-  // Only if we have at least two entries can we form an “internal” gap
-  if (tmp_eta.size() >= 2) {
-    // 1) sort ascending
-    std::sort(tmp_eta.begin(), tmp_eta.end());
+    tmp_eta.push_back(eta);
+    tmp_phi.push_back(phi);
+    tmp_pt.push_back(pt);
+    tmp_energy.push_back(ene);
+    tmp_charge.push_back(pf.charge());
+    tmp_pdgid.push_back(pf.pdgId());
 
-    // 2) sum all consecutive differences
-    float sumGaps = 0.0f;
-    for (size_t i = 0; i + 1 < tmp_eta.size(); ++i) {
-      sumGaps += (tmp_eta[i+1] - tmp_eta[i]);
+    ++nchMPI_local;
+
+    ev_.sumMPIChHt += pt;
+    ev_.maxMPIChPt = std::max(ev_.maxMPIChPt, pt);
+
+
+    // ------------------------------------------------------------
+    // Hemispheric PF-MPI variables
+    // ------------------------------------------------------------
+
+    if (eta > 0.0f) {
+      ev_.mpiNPlus  += 1.0f;
+      ev_.mpiHTPlus += pt;
+
+      // Energy version: closest central analog to HF+
+      mpiEPlus += ene;
+
+      // Edge energy version: more HF-like, using eta > etaEdgeMin
+      if (eta > etaEdgeMin) {
+        mpiEEdgePlus += ene;
+      }
+
+
+
+
+    }
+    else if (eta < 0.0f) {
+      ev_.mpiNMinus  += 1.0f;
+      ev_.mpiHTMinus += pt;
+
+      // Energy version: closest central analog to HF-
+      mpiEMinus += ene;
+
+      // Edge energy version: more HF-like, using eta < -etaEdgeMin
+      if (eta < -etaEdgeMin) {
+        mpiEEdgeMinus += ene;
+      }
+
+
     }
 
-    // 3) number of internal gaps = N-1
-    nInternalGaps = static_cast<int>(tmp_eta.size()) - 1;
 
-    // 4) average
-    avgInternalGap = sumGaps / nInternalGaps;
-  }
-
-  // 5) store in your event struct
-  ev_.avgInternalRapidityGap = avgInternalGap;
-  ev_.nInternalRapidityGaps = nInternalGaps;
-
-  /*
-  // --- 4) Compute the maximal rapidity gap from tmp_eta ---------------
-  const float eta_lo = -2.4f, eta_hi = +2.4f;
-  float maxGap = eta_hi - eta_lo;    // default: no central PF → full gap
-  if (!tmp_eta.empty()) {
-    std::sort(tmp_eta.begin(), tmp_eta.end());
-    // edge gaps
-    float leftGap  = tmp_eta.front() - eta_lo;
-    float rightGap = eta_hi       - tmp_eta.back();
-    maxGap = std::max(leftGap, rightGap);
-    // internal gaps
-    for (size_t i = 0; i + 1 < tmp_eta.size(); ++i) {
-      float gap = tmp_eta[i+1] - tmp_eta[i];
-      if (gap > maxGap) maxGap = gap;
-    }
-  }
-  ev_.rapidityGapMax = maxGap;
- */
+  } // end loop over PF candidates
 
 
 
-  // 4) Copy into event arrays, respecting MAXPF
-  ev_.npf = std::min((int)tmp_eta.size(), 10000);
-  for (int idx = 0; idx < ev_.npf; ++idx) {
-    ev_.pfMPI_eta   [idx] = tmp_eta   [idx];
-    ev_.pfMPI_phi   [idx] = tmp_phi   [idx];
-    ev_.pfMPI_pt    [idx] = tmp_pt    [idx];
-    ev_.pfMPI_energy[idx] = tmp_energy[idx];
-    ev_.pfMPI_charge[idx] = tmp_charge[idx];
-    ev_.pfMPI_pdgid [idx] = tmp_pdgid [idx];
 
-  }
-
-  // 3) Copy per‐jet counts into the event, set nchMPI
-  for (int i = 0; i < ev_.nj; ++i) {
-    ev_.jet_nch[i] = jet_nch[i];
-  }
+  // ============================================================
+  // Store main PF-MPI count
+  // ============================================================
 
   ev_.nchMPI = nchMPI_local;
 
 
+  // ============================================================
+  // Derived PF-MPI variables
+  // ============================================================
+
+  if (ev_.nchMPI > 0) {
+    ev_.meanMPIChPt = ev_.sumMPIChHt / static_cast<float>(ev_.nchMPI);
+  }
+  else {
+    ev_.meanMPIChPt = 0.0f;
+  }
 
 
-  //////////////////// END nchMPI
+  // Multiplicity hemispheres
+  ev_.mpiNMin = std::min(ev_.mpiNPlus, ev_.mpiNMinus);
+  ev_.mpiNMax = std::max(ev_.mpiNPlus, ev_.mpiNMinus);
+
+  ev_.mpiNAsym =
+    std::fabs(ev_.mpiNPlus - ev_.mpiNMinus) /
+    (ev_.mpiNPlus + ev_.mpiNMinus + eps);
+
+  ev_.mpiNSignedAsym =
+    (ev_.mpiNPlus - ev_.mpiNMinus) /
+    (ev_.mpiNPlus + ev_.mpiNMinus + eps);
+
+
+  // HT hemispheres
+  ev_.mpiHTMin = std::min(ev_.mpiHTPlus, ev_.mpiHTMinus);
+  ev_.mpiHTMax = std::max(ev_.mpiHTPlus, ev_.mpiHTMinus);
+
+  ev_.mpiHTAsym =
+    std::fabs(ev_.mpiHTPlus - ev_.mpiHTMinus) /
+    (ev_.mpiHTPlus + ev_.mpiHTMinus + eps);
+
+  ev_.mpiHTSignedAsym =
+    (ev_.mpiHTPlus - ev_.mpiHTMinus) /
+    (ev_.mpiHTPlus + ev_.mpiHTMinus + eps);
+
+
+  // Energy hemispheres: exact PF-MPI analog of HF min
+  ev_.mpiEMin = std::min(mpiEPlus, mpiEMinus);
+
+  // Edge energy hemispheres: most HF-like central-tracker analog
+  ev_.mpiEEdgeMin = std::min(mpiEEdgePlus, mpiEEdgeMinus);
+
+  ev_.mpiMinOfHFSums = std::min(mpiHFLikeSumPlus, mpiHFLikeSumMinus);
+  
+  // ============================================================
+  // Rapidity-gap variables
+  // IMPORTANT:
+  // Do not sort tmp_eta directly.
+  // Sorting tmp_eta directly breaks eta/phi/pt/energy matching.
+  // Use a copy.
+  // ============================================================
+
+  float avgInternalGap = 0.0f;
+  int   nInternalGaps = 0;
+
+
+
+
+
+  const float eta_lo = -pfEtaMax;
+  const float eta_hi =  pfEtaMax;
+
+  if (tmp_eta.empty()) {
+
+    // No PF-MPI candidate: full central tracker is empty
+    ev_.mpiEtaGapMax  = eta_hi - eta_lo;
+    ev_.mpiEdgeGapMax = eta_hi - eta_lo;
+  }
+  else {
+
+    std::vector<float> eta_sorted = tmp_eta;
+    std::sort(eta_sorted.begin(), eta_sorted.end());
+
+    // Edge gaps
+    float leftGap  = eta_sorted.front() - eta_lo;
+    float rightGap = eta_hi - eta_sorted.back();
+
+    ev_.mpiEdgeGapMax = std::max(leftGap, rightGap);
+
+    // Internal and maximum gap
+    float maxGap = ev_.mpiEdgeGapMax;
+
+    if (eta_sorted.size() >= 2) {
+      float sumGaps = 0.0f;
+
+      for (size_t i = 0; i + 1 < eta_sorted.size(); ++i) {
+        float gap = eta_sorted[i+1] - eta_sorted[i];
+
+        sumGaps += gap;
+        if (gap > maxGap) maxGap = gap;
+      }
+
+      nInternalGaps = static_cast<int>(eta_sorted.size()) - 1;
+      avgInternalGap = sumGaps / static_cast<float>(nInternalGaps);
+    }
+
+    ev_.mpiEtaGapMax = maxGap;
+  }
+
+
+
+
+
+
+
+  ev_.avgInternalRapidityGap = avgInternalGap;
+  ev_.nInternalRapidityGaps = nInternalGaps;
+
+
+
+
+  // ============================================================
+  // New rapidity-topology variables
+  // IMPORTANT:
+  // These do not modify the original variables:
+  //   mpiEtaGapMax
+  //   mpiEdgeGapMax
+  //   avgInternalRapidityGap
+  //   nInternalRapidityGaps
+  // ============================================================
+
+  const float new_eta_lo = -deltaEtaEdgeBoundary;
+  const float new_eta_hi =  deltaEtaEdgeBoundary;
+
+  if (tmp_eta.empty()) {
+
+    ev_.deltaEtaEdgeMax = new_eta_hi - new_eta_lo;
+    ev_.maxPairwiseDeltaEta = 0.0f;
+
+  }
+  else {
+
+    std::vector<float> eta_sorted_new = tmp_eta;
+    std::sort(eta_sorted_new.begin(), eta_sorted_new.end());
+
+    const float leftEdgeGapNew  = eta_sorted_new.front() - new_eta_lo;
+    const float rightEdgeGapNew = new_eta_hi - eta_sorted_new.back();
+
+    ev_.deltaEtaEdgeMax = std::max(leftEdgeGapNew, rightEdgeGapNew);
+
+    if (eta_sorted_new.size() >= 2) {
+      ev_.maxPairwiseDeltaEta = eta_sorted_new.back() - eta_sorted_new.front();
+    }
+    else {
+      ev_.maxPairwiseDeltaEta = 0.0f;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+  // ============================================================
+  // Copy selected PF-MPI candidates into event arrays
+  // ============================================================
+  // ev_.npf is storage only.
+  // ev_.nchMPI is the true selected outside-jet PF-MPI count.
+  // ============================================================
+
+  ev_.npf = std::min<int>(static_cast<int>(tmp_eta.size()), ev_.MAXPF);
+
+  for (int idx = 0; idx < ev_.npf; ++idx) {
+    ev_.pfMPI_eta[idx]    = tmp_eta[idx];
+    ev_.pfMPI_phi[idx]    = tmp_phi[idx];
+    ev_.pfMPI_pt[idx]     = tmp_pt[idx];
+    ev_.pfMPI_energy[idx] = tmp_energy[idx];
+    ev_.pfMPI_charge[idx] = tmp_charge[idx];
+    ev_.pfMPI_pdgid[idx]  = tmp_pdgid[idx];
+  }
+
+
+  // ============================================================
+  // Copy charged jet multiplicity and build inside/outside ratio
+  // ============================================================
+
+  ev_.sumJetNch = 0;
+
+  for (int i = 0; i < ev_.nj; ++i) {
+    ev_.jet_nch[i] = jet_nch[i];
+    ev_.sumJetNch += jet_nch[i];
+  }
+
+  ev_.RNOutIn =
+    static_cast<float>(ev_.nchMPI) /
+    (static_cast<float>(ev_.nchMPI + ev_.sumJetNch) + eps);
+
+
+  // ============================================================
+  // Optional debug print: first 20 events
+  // ============================================================
+  /*
+  static int pfMPI_debug_counter = 0;
+
+  if (pfMPI_debug_counter < 20) {
+    std::cout << "[PF-MPI DEBUG]"
+              << " run="      << ev_.run
+              << " lumi="     << ev_.lumi
+              << " event="    << ev_.event
+              << " pfPtMin="  << pfPtMin
+              << " pfEtaMax=" << pfEtaMax
+              << " dRJetVeto=" << dRJetVeto
+              << " dRLepVeto=" << dRLepVeto
+              << " useChargedHadronsOnly=" << useChargedHadronsOnly
+              << " nchMPI="   << ev_.nchMPI
+              << " sumMPIChHt=" << ev_.sumMPIChHt
+              << " mpiNMin="  << ev_.mpiNMin
+              << " mpiHTMin=" << ev_.mpiHTMin
+              << " mpiEMin=" << ev_.mpiEMin
+              << " mpiEEdgeMin=" << ev_.mpiEEdgeMin
+              << " mpiMinOfHFSums=" << ev_.mpiMinOfHFSums
+              << " mpiHTAsym=" << ev_.mpiHTAsym
+              << " sumJetNch=" << ev_.sumJetNch
+              << " RNOutIn="  << ev_.RNOutIn
+              << " deltaEtaEdgeMax=" << ev_.deltaEtaEdgeMax
+              << " maxPairwiseDeltaEta=" << ev_.maxPairwiseDeltaEta
+              << std::endl;
+
+    pfMPI_debug_counter++;
+  }*/
+
+
+  //////////////////// END PF-MPI / nchMPI
+
+
+
 
   
   // MET
@@ -2053,7 +2455,7 @@ void MiniAnalyzer::recAnalysis(const edm::Event& iEvent, const edm::EventSetup& 
 
 
 
-}
+  }
 
 
 
@@ -2159,11 +2561,19 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	//if (FilterType_.find("ttbar")!=std::string::npos) if(nrecbjets_<2 || nrecjets_<4 || nrecleptons_==0) return;
       if (FilterType_.find("ttbar")!=std::string::npos) {
 
-          // optimized semileptonic topology
-          if(nrecleptons_ != 1) return;
-          if(nrecjets_     < 2) return;
-          if(nrecbjets_    < 1) return;
-          if(nreclightjets_< 1) return;
+        // optimized semileptonic topology
+        // Require exactly one reconstructed lepton
+        if(nrecleptons_ != 1) return;
+
+        // Require at least 2 reconstructed jets
+        if(nrecjets_ < 2) return;
+
+        // Require at least 2 reconstructed b-jets
+        if(nrecbjets_ < 2) return;
+
+        // Require at least 2 reconstructed light jets
+        //if(nreclightjets_ < 2) return;
+          //if(ev_.met_pt<30) return;
       }
 
       if (FilterType_.find("QCD4Fake")!=std::string::npos) {
@@ -2184,7 +2594,7 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  // data - skim on event w/o forward protons but save the event count
 	  histContainer_["counter"]->Fill(2);
 	  if(ev_.isData) histContainer_["RPcount"]->Fill(nmultiprotons_[0],nmultiprotons_[1]);
-	  if(nrecbjets_!=0) histContainer_["counter"]->Fill(3);
+	  //if(nrecbjets_!=0) histContainer_["counter"]->Fill(3);
 
 
     if (ev_.isData){ 
@@ -2223,13 +2633,13 @@ void MiniAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                   << ", HFnEtaMaxEnergy: " << HFnEtaMaxEnergy << ", Hits: " << HFnHitCount << std::endl;
     }*/
 
-    if (ev_.ntrk >= ev_.MAXTRACKS) {
-      return; // Skip the event if the number of tracks is too high
-    }
+    //if (ev_.ntrk >= ev_.MAXTRACKS) {
+    //  return; // Skip the event if the number of tracks is too high
+    //}
 
-    if (ev_.nchPV >= ev_.MAXTRACKS) {
-      return; // Skip the event if the number of tracks is too high
-    }
+    //if (ev_.nchPV >= ev_.MAXTRACKS) {
+    //  return; // Skip the event if the number of tracks is too high
+    //}
 
 
     tree_->Fill();

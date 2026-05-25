@@ -248,6 +248,48 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
   t->Branch("nchMPI",     &ev.nchMPI,     "nchMPI/I");
   t->Branch("sumMPIChHt", &ev.sumMPIChHt, "sumMPIChHt/F");
 
+
+  // New PF-MPI variables for significance optimization
+  t->Branch("maxMPIChPt",  &ev.maxMPIChPt,  "maxMPIChPt/F");
+  t->Branch("meanMPIChPt", &ev.meanMPIChPt, "meanMPIChPt/F");
+
+  // Hemispheric multiplicity variables
+  t->Branch("mpiNPlus",        &ev.mpiNPlus,        "mpiNPlus/F");
+  t->Branch("mpiNMinus",       &ev.mpiNMinus,       "mpiNMinus/F");
+  t->Branch("mpiNMin",         &ev.mpiNMin,         "mpiNMin/F");
+  t->Branch("mpiNMax",         &ev.mpiNMax,         "mpiNMax/F");
+  t->Branch("mpiNAsym",        &ev.mpiNAsym,        "mpiNAsym/F");
+  t->Branch("mpiNSignedAsym",  &ev.mpiNSignedAsym,  "mpiNSignedAsym/F");
+
+  // Hemispheric HT variables
+  t->Branch("mpiHTPlus",        &ev.mpiHTPlus,        "mpiHTPlus/F");
+  t->Branch("mpiHTMinus",       &ev.mpiHTMinus,       "mpiHTMinus/F");
+  t->Branch("mpiHTMin",         &ev.mpiHTMin,         "mpiHTMin/F");
+  t->Branch("mpiHTMax",         &ev.mpiHTMax,         "mpiHTMax/F");
+  t->Branch("mpiHTAsym",        &ev.mpiHTAsym,        "mpiHTAsym/F");
+  t->Branch("mpiHTSignedAsym",  &ev.mpiHTSignedAsym,  "mpiHTSignedAsym/F");
+
+  // HF-like energy variables using PF-MPI candidates
+  t->Branch("mpiEMin",      &ev.mpiEMin,      "mpiEMin/F");
+  t->Branch("mpiEEdgeMin",  &ev.mpiEEdgeMin,  "mpiEEdgeMin/F");
+  t->Branch("mpiMinOfHFSums",   &ev.mpiMinOfHFSums,   "mpiMinOfHFSums/F");
+
+
+  // PF-MPI rapidity-gap variables
+  t->Branch("mpiEtaGapMax",  &ev.mpiEtaGapMax,  "mpiEtaGapMax/F");
+  t->Branch("mpiEdgeGapMax", &ev.mpiEdgeGapMax, "mpiEdgeGapMax/F");
+
+  // Inside/outside charged activity variables
+  t->Branch("sumJetNch", &ev.sumJetNch, "sumJetNch/I");
+  t->Branch("RNOutIn",   &ev.RNOutIn,   "RNOutIn/F");
+
+
+
+
+
+
+
+
   t->Branch("npf",        &ev.npf,        "npf/I");
   t->Branch("pfMPI_eta",     ev.pfMPI_eta,      "pfMPI_eta[npf]/F");
   t->Branch("pfMPI_phi",     ev.pfMPI_phi,      "pfMPI_phi[npf]/F");
@@ -259,6 +301,9 @@ void createMiniEventTree(TTree *t,MiniEvent_t &ev,Int_t njecUncs, std::vector<st
 
   t->Branch("avgInternalRapidityGap", &ev.avgInternalRapidityGap, "avgInternalRapidityGap/F");
   t->Branch("nInternalRapidityGaps", &ev.nInternalRapidityGaps, "nInternalRapidityGaps/I");
+  t->Branch("deltaEtaEdgeMax",     &ev.deltaEtaEdgeMax,     "deltaEtaEdgeMax/F");
+  t->Branch("maxPairwiseDeltaEta", &ev.maxPairwiseDeltaEta, "maxPairwiseDeltaEta/F");
+
 
 
   t->Branch("track_pt",     ev.track_pt,      "track_pt[ntrk]/F");  
@@ -587,6 +632,57 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
   t->SetBranchAddress("sumMPIChHt", &ev.sumMPIChHt);
 
 
+
+  // New PF-MPI variables
+  t->SetBranchAddress("maxMPIChPt",  &ev.maxMPIChPt);
+  t->SetBranchAddress("meanMPIChPt", &ev.meanMPIChPt);
+
+  // Hemispheric multiplicity variables
+  t->SetBranchAddress("mpiNPlus",       &ev.mpiNPlus);
+  t->SetBranchAddress("mpiNMinus",      &ev.mpiNMinus);
+  t->SetBranchAddress("mpiNMin",        &ev.mpiNMin);
+  t->SetBranchAddress("mpiNMax",        &ev.mpiNMax);
+  t->SetBranchAddress("mpiNAsym",       &ev.mpiNAsym);
+  t->SetBranchAddress("mpiNSignedAsym", &ev.mpiNSignedAsym);
+
+  // Hemispheric HT variables
+  t->SetBranchAddress("mpiHTPlus",       &ev.mpiHTPlus);
+  t->SetBranchAddress("mpiHTMinus",      &ev.mpiHTMinus);
+  t->SetBranchAddress("mpiHTMin",        &ev.mpiHTMin);
+  t->SetBranchAddress("mpiHTMax",        &ev.mpiHTMax);
+  t->SetBranchAddress("mpiHTAsym",       &ev.mpiHTAsym);
+  t->SetBranchAddress("mpiHTSignedAsym", &ev.mpiHTSignedAsym);
+
+  // HF-like energy variables using PF-MPI candidates
+  t->SetBranchAddress("mpiEMin",          &ev.mpiEMin);
+  t->SetBranchAddress("mpiEEdgeMin",      &ev.mpiEEdgeMin);
+  t->SetBranchAddress("mpiMinOfHFSums",   &ev.mpiMinOfHFSums);
+
+
+  // PF-MPI rapidity-gap variables
+  t->SetBranchAddress("mpiEtaGapMax",  &ev.mpiEtaGapMax);
+  t->SetBranchAddress("mpiEdgeGapMax", &ev.mpiEdgeGapMax);
+
+  // Inside/outside charged activity variables
+  t->SetBranchAddress("sumJetNch", &ev.sumJetNch);
+  t->SetBranchAddress("RNOutIn",   &ev.RNOutIn);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   t->SetBranchAddress("pfMPI_eta",     ev.pfMPI_eta);
   t->SetBranchAddress("pfMPI_phi",     ev.pfMPI_phi);
   t->SetBranchAddress("pfMPI_pt",      ev.pfMPI_pt);
@@ -597,7 +693,8 @@ void attachToMiniEventTree(TTree *t,MiniEvent_t &ev)
 
   t->SetBranchAddress("avgInternalRapidityGap", &ev.avgInternalRapidityGap);
   t->SetBranchAddress("nInternalRapidityGaps", &ev.nInternalRapidityGaps);
-
+  t->SetBranchAddress("deltaEtaEdgeMax", &ev.deltaEtaEdgeMax);
+  t->SetBranchAddress("maxPairwiseDeltaEta", &ev.maxPairwiseDeltaEta);
 
 
   // ntrk new variables
