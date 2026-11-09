@@ -8,6 +8,7 @@
 //   - Define helper macros such as ADDVAR for ROOT branch creation.
 // =================================================================================================
 
+#include "TBranch.h"
 #include "TFile.h"
 #include "TROOT.h"
 #include "TH1.h"
@@ -31,6 +32,7 @@
 #include <sstream>
 #include <map>
 #include <iomanip>
+#include <stdexcept>
 
 // package includes
 #include "TopLJets2015/TopAnalysis/interface/CommonTools.h"
@@ -583,7 +585,33 @@ void RunExclusiveTop(TString filename,
 //    }
 #endif
 
-    t->GetEntry(0);
+    TBranch *ntrkBranch = nullptr;
+    if (t->SetBranchAddress("ntrk", &ev.ntrk, &ntrkBranch) < 0 || !ntrkBranch) {
+        throw std::runtime_error("Cannot bind input branch ntrk");
+    }
+
+    Int_t maxTracks = 0;
+    for (Int_t entry = 0; entry < nentries; ++entry) {
+        if (ntrkBranch->GetEntry(entry) <= 0 || ev.ntrk < 0) {
+            throw std::runtime_error("Invalid ntrk at entry " + std::to_string(entry));
+        }
+        maxTracks = std::max(maxTracks, ev.ntrk);
+    }
+
+    const Int_t trackCapacity = std::max(1, maxTracks);
+    std::vector<Float_t> trackPt(trackCapacity);
+    std::vector<Float_t> trackEta(trackCapacity);
+    std::vector<Float_t> trackPhi(trackCapacity);
+
+    if (t->SetBranchAddress("track_pt", trackPt.data()) < 0 ||
+        t->SetBranchAddress("track_eta", trackEta.data()) < 0 ||
+        t->SetBranchAddress("track_phi", trackPhi.data()) < 0) {
+        throw std::runtime_error("Cannot bind input track branches");
+    }
+
+    if (nentries > 0) {
+        t->GetEntry(0);
+    }
 
     std::cout << "--- producing " << outname << " from " << nentries << " events" << std::endl;
 
@@ -685,9 +713,9 @@ void RunExclusiveTop(TString filename,
     outT->Branch("beamXangle",&ev.beamXangle,"beamXangle/F");
 
     // Eta tracks
-    outT->Branch("track_eta", ev.track_eta, "track_eta[ntrk]/F");    
-    outT->Branch("track_pt", ev.track_pt, "track_pt[ntrk]/F");
-    outT->Branch("track_phi", ev.track_phi, "track_phi[ntrk]/F");
+    outT->Branch("track_eta", trackEta.data(), "track_eta[ntrk]/F");
+    outT->Branch("track_pt", trackPt.data(), "track_pt[ntrk]/F");
+    outT->Branch("track_phi", trackPhi.data(), "track_phi[ntrk]/F");
 
 
 
@@ -1608,8 +1636,8 @@ void RunExclusiveTop(TString filename,
         float eta_max = -1e6, eta_min = +1e6;
         bool any = false;
         for (int i = 0; i < ev.ntrk; ++i) {
-            if (ev.track_pt[i] <= 0.2f) continue;
-            float e = ev.track_eta[i];
+            if (trackPt[i] <= 0.2f) continue;
+            float e = trackEta[i];
             any = true;
             if (e > eta_max) eta_max = e;
             if (e < eta_min) eta_min = e;
